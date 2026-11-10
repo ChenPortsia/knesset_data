@@ -1,0 +1,18 @@
+version: 2
+
+seeds:
+  - name: code_labels
+    description: "English labels for source codes, used by the code_label macro | תרגום קודים מהמקור לאנגלית"
+    config:
+      column_types: {domain: varchar, code: integer, label_en: varchar, label_he: varchar}
+    columns:
+      - name: domain
+        description: "Which code list: gender, bill_origin, vote_result | רשימת הקודים"
+        data_tests: [not_null]
+      - name: code
+        description: "Code as it appears in the source | הקוד במקור"
+        data_tests: [not_null]
+      - name: label_en
+        description: "English label | תווית באנגלית"
+      - name: label_he
+        description: "Hebrew label, as in the source | תווית בעברית, כמו במקור"

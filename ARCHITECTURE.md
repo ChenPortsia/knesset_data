@@ -240,10 +240,13 @@ Question-bank categories: lookups, aggregates, votes, oversight, text-only, hybr
 ### Repo layout
 
 ```
-knesset-data/
-  pipelines/        # dlt: odata.py, protocols.py
-  dbt/              # models/staging, intermediate, marts; seeds/ (glossary, aliases)
-  nlp/              # chunk.py, embed.py, topics.py, sentiment.py
+knesset_data/
+  ingestion/        # dlt: odata.py, protocols.py → bronze
+  transformation/   # dbt: models/staging, intermediate, marts; seeds/ (codes, glossary, aliases) → silver, gold
+  nlp/              # chunk.py, embed.py, topics.py, sentiment.py → rag
+  notebooks/        # discovery and profiling
+  docs/             # questions the warehouse must answer
+  tests/            # pytest unit tests
   Makefile          # ingest → dbt → nlp → dbt
 
 knesset-agent/

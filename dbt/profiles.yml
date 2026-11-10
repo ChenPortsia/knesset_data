@@ -1,7 +1,0 @@
-knesset:
-  target: dev
-  outputs:
-    dev:
-      type: duckdb
-      path: ../data/knesset.duckdb
-      threads: 4

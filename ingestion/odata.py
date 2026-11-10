@@ -1,8 +1,8 @@
 """Load Knesset OData v4 tables into the `bronze` schema of the DuckDB warehouse.
 
-Run:  python -m pipelines.odata                  # full load into data/knesset.duckdb
-      python -m pipelines.odata --sample         # 200 rows per table into data/sample.duckdb
-      python -m pipelines.odata KNS_Person ...   # only some tables
+Run:  python -m ingestion.odata                  # full load into data/knesset.duckdb
+      python -m ingestion.odata --sample         # 200 rows per table into data/sample.duckdb
+      python -m ingestion.odata KNS_Person ...   # only some tables
 
 Scope: only the 20th Knesset onward (2015-03-31 to today), which covers the
 committee protocols (Nov 2018+). Change `FROM_KNESSET` / `FROM_DATE` to widen it.
@@ -13,6 +13,7 @@ are fully replaced every run.
 """
 
 import argparse
+import xml.etree.ElementTree as ET
 from collections.abc import Callable, Iterator
 from dataclasses import dataclass
 from datetime import datetime
@@ -63,6 +64,18 @@ TABLES: dict[str, Table] = {
     "KNS_ItemType": Table(incremental=False),
 }
 
+# OData type -> dlt type. Declaring every column keeps the warehouse schema stable:
+# without it dlt skips columns that happen to be all-null in a load.
+DLT_TYPES = {
+    "Edm.Int16": "bigint",
+    "Edm.Int32": "bigint",
+    "Edm.Int64": "bigint",
+    "Edm.String": "text",
+    "Edm.Boolean": "bool",
+    "Edm.DateTimeOffset": "timestamp",
+}
+EDM = "{http://docs.oasis-open.org/odata/ns/edm}"
+
 Row = dict[str, Any]
 GetJson = Callable[[str, dict[str, str]], dict[str, Any]]
 
@@ -72,6 +85,17 @@ def get_json(url: str, params: dict[str, str]) -> dict[str, Any]:
     response = requests.get(url, params=params, timeout=120)
     response.raise_for_status()
     return response.json()
+
+
+def table_columns(metadata: bytes, table: str) -> dict[str, dict[str, Any]]:
+    """dlt column hints for one table, read from the API's `$metadata` XML."""
+    for entity in ET.fromstring(metadata).iter(f"{EDM}EntityType"):
+        if entity.get("Name") == table:
+            return {
+                prop.get("Name"): {"data_type": DLT_TYPES[prop.get("Type")], "nullable": True}
+                for prop in entity.iter(f"{EDM}Property")
+            }
+    raise KeyError(f"{table} not in $metadata")
 
 
 def build_filter(last_id: int, where: str | None = None, since: datetime | None = None) -> str:
@@ -122,12 +146,14 @@ def table_rows(
 @dlt.source(name="knesset_odata")
 def knesset_odata(tables: list[str] | None = None, max_pages: int | None = None) -> Iterator[Any]:
     """One dlt resource per OData table; `max_pages` caps each table for test loads."""
+    metadata = requests.get(BASE_URL + "$metadata", timeout=120).content
     for name in tables or list(TABLES):
         table = TABLES[name]
         resource = dlt.resource(
             table_rows,
             name=name,
             primary_key="Id",
+            columns=table_columns(metadata, name),
             write_disposition="merge" if table.incremental else "replace",
             parallelized=True,
         )

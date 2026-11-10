@@ -1,0 +1,11 @@
+knesset:
+  target: dev
+  outputs:
+    dev:     # the full load
+      type: duckdb
+      path: ../data/knesset.duckdb
+      threads: 4
+    sample:  # the test load from `make sample`
+      type: duckdb
+      path: ../data/knesset_sample.duckdb
+      threads: 4

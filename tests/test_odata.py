@@ -1,6 +1,23 @@
 from datetime import datetime, timedelta, timezone
 
-from pipelines.odata import TABLES, build_filter, fetch_pages, knesset_odata, parse_row
+import pytest
+
+from ingestion.odata import (
+    TABLES,
+    build_filter,
+    fetch_pages,
+    knesset_odata,
+    parse_row,
+    table_columns,
+)
+
+METADATA = b"""<edmx:Edmx xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx"><edmx:DataServices>
+<Schema xmlns="http://docs.oasis-open.org/odata/ns/edm"><EntityType Name="KNS_Person">
+<Key><PropertyRef Name="Id"/></Key>
+<Property Name="Id" Type="Edm.Int32" Nullable="false"/>
+<Property Name="Email" Type="Edm.String"/>
+<Property Name="LastUpdatedDate" Type="Edm.DateTimeOffset"/>
+</EntityType></Schema></edmx:DataServices></edmx:Edmx>"""
 
 
 def test_build_filter_first_full_load():
@@ -47,3 +64,16 @@ def test_source_has_one_resource_per_table():
 def test_sample_source_is_limited():
     source = knesset_odata(["KNS_Person"], max_pages=2)
     assert source.resources["KNS_Person"].limit is not None
+
+
+def test_table_columns_from_metadata():
+    assert table_columns(METADATA, "KNS_Person") == {
+        "Id": {"data_type": "bigint", "nullable": True},
+        "Email": {"data_type": "text", "nullable": True},
+        "LastUpdatedDate": {"data_type": "timestamp", "nullable": True},
+    }
+
+
+def test_table_columns_unknown_table():
+    with pytest.raises(KeyError):
+        table_columns(METADATA, "KNS_Missing")
