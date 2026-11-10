@@ -31,10 +31,14 @@ DuckDB allows one writer per file, so run dbt after ingestion finishes, not duri
 ```
 ingestion/           # 1. Ingestion: OData API → raw.duckdb (dlt)
   __main__.py        #    command line: one load per table, modes, run summary, exit code
+  api.py             #    HTTP API to trigger and watch runs
+  Dockerfile         #    the ingestion container
   odata.py           #    API client, scope, paging, the dlt resource per table
   checks.py          #    checks after each load: reconciliation, volume, freshness, deletes
   runlog.py          #    log file per run and ops tables
 transformation/      # 2. Transformation: raw.duckdb → warehouse.duckdb (dbt project)
+  api.py             #    HTTP API to trigger and watch dbt builds
+  Dockerfile         #    the transformation container
   models/staging/    #    one model per source table, 1:1, no joins
   models/intermediate/
   models/marts/
@@ -42,6 +46,8 @@ transformation/      # 2. Transformation: raw.duckdb → warehouse.duckdb (dbt p
   macros/            #    current_rows(), local_time(), code_label()
   tests/             #    custom SQL tests
 nlp/                 # 3. NLP batch (milestone 4+)
+common/jobs.py       # runs one background job at a time, used by both APIs
+compose.yaml         # both services, ports 8001 and 8002
 notebooks/           # discovery and profiling of the source
 docs/                # questions the warehouse must answer
 tests/               # pytest unit tests for the Python code (no network)
@@ -62,9 +68,61 @@ make ingest-weekly       # ingestion + check for rows deleted in the API (run we
 make docs TARGET=sample  # browse model and column docs
 make test lint           # unit tests and lint
 make clean               # delete all loaded data, pipeline state and logs
+make up / make down      # run both as Docker services with HTTP APIs (see below)
 ```
 
 Discovery notebook: `uv run jupyter lab notebooks/01_odata_discovery.ipynb`.
+
+## Running as services (Docker)
+
+Each task runs in its own container, with its own dependencies and an HTTP API to trigger and watch it. Both containers share `./data` and `./logs` with your computer. You need Docker Desktop.
+
+```bash
+make up      # build and start both services
+make down    # stop them
+```
+
+| Service | URL | What it does |
+| --- | --- | --- |
+| ingestion | http://localhost:8001/docs | load the OData tables into `data/raw.duckdb` |
+| transformation | http://localhost:8002/docs | run `dbt build` into `data/warehouse.duckdb` |
+
+The `/docs` pages let you try every endpoint in the browser.
+
+**Ingestion endpoints**
+
+| Method | Path | Does |
+| --- | --- | --- |
+| GET | `/health` | service is up; which run is in progress |
+| GET | `/tables` | the tables loaded and their scope |
+| POST | `/runs` | start a run: `{"mode": "daily" \| "weekly" \| "sample", "tables": [...]}` |
+| GET | `/runs?mode=daily` | the run in progress and recent runs |
+| GET | `/runs/{run_id}` | status; when finished, per-table counts, warnings and errors |
+| GET | `/runs/{run_id}/log` | the run's log |
+
+**Transformation endpoints**
+
+| Method | Path | Does |
+| --- | --- | --- |
+| GET | `/health` | service is up; which build is in progress |
+| POST | `/builds` | start `dbt build`: `{"target": "dev" \| "sample", "select": "staging"}` |
+| GET | `/builds` | builds since the service started |
+| GET | `/builds/{build_id}` | status; when finished, result counts and each failure with dbt's message |
+| GET | `/builds/{build_id}/log` | dbt's output |
+
+From the terminal:
+
+```bash
+curl -X POST localhost:8001/runs -H 'content-type: application/json' -d '{"mode": "daily"}'
+curl localhost:8001/runs/<run_id>
+curl -X POST localhost:8002/builds -H 'content-type: application/json' -d '{"target": "dev"}'
+curl localhost:8002/builds/<build_id>
+```
+
+Rules:
+- Each service runs **one job at a time** (DuckDB allows one writer per file). A second request gets `409`.
+- **Start a build after the ingestion run has finished.** dbt opens `raw.duckdb` read-only and fails while ingestion is writing it. Airflow will sequence the two later.
+- A run's history lives in `ops.ingestion_runs` and survives restarts. Builds are kept in memory, so after a restart only their log files in `logs/transformation/` remain.
 
 ## 1. Ingestion (`ingestion/`)
 

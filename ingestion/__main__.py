@@ -87,6 +87,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Load Knesset OData tables into data/raw.duckdb")
     parser.add_argument("tables", nargs="*", help="table names, default: all")
     parser.add_argument("--mode", choices=["daily", "weekly", "sample"], default="daily")
+    parser.add_argument("--run-id", help="set by the API; default: the start time")
     args = parser.parse_args()
     if unknown := set(args.tables) - set(TABLES):
         parser.error(f"unknown tables: {sorted(unknown)}")
@@ -100,7 +101,7 @@ def main() -> int:
         Path(db).unlink(missing_ok=True)
         shutil.rmtree(pipelines_dir / name, ignore_errors=True)
 
-    run_id = runlog.new_run_id()
+    run_id = args.run_id or runlog.new_run_id()
     log_file = runlog.setup_logging(run_id)
     DATA_DIR.mkdir(exist_ok=True)
     runlog.init(db)

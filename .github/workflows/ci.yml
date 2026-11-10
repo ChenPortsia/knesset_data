@@ -11,3 +11,19 @@ jobs:
       - run: make lint
       - run: make test
       - run: cd transformation && uv run dbt parse --profiles-dir .
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker compose build
+      - name: Both services start and answer /health
+        run: |
+          mkdir -p data logs
+          docker compose up -d
+          for port in 8001 8002; do
+            for i in $(seq 1 30); do curl -sf localhost:$port/health && break; sleep 2; done
+            curl -sf localhost:$port/health
+          done
+      - if: always()
+        run: docker compose logs && docker compose down

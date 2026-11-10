@@ -1,9 +1,17 @@
 # Two separate processes that share only the bronze tables:
 #   1. ingestion       API -> data/raw.duckdb (bronze, ops)
 #   2. transformation  data/raw.duckdb (read-only) -> data/warehouse.duckdb (silver, gold)
+# Run them directly (make ingest, make dbt) or as Docker services with HTTP APIs (make up).
 TARGET ?= dev
 
-.PHONY: sample ingest ingest-weekly dbt docs test lint clean
+.PHONY: up down sample ingest ingest-weekly dbt docs test lint clean
+
+up:  ## Start both services in Docker: ingestion on :8001, transformation on :8002
+	mkdir -p data logs
+	docker compose up -d --build
+
+down:  ## Stop the Docker services
+	docker compose down
 
 sample:  ## Ingestion test load: 200 rows per table into data/raw_sample.duckdb (~1 min)
 	uv run python -m ingestion --mode sample $(TABLES)

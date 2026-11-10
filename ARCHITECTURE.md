@@ -236,7 +236,7 @@ Question-bank categories: lookups, aggregates, votes, oversight, text-only, hybr
 
 ### Infra
 
-- `docker-compose` with three services: `pipeline` (dlt + dbt + nlp, run on a schedule), `api` (FastAPI serving the LangGraph app), `ui` (Chainlit or Streamlit).
+- Docker Compose, one container per task, each with its own dependencies and a small HTTP API to trigger and watch it: `ingestion` (dlt; `POST /runs`), `transformation` (dbt; `POST /builds`), later `nlp` (the NLP batch), plus `api` (FastAPI serving the LangGraph app) and `ui` (Chainlit). Airflow triggers the task services through their endpoints, in order.
 - `warehouse.duckdb` is mounted read-only into `api`; the `context` schema is written through one small service function so agents can't write elsewhere.
 - Scheduling: Airflow (see Pilot deployment, orchestration and observability).
 
