@@ -9,7 +9,7 @@ dependencies = []
 [dependency-groups]
 ingestion = ["dlt[duckdb]"]
 transformation = ["dbt-duckdb"]
-dev = ["pytest", "ruff"]
+dev = ["pytest", "pytest-timeout", "ruff"]
 notebook = [
     "ipykernel>=7.4.0",
     "jupyterlab>=4.6.6",
@@ -22,6 +22,7 @@ default-groups = ["ingestion", "transformation", "dev", "notebook"]  # locally: 
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
+timeout = 60  # a hung test fails instead of hanging CI
 
 [tool.ruff]
 line-length = 100

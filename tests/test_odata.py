@@ -89,6 +89,30 @@ def test_merge_pages_raises_errors_from_threads():
         list(merge_pages([broken(), iter([[{"Id": 2}]])]))
 
 
+def endless():
+    while True:
+        yield [{"Id": 1}]
+
+
+@pytest.mark.timeout(10)
+def test_merge_pages_stops_all_threads_after_an_error():
+    """Regression: busy threads used to block forever once the consumer had stopped."""
+
+    def broken():
+        raise RuntimeError("API down")
+        yield
+
+    with pytest.raises(RuntimeError, match="API down"):
+        list(merge_pages([broken(), endless(), endless(), endless()]))
+
+
+@pytest.mark.timeout(10)
+def test_merge_pages_stops_all_threads_when_consumer_stops_early():
+    pages = merge_pages([endless(), endless()])
+    assert next(pages) == [{"Id": 1}]
+    pages.close()  # what dlt's sample limit does
+
+
 def test_parse_row_compares_across_time_zones():
     winter = parse_row({"LastUpdatedDate": "2020-03-23T23:33:55.387+02:00"})
     summer = parse_row({"LastUpdatedDate": "2024-07-28T21:41:35.37+03:00"})

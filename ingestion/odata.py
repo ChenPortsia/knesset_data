@@ -197,23 +197,33 @@ def fetch_range(
 
 
 def merge_pages(iterators: list[Iterator[list[Row]]]) -> Iterator[list[Row]]:
-    """Run page iterators in parallel threads and yield their pages as they arrive."""
+    """Run page iterators in parallel threads and yield their pages as they arrive.
+
+    If the consumer stops early (an error, or the sample limit), every thread stops
+    too: `put` gives up once `stop` is set, so no thread can block forever.
+    """
     pages: queue.Queue = queue.Queue(maxsize=2 * len(iterators))
     stop = threading.Event()
     done = object()
 
+    def put(item: object) -> bool:
+        """Queue an item; False if the consumer has stopped."""
+        while not stop.is_set():
+            try:
+                pages.put(item, timeout=0.5)
+                return True
+            except queue.Full:
+                continue
+        return False
+
     def drain(pages_of_range: Iterator[list[Row]]) -> None:
         try:
             for page in pages_of_range:
-                while not stop.is_set():
-                    try:
-                        pages.put(page, timeout=1)
-                        break
-                    except queue.Full:
-                        continue
-            pages.put(done)
+                if not put(page):
+                    return
+            put(done)
         except Exception as error:  # hand the error to the consumer, which re-raises it
-            pages.put(error)
+            put(error)
 
     with ThreadPoolExecutor(len(iterators)) as pool:
         for pages_of_range in iterators:
@@ -229,9 +239,7 @@ def merge_pages(iterators: list[Iterator[list[Row]]]) -> Iterator[list[Row]]:
                 else:
                     yield item
         finally:
-            stop.set()  # unblock the threads if we stop early (error or sample limit)
-            while not pages.empty():
-                pages.get_nowait()
+            stop.set()
 
 
 def fetch_table(
