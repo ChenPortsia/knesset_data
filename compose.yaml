@@ -1,0 +1,17 @@
+# Each task runs in its own container with its own HTTP API.
+#   docker compose up -d --build     start both services
+#   http://localhost:8001/docs       ingestion API
+#   http://localhost:8002/docs       transformation API
+# Both share ./data (DuckDB files) and ./logs with the host.
+services:
+  ingestion:
+    build: {context: ., dockerfile: ingestion/Dockerfile}
+    ports: ["8001:8000"]
+    volumes: ["./data:/app/data", "./logs:/app/logs"]
+    restart: unless-stopped
+
+  transformation:
+    build: {context: ., dockerfile: transformation/Dockerfile}
+    ports: ["8002:8000"]
+    volumes: ["./data:/app/data", "./logs:/app/logs"]
+    restart: unless-stopped

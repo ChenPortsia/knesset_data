@@ -10,3 +10,4 @@ transformation/dbt_packages/
 transformation/logs/
 data/
 transformation/.user.yml
+logs/

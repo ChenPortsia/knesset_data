@@ -2,13 +2,15 @@
 name = "knesset-data"
 version = "0.1.0"
 requires-python = ">=3.12"
-dependencies = [
-    "dlt[duckdb]",
-    "dbt-duckdb",
-]
+dependencies = []
 
+# Each process has its own dependencies, so it can be installed and run on its own
+# (e.g. `uv sync --only-group ingestion` in an ingestion container).
 [dependency-groups]
-dev = ["pytest", "ruff"]
+ingestion = ["dlt[duckdb]"]
+transformation = ["dbt-duckdb"]
+api = ["fastapi", "uvicorn"]  # the HTTP API each service's container runs
+dev = ["pytest", "pytest-timeout", "ruff", "httpx"]
 notebook = [
     "ipykernel>=7.4.0",
     "jupyterlab>=4.6.6",
@@ -16,8 +18,12 @@ notebook = [
     "pandas>=3.1.1",
 ]
 
+[tool.uv]
+default-groups = ["ingestion", "transformation", "api", "dev", "notebook"]  # locally: everything
+
 [tool.pytest.ini_options]
 pythonpath = ["."]
+timeout = 60  # a hung test fails instead of hanging CI
 
 [tool.ruff]
 line-length = 100
@@ -27,3 +33,4 @@ select = ["E", "F", "I", "UP", "B"]
 
 [tool.ruff.lint.per-file-ignores]
 "notebooks/*" = ["E402", "E501"]  # imports after sys.path setup; long SQL lines
+"transformation/scripts/generate_staging.py" = ["E501"]  # the spec table has long bilingual lines

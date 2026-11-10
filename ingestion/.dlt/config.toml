@@ -1,0 +1,21 @@
+# dlt settings for the ingestion project. Any value can be overridden by an
+# environment variable, e.g. SOURCES__KNESSET_ODATA__WORKERS=4
+
+[runtime]
+log_level = "WARNING"     # dlt's own log level; our run log is separate
+dlthub_telemetry = false
+
+[sources.knesset_odata]
+base_url = "https://knesset.gov.il/OdataV4/ParliamentInfo/"
+# Scope: the 20th Knesset onward, which covers the committee protocols (Nov 2018+)
+from_knesset = 20
+from_date = "2015-03-31T00:00:00+03:00"   # the 20th Knesset was sworn in
+# Speed and politeness
+workers = 8               # parallel requests per large table
+rows_per_range = 20000    # split a table into parallel Id ranges of about this size
+lag_seconds = 3600        # re-read the last hour each run, for rows committed late
+sample_pages = 2          # pages per table in a sample run (100 rows per page)
+# HTTP
+request_timeout = 120
+request_max_attempts = 8
+request_backoff_factor = 2  # waits 1, 2, 4 ... 64s between attempts

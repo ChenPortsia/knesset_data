@@ -1,0 +1,14 @@
+.git
+.github
+.venv
+.pytest_cache
+.ruff_cache
+**/__pycache__
+data
+logs
+notebooks
+transformation/target
+transformation/logs
+transformation/dbt_packages
+ingestion/.dlt/secrets.toml
+transformation/scripts
