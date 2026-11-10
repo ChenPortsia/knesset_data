@@ -57,6 +57,7 @@ Two DuckDB files, so ingestion and transformation are separate processes that sh
 
 ### Transformation — dbt (dbt-duckdb)
 
+- **SQL style:** uppercase SQL, every column cast explicitly, and every model as CTEs in the order `source → renamed → filtered → enhanced`. Model folders are numbered (`1_staging`, `2_intermediate`, `3_mart`) so they sort in build order.
 - **staging:** one model per source table — English column names, types cast, Hebrew lookup codes decoded via seeds.
 - **intermediate:**
   - `int_speaker_turns` — protocol text cut by speaker segment, one row per turn.
@@ -244,8 +245,8 @@ Question-bank categories: lookups, aggregates, votes, oversight, text-only, hybr
 
 ```
 knesset_data/
-  ingestion/        # dlt: odata.py, protocols.py → bronze
-  transformation/   # dbt: models/staging, intermediate, marts; seeds/ (codes, glossary, aliases) → silver, gold
+  ingestion/        # dlt project: .dlt/config.toml, odata.py, protocols.py → bronze
+  transformation/   # dbt project: models/1_staging, 2_intermediate, 3_mart; seeds/ (codes, glossary, aliases) → silver, gold
   nlp/              # chunk.py, embed.py, topics.py, sentiment.py → rag
   notebooks/        # discovery and profiling
   docs/             # questions the warehouse must answer

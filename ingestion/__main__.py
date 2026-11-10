@@ -24,44 +24,52 @@ import duckdb
 from dlt.common.normalizers.naming.snake_case import NamingConvention
 
 from ingestion import checks, runlog
-from ingestion.odata import TABLES, WORKERS, api_count, get_metadata, table_resource
+from ingestion.odata import TABLES, Api, Settings, api_count, knesset_odata, load_settings, scope
 
 DATA_DIR = Path("data")
-SAMPLE_PAGES = 2  # 100 rows per page
 
 log = logging.getLogger("ingestion")
 bronze_name = NamingConvention().normalize_table_identifier  # KNS_PlenumVote -> kns_plenum_vote
 
 
 def load_table(
-    pipeline: dlt.Pipeline, db: str, name: str, metadata: bytes, mode: str
+    pipeline: dlt.Pipeline,
+    db: str,
+    source: dlt.sources.DltSource,
+    settings: Settings,
+    api: Api,
+    name: str,
+    mode: str,
+    run_id: str,
 ) -> dict[str, Any]:
     """Load one table, run its checks and return its ops record. Never raises."""
-    table, scd2 = bronze_name(name), TABLES[name].incremental
+    table, scd2, where = bronze_name(name), TABLES[name].incremental, scope(name, settings)
     record: dict[str, Any] = {"table_name": table, "started_at": runlog.now(), "status": "ok"}
     warnings: list[str] = []
     try:
-        resource = table_resource(name, metadata, workers=1 if mode == "sample" else WORKERS)
+        one_table = source.with_resources(name)
         if mode == "sample":
-            resource.add_limit(SAMPLE_PAGES)
-        load_info = pipeline.run(resource)
+            one_table.add_limit(settings.sample_pages)
+        load_info = pipeline.run(one_table)
         record["load_id"] = load_info.loads_ids[0] if load_info.loads_ids else None
         record["rows_extracted"] = pipeline.last_trace.last_normalize_info.row_counts.get(table, 0)
 
         with duckdb.connect(db) as con:
             record["bronze_rows"], record["max_updated_at"] = checks.bronze_stats(con, table, scd2)
             if mode != "sample":
-                record["api_rows"] = api_count(name, TABLES[name].where)
+                record["api_rows"] = api_count(api.json, name, where)
                 warnings.append(checks.reconcile(record["api_rows"], record["bronze_rows"]))
                 warnings.append(
                     checks.volume(record["rows_extracted"], checks.usual_rows(con, table))
                 )
             if mode == "weekly":
-                deleted = checks.find_deleted(con, name, table, TABLES[name].where, scd2)
-                con.execute("delete from bronze.deleted_ids where table_name = ?", [table])
+                deleted = checks.find_deleted(
+                    con, api.json, name, table, where, scd2, settings.workers
+                )
+                con.execute("DELETE FROM bronze.deleted_ids WHERE table_name = ?", [table])
                 con.executemany(
-                    "insert into bronze.deleted_ids values (?, ?, ?, ?)",
-                    [(table, i, record["started_at"], pipeline.run_id) for i in sorted(deleted)],
+                    "INSERT INTO bronze.deleted_ids VALUES (?, ?, ?, ?)",
+                    [(table, i, record["started_at"], run_id) for i in sorted(deleted)],
                 )
                 record["deleted_rows"] = len(deleted)
                 if deleted:
@@ -119,9 +127,13 @@ def main() -> int:
         destination=dlt.destinations.duckdb(db),
         dataset_name="bronze",
     )
-    metadata = get_metadata()
+    settings = load_settings()
+    api = Api(settings)
+    workers = 1 if args.mode == "sample" else settings.workers
+    source = knesset_odata(settings, api, api.metadata(), workers, args.tables or list(TABLES))
     records = [
-        load_table(pipeline, db, table, metadata, args.mode) for table in args.tables or TABLES
+        load_table(pipeline, db, source, settings, api, table, args.mode, run_id)
+        for table in args.tables or TABLES
     ]
     for record in records:
         runlog.insert(db, "ingestion_tables", {"run_id": run_id, **record})

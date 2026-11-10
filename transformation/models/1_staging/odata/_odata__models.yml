@@ -12,12 +12,8 @@ models:
     description: First name (Hebrew) | שם פרטי
   - name: last_name
     description: Last name (Hebrew) | שם משפחה
-  - name: full_name
-    description: First and last name | שם מלא
-  - name: gender
-    description: 'Gender: female / male | מגדר'
-    data_tests:
-    - not_null
+  - name: gender_id
+    description: 'Gender code: 250 female, 251 male | קוד מגדר'
   - name: gender_he
     description: Gender in Hebrew | מגדר בעברית
   - name: email
@@ -26,6 +22,14 @@ models:
     description: True if serving in the current Knesset | האם מכהן בכנסת הנוכחית
   - name: updated_at
     description: When the source row last changed (LastUpdatedDate) | מועד העדכון האחרון של השורה במקור
+  - name: loaded_at
+    description: When this version of the row was loaded | מועד טעינת הגרסה הזו של השורה
+  - name: full_name
+    description: First and last name | שם מלא
+  - name: gender
+    description: 'Gender: female / male | מגדר'
+    data_tests:
+    - not_null
 - name: stg_odata__position
   description: 'Position types (MK, minister, committee chair...). Grain: one row per position type | סוגי תפקידים (ח"כ, שר, יו"ר ועדה...)'
   columns:
@@ -40,6 +44,8 @@ models:
     description: Gender the title form applies to | המגדר שאליו מתייחס נוסח התפקיד
   - name: updated_at
     description: When the source row last changed (LastUpdatedDate) | מועד העדכון האחרון של השורה במקור
+  - name: loaded_at
+    description: When this version of the row was loaded | מועד טעינת הגרסה הזו של השורה
 - name: stg_odata__person_position
   description: 'Who held which position, when: MK in a faction, minister, committee member. Grain: one row per person, position and period | מי כיהן באיזה תפקיד ומתי: ח"כ בסיעה, שר, חבר ועדה'
   columns:
@@ -78,6 +84,8 @@ models:
     description: True if this is current (serving now) | האם בתוקף כעת
   - name: updated_at
     description: When the source row last changed (LastUpdatedDate) | מועד העדכון האחרון של השורה במקור
+  - name: loaded_at
+    description: When this version of the row was loaded | מועד טעינת הגרסה הזו של השורה
 - name: stg_odata__faction
   description: 'Factions (parliamentary groups) per Knesset. Grain: one row per faction per Knesset | סיעות בכל כנסת'
   columns:
@@ -98,6 +106,8 @@ models:
     description: True if this is current (serving now) | האם בתוקף כעת
   - name: updated_at
     description: When the source row last changed (LastUpdatedDate) | מועד העדכון האחרון של השורה במקור
+  - name: loaded_at
+    description: When this version of the row was loaded | מועד טעינת הגרסה הזו של השורה
 - name: stg_odata__knesset_period
   description: 'Knesset terms split into assemblies and sittings. Grain: one row per Knesset sitting period | כנסות לפי כנסים ומושבים'
   columns:
@@ -122,6 +132,8 @@ models:
     description: True if this is current (serving now) | האם בתוקף כעת
   - name: updated_at
     description: When the source row last changed (LastUpdatedDate) | מועד העדכון האחרון של השורה במקור
+  - name: loaded_at
+    description: When this version of the row was loaded | מועד טעינת הגרסה הזו של השורה
 - name: stg_odata__ministry
   description: 'Government ministries. Grain: one row per ministry | משרדי ממשלה'
   columns:
@@ -142,6 +154,8 @@ models:
     description: True if the ministry exists today | האם המשרד פעיל
   - name: updated_at
     description: When the source row last changed (LastUpdatedDate) | מועד העדכון האחרון של השורה במקור
+  - name: loaded_at
+    description: When this version of the row was loaded | מועד טעינת הגרסה הזו של השורה
 - name: stg_odata__committee
   description: 'Knesset committees per Knesset. Grain: one row per committee per Knesset | ועדות הכנסת בכל כנסת'
   columns:
@@ -178,6 +192,8 @@ models:
     description: True if this is current (serving now) | האם בתוקף כעת
   - name: updated_at
     description: When the source row last changed (LastUpdatedDate) | מועד העדכון האחרון של השורה במקור
+  - name: loaded_at
+    description: When this version of the row was loaded | מועד טעינת הגרסה הזו של השורה
 - name: stg_odata__committee_session
   description: 'Committee sessions (meetings). Grain: one row per committee session | ישיבות ועדה'
   columns:
@@ -214,6 +230,8 @@ models:
     description: End, Israel local time; null if ongoing | מועד סיום, שעון ישראל; ריק אם עדיין פעיל
   - name: updated_at
     description: When the source row last changed (LastUpdatedDate) | מועד העדכון האחרון של השורה במקור
+  - name: loaded_at
+    description: When this version of the row was loaded | מועד טעינת הגרסה הזו של השורה
 - name: stg_odata__committee_session_item
   description: 'Items on a committee session agenda (bills, queries, topics); all Knessets. Grain: one row per item per committee session | פריטים בסדר היום של ישיבת ועדה; כל הכנסות'
   columns:
@@ -236,6 +254,8 @@ models:
     description: Status ID (see stg_odata__status) | מזהה סטטוס
   - name: updated_at
     description: When the source row last changed (LastUpdatedDate) | מועד העדכון האחרון של השורה במקור
+  - name: loaded_at
+    description: When this version of the row was loaded | מועד טעינת הגרסה הזו של השורה
 - name: stg_odata__plenum_session
   description: 'Plenum sessions. Grain: one row per plenum session | ישיבות מליאה'
   columns:
@@ -258,6 +278,8 @@ models:
     description: End, Israel local time; null if ongoing | מועד סיום, שעון ישראל; ריק אם עדיין פעיל
   - name: updated_at
     description: When the source row last changed (LastUpdatedDate) | מועד העדכון האחרון של השורה במקור
+  - name: loaded_at
+    description: When this version of the row was loaded | מועד טעינת הגרסה הזו של השורה
 - name: stg_odata__plenum_session_item
   description: 'Items on a plenum session agenda; all Knessets. Grain: one row per item per plenum session | פריטים בסדר היום של ישיבת מליאה; כל הכנסות'
   columns:
@@ -284,6 +306,8 @@ models:
     description: True if the item was discussed (not only listed) | האם הפריט נדון
   - name: updated_at
     description: When the source row last changed (LastUpdatedDate) | מועד העדכון האחרון של השורה במקור
+  - name: loaded_at
+    description: When this version of the row was loaded | מועד טעינת הגרסה הזו של השורה
 - name: stg_odata__bill
   description: 'Bills (proposed laws). Grain: one row per bill | הצעות חוק'
   columns:
@@ -300,10 +324,8 @@ models:
     description: Bill type ID | מזהה סוג הצעה
   - name: bill_type
     description: Bill type (Hebrew) | סוג ההצעה
-  - name: origin
-    description: 'Who proposed it: government / private / committee | מקור ההצעה: ממשלתית / פרטית / ועדה'
-    data_tests:
-    - not_null
+  - name: origin_id
+    description: 'Origin code: 53 government, 54 private, 55 committee | קוד מקור ההצעה'
   - name: origin_he
     description: Origin in Hebrew | מקור ההצעה בעברית
   - name: private_number
@@ -338,6 +360,12 @@ models:
     description: Short summary of the law (Hebrew) | תקציר החוק
   - name: updated_at
     description: When the source row last changed (LastUpdatedDate) | מועד העדכון האחרון של השורה במקור
+  - name: loaded_at
+    description: When this version of the row was loaded | מועד טעינת הגרסה הזו של השורה
+  - name: origin
+    description: 'Who proposed it: government / private / committee | מקור ההצעה: ממשלתית / פרטית / ועדה'
+    data_tests:
+    - not_null
 - name: stg_odata__bill_initiator
   description: 'MKs who initiated or joined a bill; all Knessets. Grain: one row per bill and person | חברי כנסת שיזמו או הצטרפו להצעת חוק; כל הכנסות'
   columns:
@@ -356,6 +384,8 @@ models:
     description: Order within the parent | מספר סידורי
   - name: updated_at
     description: When the source row last changed (LastUpdatedDate) | מועד העדכון האחרון של השורה במקור
+  - name: loaded_at
+    description: When this version of the row was loaded | מועד טעינת הגרסה הזו של השורה
 - name: stg_odata__law
   description: 'Israeli laws in force or repealed; all Knessets. Grain: one row per law | חוקי מדינת ישראל; כל הכנסות'
   columns:
@@ -392,6 +422,8 @@ models:
     description: Notes on end of validity | הערות לסיום תוקף
   - name: updated_at
     description: When the source row last changed (LastUpdatedDate) | מועד העדכון האחרון של השורה במקור
+  - name: loaded_at
+    description: When this version of the row was loaded | מועד טעינת הגרסה הזו של השורה
 - name: stg_odata__plenum_vote
   description: 'Plenum votes (one per vote held). Grain: one row per vote | הצבעות במליאה'
   columns:
@@ -432,6 +464,8 @@ models:
     description: Meaning of an 'against' vote (Hebrew) | משמעות הצבעה נגד
   - name: updated_at
     description: When the source row last changed (LastUpdatedDate) | מועד העדכון האחרון של השורה במקור
+  - name: loaded_at
+    description: When this version of the row was loaded | מועד טעינת הגרסה הזו של השורה
 - name: stg_odata__plenum_vote_result
   description: 'How each MK voted in each plenum vote. Grain: one row per vote and MK | איך הצביע כל ח"כ בכל הצבעה במליאה'
   columns:
@@ -452,6 +486,12 @@ models:
     description: When the vote took place, Israel local time | מועד ההצבעה, שעון ישראל
   - name: result_code
     description: 'Result code: 7 for, 8 against, 9 abstain, 10 absent, 11 secret ballot | קוד תוצאה'
+  - name: result_he
+    description: Result in Hebrew | תוצאה בעברית
+  - name: updated_at
+    description: When the source row last changed (LastUpdatedDate) | מועד העדכון האחרון של השורה במקור
+  - name: loaded_at
+    description: When this version of the row was loaded | מועד טעינת הגרסה הזו של השורה
   - name: result
     description: 'Result: for / against / abstain / absent / voted | תוצאה: בעד / נגד / נמנע / לא נכח / הצביע'
     data_tests:
@@ -463,10 +503,6 @@ models:
           - abstain
           - absent
           - voted
-  - name: result_he
-    description: Result in Hebrew | תוצאה בעברית
-  - name: updated_at
-    description: When the source row last changed (LastUpdatedDate) | מועד העדכון האחרון של השורה במקור
 - name: stg_odata__query
   description: 'Parliamentary queries from MKs to ministers. Grain: one row per query | שאילתות של חברי כנסת לשרים'
   columns:
@@ -499,6 +535,8 @@ models:
     description: When the minister replied | מועד תשובת השר
   - name: updated_at
     description: When the source row last changed (LastUpdatedDate) | מועד העדכון האחרון של השורה במקור
+  - name: loaded_at
+    description: When this version of the row was loaded | מועד טעינת הגרסה הזו של השורה
 - name: stg_odata__agenda
   description: 'Motions for the agenda. Grain: one row per motion | הצעות לסדר היום'
   columns:
@@ -545,6 +583,8 @@ models:
     description: Speaker's decision date | מועד החלטת יו"ר הכנסת
   - name: updated_at
     description: When the source row last changed (LastUpdatedDate) | מועד העדכון האחרון של השורה במקור
+  - name: loaded_at
+    description: When this version of the row was loaded | מועד טעינת הגרסה הזו של השורה
 - name: stg_odata__status
   description: 'Status codes for bills, queries, sessions and more. Grain: one row per status | קודי סטטוס להצעות חוק, שאילתות, ישיבות ועוד'
   columns:
@@ -565,6 +605,8 @@ models:
     description: True if the status is still used | האם הסטטוס בשימוש
   - name: updated_at
     description: When the source row last changed (LastUpdatedDate) | מועד העדכון האחרון של השורה במקור
+  - name: loaded_at
+    description: When this version of the row was loaded | מועד טעינת הגרסה הזו של השורה
 - name: stg_odata__item_type
   description: 'Types of items discussed in sessions. Grain: one row per item type | סוגי פריטים הנדונים בישיבות'
   columns:

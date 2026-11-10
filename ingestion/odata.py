@@ -1,15 +1,15 @@
-"""Knesset OData v4 API client and the dlt resource for one table.
+"""Knesset OData v4 API client and the dlt source with one resource per table.
 
-Scope: only the 20th Knesset onward (2015-03-31 to today), which covers the
-committee protocols (Nov 2018+). Change `FROM_KNESSET` / `FROM_DATE` to widen it.
+Settings come from ingestion/.dlt/config.toml, section [sources.knesset_odata].
 """
 
+import logging
 import queue
 import threading
 import xml.etree.ElementTree as ET
 from collections.abc import Callable, Iterator
 from concurrent.futures import ThreadPoolExecutor
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass, fields
 from datetime import datetime
 from typing import Any
 
@@ -17,21 +17,37 @@ import dlt
 from dlt.extract.resource import DltResource
 from dlt.sources.helpers.requests import Client
 
-BASE_URL = "https://knesset.gov.il/OdataV4/ParliamentInfo/"
-FROM_KNESSET = 20
-FROM_DATE = "2015-03-31T00:00:00+03:00"  # the 20th Knesset was sworn in
-WORKERS = 8  # parallel requests per table; the API handled 16, 8 stays polite
-ROWS_PER_RANGE = 20_000  # split a table into parallel Id ranges of about this size
-LAG_SECONDS = 3600  # re-read the last hour each run, for rows committed late
+log = logging.getLogger("ingestion")
+
+
+@dataclass(frozen=True)
+class Settings:
+    base_url: str
+    from_knesset: int
+    from_date: str
+    workers: int
+    rows_per_range: int
+    lag_seconds: int
+    sample_pages: int
+    request_timeout: int
+    request_max_attempts: int
+    request_backoff_factor: float
+
+
+def load_settings() -> Settings:
+    """Read [sources.knesset_odata] from ingestion/.dlt/config.toml (or environment variables)."""
+    return Settings(
+        **{f.name: dlt.config[f"sources.knesset_odata.{f.name}"] for f in fields(Settings)}
+    )
 
 
 @dataclass(frozen=True)
 class Table:
-    where: str | None = None  # extra OData filter that limits the scope
+    where: str | None = None  # scope filter; {from_knesset} / {from_date} come from Settings
     incremental: bool = True  # False for tables without LastUpdatedDate
 
 
-BY_KNESSET = f"KnessetNum ge {FROM_KNESSET}"
+BY_KNESSET = "KnessetNum ge {from_knesset}"
 
 TABLES: dict[str, Table] = {
     # People, factions, positions
@@ -51,8 +67,8 @@ TABLES: dict[str, Table] = {
     "KNS_Bill": Table(BY_KNESSET),
     "KNS_BillInitiator": Table(),  # no Knesset/date column; filtered in dbt
     "KNS_IsraelLaw": Table(),  # laws in force may come from any Knesset
-    "KNS_PlenumVote": Table(f"VoteDateTime ge {FROM_DATE}"),
-    "KNS_PlenumVoteResult": Table(f"VoteDate ge {FROM_DATE}"),
+    "KNS_PlenumVote": Table("VoteDateTime ge {from_date}"),
+    "KNS_PlenumVoteResult": Table("VoteDate ge {from_date}"),
     # Oversight
     "KNS_Query": Table(BY_KNESSET),
     "KNS_Agenda": Table(BY_KNESSET),
@@ -60,6 +76,13 @@ TABLES: dict[str, Table] = {
     "KNS_Status": Table(),
     "KNS_ItemType": Table(incremental=False),
 }
+
+
+def scope(table: str, settings: Settings) -> str | None:
+    """The table's scope filter with the configured Knesset / date filled in."""
+    where = TABLES[table].where
+    return where.format(**asdict(settings)) if where else None
+
 
 # OData type -> dlt type. Declaring every column keeps the warehouse schema stable:
 # without it dlt skips columns that happen to be all-null in a load.
@@ -74,30 +97,43 @@ DLT_TYPES = {
 EDM = "{http://docs.oasis-open.org/odata/ns/edm}"
 
 # The site's firewall sometimes answers a burst of requests with non-standard 4xx codes
-# (seen: 473, 481) for a few seconds. Retry those like rate limits (429) and server errors
-# (5xx), with exponential backoff: 1, 2, 4 ... 64s, up to 8 attempts.
+# (seen: 473, 481) for a few seconds. Retry those like rate limits (429) and server errors.
 RETRY_STATUS = (429, *range(470, 500), *range(500, 600))
-http = Client(
-    request_timeout=120,
-    status_codes=RETRY_STATUS,
-    request_max_attempts=8,
-    request_backoff_factor=2,
-).session
 
 Row = dict[str, Any]
-GetJson = Callable[[str, dict[str, str]], dict[str, Any]]
+GetJson = Callable[[str, dict[str, str]], dict[str, Any]]  # (path, params) -> JSON body
 
 
-def get_json(url: str, params: dict[str, str]) -> dict[str, Any]:
-    """GET a URL and return its JSON body; retries as set on `http` above."""
-    response = http.get(url, params=params)
-    response.raise_for_status()
-    return response.json()
+class Api:
+    """HTTP access to the OData API, with retries and backoff from the settings."""
 
+    def __init__(self, settings: Settings) -> None:
+        self.base_url = settings.base_url
+        self.session = Client(
+            request_timeout=settings.request_timeout,
+            status_codes=RETRY_STATUS,
+            request_max_attempts=settings.request_max_attempts,
+            request_backoff_factor=settings.request_backoff_factor,
+        ).session
+        self.session.hooks["response"].append(self._log_errors)
 
-def get_metadata() -> bytes:
-    """The API's `$metadata` XML: every table with its typed columns."""
-    return http.get(BASE_URL + "$metadata").content
+    @staticmethod
+    def _log_errors(response: Any, *args: Any, **kwargs: Any) -> None:
+        """Log every failed response, including those that are retried."""
+        if response.status_code >= 400:
+            retry = "retrying" if response.status_code in RETRY_STATUS else "giving up"
+            log.warning("HTTP %s, %s: %s", response.status_code, retry, response.url)
+
+    def json(self, path: str, params: dict[str, str]) -> dict[str, Any]:
+        response = self.session.get(self.base_url + path, params=params)
+        response.raise_for_status()
+        return response.json()
+
+    def metadata(self) -> bytes:
+        """The `$metadata` XML: every table with its typed columns."""
+        response = self.session.get(self.base_url + "$metadata")
+        response.raise_for_status()
+        return response.content
 
 
 def table_columns(metadata: bytes, table: str) -> dict[str, dict[str, Any]]:
@@ -134,21 +170,19 @@ def params_for(filter_: str | None, **extra: str) -> dict[str, str]:
     return {**({"$filter": filter_} if filter_ else {}), **extra}
 
 
-def api_count(table: str, where: str | None = None, get: GetJson = get_json) -> int:
+def api_count(get: GetJson, table: str, where: str | None = None) -> int:
     """Number of rows the API has for a table in our scope."""
     params = params_for(build_filter(where), **{"$count": "true", "$top": "0"})
-    return get(BASE_URL + table, params)["@odata.count"]
+    return get(table, params)["@odata.count"]
 
 
 def edge_id(
-    table: str, where: str | None, since: datetime | None, last: bool, get: GetJson = get_json
+    get: GetJson, table: str, where: str | None, since: datetime | None, last: bool
 ) -> int | None:
     """Smallest (or with `last`, largest) Id matching the filter; None if no rows."""
     order = "Id desc" if last else "Id"
-    params = params_for(
-        build_filter(where, since), **{"$select": "Id", "$orderby": order, "$top": "1"}
-    )
-    rows = get(BASE_URL + table, params)["value"]
+    extra = {"$select": "Id", "$orderby": order, "$top": "1"}
+    rows = get(table, params_for(build_filter(where, since), **extra))["value"]
     return rows[0]["Id"] if rows else None
 
 
@@ -158,24 +192,37 @@ def id_ranges(low: int, high: int, parts: int) -> list[tuple[int, int]]:
     return [(start, min(start + step, high)) for start in range(low, high, step)]
 
 
-def check_page(table: str, page: list[Row], after: int) -> None:
-    """Every row needs an Id, in increasing order after the previous page. Raises if not."""
+def clean_page(table: str, page: list[Row], after: int) -> list[Row]:
+    """Check a page and drop repeated Ids.
+
+    Every row needs an Id, in increasing order after the previous page, or we raise:
+    that would mean paging is broken. The API does repeat some Ids (seen: the same vote
+    3 times); exact copies are dropped, and if copies differ the first is kept. Both logged.
+    """
+    rows: list[Row] = []
     previous = after
     for row in page:
         row_id = row.get("Id")
-        if not isinstance(row_id, int) or row_id <= previous:
+        if not isinstance(row_id, int) or row_id < previous or (row_id == previous and not rows):
             raise ValueError(f"{table}: bad or out-of-order Id {row_id!r} after {previous}")
+        if row_id == previous:
+            same = row == rows[-1]
+            log.warning("%s: Id %s repeated by the API (%s copy dropped)", table, row_id,
+                        "identical" if same else "DIFFERENT")  # fmt: skip
+            continue
+        rows.append(row)
         previous = row_id
+    return rows
 
 
 def fetch_range(
+    get: GetJson,
     table: str,
     where: str | None,
     since: datetime | None,
     after: int,
     upto: int,
     select: str | None = None,
-    get: GetJson = get_json,
 ) -> Iterator[list[Row]]:
     """Pages of rows with `after < Id <= upto`, 100 at a time, ordered by Id.
 
@@ -186,14 +233,11 @@ def fetch_range(
     last = after
     while True:
         extra = {"$orderby": "Id", **({"$select": select} if select else {})}
-        page = get(BASE_URL + table, params_for(build_filter(where, since, last, upto), **extra))[
-            "value"
-        ]
+        page = get(table, params_for(build_filter(where, since, last, upto), **extra))["value"]
         if not page:
             return
-        check_page(table, page, last)
-        yield page
-        last = page[-1]["Id"]
+        yield (rows := clean_page(table, page, last))
+        last = rows[-1]["Id"]
 
 
 def merge_pages(iterators: list[Iterator[list[Row]]]) -> Iterator[list[Row]]:
@@ -243,21 +287,22 @@ def merge_pages(iterators: list[Iterator[list[Row]]]) -> Iterator[list[Row]]:
 
 
 def fetch_table(
+    get: GetJson,
     table: str,
     where: str | None = None,
     since: datetime | None = None,
     select: str | None = None,
-    workers: int = WORKERS,
-    get: GetJson = get_json,
+    workers: int = 1,
+    rows_per_range: int = 20_000,
 ) -> Iterator[list[Row]]:
     """All pages of a table. Large tables are split into Id ranges fetched in parallel."""
-    low = edge_id(table, where, since, last=False, get=get)
+    low = edge_id(get, table, where, since, last=False)
     if low is None:
         return
-    high = edge_id(table, where, since, last=True, get=get)
-    parts = max(1, min(workers, (high - low) // ROWS_PER_RANGE))
+    high = edge_id(get, table, where, since, last=True)
+    parts = max(1, min(workers, (high - low) // rows_per_range))
     ranges = id_ranges(low - 1, high, parts)
-    iterators = [fetch_range(table, where, since, a, b, select, get) for a, b in ranges]
+    iterators = [fetch_range(get, table, where, since, a, b, select) for a, b in ranges]
     yield from iterators[0] if parts == 1 else merge_pages(iterators)
 
 
@@ -269,18 +314,22 @@ def parse_row(row: Row) -> Row:
 
 
 def table_rows(
+    get: GetJson,
     table: str,
     where: str | None,
+    workers: int,
+    rows_per_range: int,
     updated: dlt.sources.incremental[datetime] | None = None,
-    workers: int = WORKERS,
 ) -> Iterator[list[Row]]:
     """Rows of one table; with `updated`, only rows changed since the last run (minus the lag)."""
     since = updated.start_value if updated is not None else None
-    for page in fetch_table(table, where, since, workers=workers):
+    for page in fetch_table(get, table, where, since, None, workers, rows_per_range):
         yield [parse_row(row) for row in page]
 
 
-def table_resource(name: str, metadata: bytes, workers: int = WORKERS) -> DltResource:
+def table_resource(
+    name: str, metadata: bytes, settings: Settings, get: GetJson, workers: int
+) -> DltResource:
     """The dlt resource for one table.
 
     Incremental tables use SCD2: bronze keeps every version of a row, with
@@ -290,7 +339,8 @@ def table_resource(name: str, metadata: bytes, workers: int = WORKERS) -> DltRes
     table = TABLES[name]
     if table.incremental:
         disposition: Any = {"disposition": "merge", "strategy": "scd2"}
-        updated = dlt.sources.incremental[datetime]("LastUpdatedDate", lag=LAG_SECONDS)
+        lag = settings.lag_seconds
+        updated = dlt.sources.incremental[datetime]("LastUpdatedDate", lag=lag)
     else:
         disposition, updated = "replace", None
     resource = dlt.resource(
@@ -303,4 +353,12 @@ def table_resource(name: str, metadata: bytes, workers: int = WORKERS) -> DltRes
         # A changed column type fails the load; new columns are added (and logged).
         schema_contract={"tables": "evolve", "columns": "evolve", "data_type": "freeze"},
     )
-    return resource(name, table.where, updated, workers)
+    return resource(get, name, scope(name, settings), workers, settings.rows_per_range, updated)
+
+
+@dlt.source(name="knesset_odata", max_table_nesting=0)
+def knesset_odata(
+    settings: Settings, api: Api, metadata: bytes, workers: int, tables: list[str]
+) -> list[DltResource]:
+    """The Knesset OData source: one resource (bronze table) per OData table."""
+    return [table_resource(name, metadata, settings, api.json, workers) for name in tables]

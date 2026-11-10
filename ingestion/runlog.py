@@ -10,40 +10,40 @@ import duckdb
 LOG_DIR = Path("logs/ingestion")
 
 DDL = """
-create schema if not exists ops;
-create table if not exists ops.ingestion_runs (
-    run_id varchar primary key,
-    mode varchar,
-    started_at timestamptz,
-    finished_at timestamptz,
-    status varchar,          -- ok | warn | failed
-    tables_ok integer,
-    tables_warn integer,
-    tables_failed integer,
-    log_file varchar
+CREATE SCHEMA IF NOT EXISTS ops;
+CREATE TABLE IF NOT EXISTS ops.ingestion_runs (
+    run_id VARCHAR PRIMARY KEY,
+    mode VARCHAR,
+    started_at TIMESTAMPTZ,
+    finished_at TIMESTAMPTZ,
+    status VARCHAR,          -- ok | warn | failed
+    tables_ok INTEGER,
+    tables_warn INTEGER,
+    tables_failed INTEGER,
+    log_file VARCHAR
 );
-create table if not exists ops.ingestion_tables (
-    run_id varchar,
-    table_name varchar,
-    started_at timestamptz,
-    finished_at timestamptz,
-    status varchar,          -- ok | warn | failed
-    load_id varchar,         -- dlt load id, matches _dlt_load_id in bronze
-    rows_extracted bigint,   -- rows fetched from the API this run
-    api_rows bigint,         -- rows the API has in scope
-    bronze_rows bigint,      -- current rows in bronze
-    deleted_rows bigint,     -- rows in bronze but no longer in the API (weekly check)
-    max_updated_at timestamptz,
-    warnings varchar,
-    error varchar,
-    primary key (run_id, table_name)
+CREATE TABLE IF NOT EXISTS ops.ingestion_tables (
+    run_id VARCHAR,
+    table_name VARCHAR,
+    started_at TIMESTAMPTZ,
+    finished_at TIMESTAMPTZ,
+    status VARCHAR,          -- ok | warn | failed
+    load_id VARCHAR,         -- dlt load id, matches _dlt_load_id in bronze
+    rows_extracted BIGINT,   -- rows fetched from the API this run
+    api_rows BIGINT,         -- rows the API has in scope
+    bronze_rows BIGINT,      -- current rows in bronze
+    deleted_rows BIGINT,     -- rows in bronze but no longer in the API (weekly check)
+    max_updated_at TIMESTAMPTZ,
+    warnings VARCHAR,
+    error VARCHAR,
+    PRIMARY KEY (run_id, table_name)
 );
-create schema if not exists bronze;
-create table if not exists bronze.deleted_ids (
-    table_name varchar,      -- bronze table name, e.g. kns_bill
-    id bigint,
-    detected_at timestamptz,
-    run_id varchar
+CREATE SCHEMA IF NOT EXISTS bronze;
+CREATE TABLE IF NOT EXISTS bronze.deleted_ids (
+    table_name VARCHAR,      -- bronze table name, e.g. kns_bill
+    id BIGINT,
+    detected_at TIMESTAMPTZ,
+    run_id VARCHAR
 );
 """
 
@@ -80,6 +80,6 @@ def insert(db: str, table: str, record: dict[str, Any]) -> None:
     marks = ", ".join("?" for _ in record)
     with duckdb.connect(db) as con:
         con.execute(
-            f"insert or replace into ops.{table} ({columns}) values ({marks})",
+            f"INSERT OR REPLACE INTO ops.{table} ({columns}) VALUES ({marks})",
             list(record.values()),
         )

@@ -29,22 +29,23 @@ DuckDB allows one writer per file, so run dbt after ingestion finishes, not duri
 ## Repo layout
 
 ```
-ingestion/           # 1. Ingestion: OData API → raw.duckdb (dlt)
+ingestion/           # 1. Ingestion: OData API → raw.duckdb (a dlt project)
+  .dlt/config.toml   #    dlt settings: scope, workers, retries (override with env variables)
   __main__.py        #    command line: one load per table, modes, run summary, exit code
   api.py             #    HTTP API to trigger and watch runs
   Dockerfile         #    the ingestion container
-  odata.py           #    API client, scope, paging, the dlt resource per table
+  odata.py           #    API client, scope, paging, the dlt source with one resource per table
   checks.py          #    checks after each load: reconciliation, volume, freshness, deletes
   runlog.py          #    log file per run and ops tables
-transformation/      # 2. Transformation: raw.duckdb → warehouse.duckdb (dbt project)
+transformation/      # 2. Transformation: raw.duckdb → warehouse.duckdb (a dbt project)
   api.py             #    HTTP API to trigger and watch dbt builds
   Dockerfile         #    the transformation container
-  models/staging/    #    one model per source table, 1:1, no joins
-  models/intermediate/
-  models/marts/
+  models/1_staging/  #    one model per source table, 1:1, no joins
+  models/2_intermediate/
+  models/3_mart/
   seeds/             #    small CSVs: code labels (later: glossary, aliases)
-  macros/            #    current_rows(), local_time(), code_label()
-  tests/             #    custom SQL tests
+  macros/            #    is_current(), local_time(), code_label()
+  tests/, analyses/, snapshots/   # the rest of the standard dbt layout
 nlp/                 # 3. NLP batch (milestone 4+)
 common/jobs.py       # runs one background job at a time, used by both APIs
 compose.yaml         # both services, ports 8001 and 8002
@@ -126,7 +127,9 @@ Rules:
 
 ## 1. Ingestion (`ingestion/`)
 
-**What it loads.** `TABLES` in `odata.py` lists 20 tables, each with an optional scope filter: only the 20th Knesset onward (`FROM_KNESSET`, `FROM_DATE`), about 1.9M rows instead of 2.7M. Most of it is plenum vote results (1.35M rows).
+**What it loads.** `TABLES` in `odata.py` lists 20 tables, each with an optional scope filter: only the 20th Knesset onward (`from_knesset`, `from_date` in `ingestion/.dlt/config.toml`), about 1.9M rows instead of 2.7M. Most of it is plenum vote results (1.35M rows).
+
+**Settings.** `ingestion/` is a dlt project: its settings live in `ingestion/.dlt/config.toml`, section `[sources.knesset_odata]` (scope, parallel workers, overlap window, retries). Any value can be overridden with an environment variable, e.g. `SOURCES__KNESSET_ODATA__WORKERS=4 make ingest`. Credentials would go in `.dlt/secrets.toml`, which is git-ignored; the Knesset API needs none.
 
 **How it loads.**
 - One dlt load per table, so a failing table never loses the others. The run continues, records the failure and exits with code 1.
@@ -141,6 +144,7 @@ Rules:
 | Check | When | On failure |
 | --- | --- | --- |
 | Every row has an `Id`, in increasing order | each page | table fails, nothing saved |
+| Same `Id` repeated by the API (seen on votes) | each page | first copy kept, repeat logged |
 | Column types unchanged (dlt schema contract) | each load | table fails, nothing saved |
 | New columns in the API | each load | added and logged |
 | Bronze rows = API `$count` in scope (reconciliation) | after each load | warning |
@@ -163,12 +167,13 @@ select * from ops.ingestion_tables where status != 'ok';      -- per table: coun
 
 dbt opens `raw.duckdb` read-only as the `raw` database and writes to `warehouse.duckdb`, so it can never change bronze.
 
-**Staging** (`models/staging/odata/`, schema `silver`): one view per bronze table, named `stg_odata__<entity>`. Each one only:
+SQL style and layout: see [transformation/README.md](transformation/README.md). In short: uppercase SQL, every column cast explicitly, and every model built as CTEs in the order `source → renamed → filtered → enhanced`.
 
-- reads the current version of each row and leaves out rows deleted in the API (`current_rows()` macro)
-- renames columns to clear English names (`id` → `bill_id`, `mk_id` → `person_id`, `last_updated_date` → `updated_at`)
-- converts timestamps to Israel local time (`local_time()` macro), so a vote at 01:45 falls on the right day
-- adds English labels for codes from the `code_labels` seed (`code_label()` macro): vote result, bill origin, gender
+**Staging** (`models/1_staging/odata/`, schema `silver`): one view per bronze table, named `stg_odata__<entity>`. Each one only:
+
+- **renamed:** renames columns to clear English names (`id` → `bill_id`, `mk_id` → `person_id`, `last_updated_date` → `updated_at`), casts each to its type from the API's `$metadata`, and converts timestamps to Israel local time (`local_time()` macro), so a vote at 01:45 falls on the right day
+- **filtered:** keeps the current version of each row and leaves out rows deleted in the API (`is_current()` macro)
+- **enhanced:** adds English labels for codes from the `code_labels` seed (`code_label()` macro: vote result, bill origin, gender) and full names
 
 Every model and column has an English | Hebrew description in `_odata__models.yml`. Each model's primary key is tested `unique` and `not_null`, and decoded codes are tested so a new code without a label fails the build.
 

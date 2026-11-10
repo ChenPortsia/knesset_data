@@ -1,17 +1,30 @@
 name: knesset
-version: "0.1.0"
+version: "1.0.0"
+config-version: 2
 profile: knesset
 
-# bronze (raw, from ingestion) -> silver (staging, intermediate) -> gold (marts)
+# Where dbt looks for each kind of file (the folders `dbt init` creates)
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+clean-targets:  # removed by `dbt clean`
+  - "target"
+  - "dbt_packages"
+
+# raw.duckdb bronze (from ingestion) -> silver (staging, intermediate) -> gold (mart)
 models:
   knesset:
-    staging:
+    1_staging:
       +schema: silver
       +materialized: view
-    intermediate:
+    2_intermediate:
       +schema: silver
       +materialized: view
-    marts:
+    3_mart:
       +schema: gold
       +materialized: table
 

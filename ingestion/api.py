@@ -14,7 +14,7 @@ from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel
 
 from common.jobs import Job, Runner, tail
-from ingestion.odata import TABLES
+from ingestion.odata import TABLES, load_settings, scope
 from ingestion.runlog import LOG_DIR, new_run_id
 
 DBS = {"daily": "data/raw.duckdb", "weekly": "data/raw.duckdb", "sample": "data/raw_sample.duckdb"}
@@ -53,8 +53,12 @@ def health() -> dict[str, Any]:
 
 @app.get("/tables")
 def tables() -> dict[str, dict[str, Any]]:
-    """The tables ingestion loads, with their scope filter."""
-    return {name: {"scope": t.where, "incremental": t.incremental} for name, t in TABLES.items()}
+    """The tables ingestion loads, with their scope filter (from ingestion/.dlt/config.toml)."""
+    settings = load_settings()
+    return {
+        name: {"scope": scope(name, settings), "incremental": t.incremental}
+        for name, t in TABLES.items()
+    }
 
 
 @app.post("/runs", status_code=202)
@@ -74,7 +78,7 @@ def start_run(request: RunRequest) -> Job:
 def list_runs(mode: Literal["daily", "sample"] = "daily", limit: int = 20) -> dict[str, Any]:
     """The run in progress, if any, and recent finished runs from ops.ingestion_runs."""
     recent = None if runner.current else query_ops(
-        DBS[mode], "select * from ops.ingestion_runs order by started_at desc limit ?", [limit]
+        DBS[mode], "SELECT * FROM ops.ingestion_runs ORDER BY started_at DESC LIMIT ?", [limit]
     )  # fmt: skip
     return {"running": runner.current, "recent": recent}
 
@@ -86,9 +90,9 @@ def get_run(run_id: str) -> dict[str, Any]:
     if job and job.status == "running":
         return {"run": job, "log_tail": tail(LOG_DIR / f"{run_id}.log", 30)}
     for db in sorted(set(DBS.values())):
-        runs = ops_or_busy(db, "select * from ops.ingestion_runs where run_id = ?", [run_id])
+        runs = ops_or_busy(db, "SELECT * FROM ops.ingestion_runs WHERE run_id = ?", [run_id])
         if runs:
-            sql = "select * from ops.ingestion_tables where run_id = ? order by started_at"
+            sql = "SELECT * FROM ops.ingestion_tables WHERE run_id = ? ORDER BY started_at"
             return {"run": runs[0], "tables": ops_or_busy(db, sql, [run_id]), "job": job}
     if job:  # finished but recorded nothing: it crashed before the end, see its log
         return {"run": job, "log_tail": tail(job.log_file, 50)}

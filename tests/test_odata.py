@@ -6,7 +6,7 @@ import pytest
 from ingestion import odata
 from ingestion.odata import (
     build_filter,
-    check_page,
+    clean_page,
     fetch_range,
     fetch_table,
     id_ranges,
@@ -55,29 +55,36 @@ def test_id_ranges_cover_all_ids_once():
     assert id_ranges(4, 5, 8) == [(4, 5)]
 
 
-def test_check_page_rejects_missing_or_unordered_ids():
-    check_page("T", [{"Id": 3}, {"Id": 7}], after=2)
+def test_clean_page_rejects_missing_or_unordered_ids():
+    assert clean_page("T", [{"Id": 3}, {"Id": 7}], after=2) == [{"Id": 3}, {"Id": 7}]
     with pytest.raises(ValueError):
-        check_page("T", [{"Id": 3}, {"Id": 3}], after=0)
+        clean_page("T", [{"Id": 3}, {"Id": 2}], after=0)
     with pytest.raises(ValueError):
-        check_page("T", [{"Name": "no id"}], after=0)
+        clean_page("T", [{"Id": 2}], after=2)
+    with pytest.raises(ValueError):
+        clean_page("T", [{"Name": "no id"}], after=0)
+
+
+def test_clean_page_drops_ids_the_api_repeats():
+    """The API returned vote 37161 three times; we keep the first copy."""
+    page = [{"Id": 1, "v": "a"}, {"Id": 1, "v": "a"}, {"Id": 1, "v": "b"}, {"Id": 2, "v": "c"}]
+    assert clean_page("T", page, after=0) == [{"Id": 1, "v": "a"}, {"Id": 2, "v": "c"}]
 
 
 def test_fetch_range_pages_by_last_id():
-    pages = list(fetch_range("T", None, None, after=0, upto=250, get=fake_api(list(range(1, 301)))))
+    pages = list(fetch_range(fake_api(list(range(1, 301))), "T", None, None, after=0, upto=250))
     assert [len(p) for p in pages] == [100, 100, 50]
     assert pages[-1][-1]["Id"] == 250
 
 
-def test_fetch_table_in_parallel_returns_every_row_once(monkeypatch):
-    monkeypatch.setattr(odata, "ROWS_PER_RANGE", 300)
+def test_fetch_table_in_parallel_returns_every_row_once():
     ids = list(range(1, 3000, 2))  # 1500 rows with gaps
-    rows = [r["Id"] for page in fetch_table("T", get=fake_api(ids), workers=4) for r in page]
-    assert sorted(rows) == ids
+    pages = fetch_table(fake_api(ids), "T", workers=4, rows_per_range=300)
+    assert sorted(r["Id"] for page in pages for r in page) == ids
 
 
 def test_fetch_table_empty():
-    assert list(fetch_table("T", get=fake_api([]))) == []
+    assert list(fetch_table(fake_api([]), "T")) == []
 
 
 def test_merge_pages_raises_errors_from_threads():
@@ -133,3 +140,12 @@ def test_table_columns_from_metadata():
 def test_firewall_codes_are_retried_but_real_client_errors_are_not():
     assert {429, 473, 481, 500, 503} <= set(odata.RETRY_STATUS)
     assert not {400, 401, 403, 404} & set(odata.RETRY_STATUS)
+
+
+def test_settings_come_from_dlt_config_and_env(monkeypatch):
+    settings = odata.load_settings()  # ingestion/.dlt/config.toml
+    assert (settings.from_knesset, settings.workers) == (20, 8)
+    assert odata.scope("KNS_Bill", settings) == "KnessetNum ge 20"
+    assert odata.scope("KNS_Person", settings) is None
+    monkeypatch.setenv("SOURCES__KNESSET_ODATA__FROM_KNESSET", "24")
+    assert odata.scope("KNS_Bill", odata.load_settings()) == "KnessetNum ge 24"
