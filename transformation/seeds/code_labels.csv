@@ -1,0 +1,11 @@
+domain,code,label_en,label_he
+gender,250,female,נקבה
+gender,251,male,זכר
+bill_origin,53,government,ממשלתית
+bill_origin,54,private,פרטית
+bill_origin,55,committee,ועדה
+vote_result,7,for,בעד
+vote_result,8,against,נגד
+vote_result,9,abstain,נמנע
+vote_result,10,absent,לא נכח/ אינו נוכח
+vote_result,11,voted,הצביע

@@ -5,8 +5,8 @@ __pycache__/
 *.duckdb
 *.duckdb.wal
 .dlt/secrets.toml
-dbt/target/
-dbt/dbt_packages/
-dbt/logs/
+transformation/target/
+transformation/dbt_packages/
+transformation/logs/
 data/
-dbt/.user.yml
+transformation/.user.yml

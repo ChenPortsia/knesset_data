@@ -48,7 +48,7 @@ One DuckDB file holds everything the agent needs, in five schemas: `bronze`, `si
 
 ### Ingestion — dlt
 
-- **OData pipeline:** a dlt `rest_api` source, one resource per KNS table, following `@odata.nextLink`. Incremental on `LastUpdatedDate` with merge on `Id`, so daily runs fetch only changes.
+- **OData pipeline:** a small dlt source, one resource per KNS table, paging by `Id` (keyset) because `@odata.nextLink` uses slow `$skip` paging. Incremental on `LastUpdatedDate` with merge on `Id`, so daily runs fetch only changes.
 - **Protocols pipeline:** `snapshot_download` with `allow_patterns` for `raw.protocol.txt`, `speakers*.txt`, `metadata.json`, then a dlt Python resource that yields three tables: `sessions`, `speakers`, `speaker_segments`.
 - Both land in `bronze` as-is. dlt's schema evolution and load info give you lineage for free.
 
@@ -240,10 +240,13 @@ Question-bank categories: lookups, aggregates, votes, oversight, text-only, hybr
 ### Repo layout
 
 ```
-knesset-data/
-  pipelines/        # dlt: odata.py, protocols.py
-  dbt/              # models/staging, intermediate, marts; seeds/ (glossary, aliases)
-  nlp/              # chunk.py, embed.py, topics.py, sentiment.py
+knesset_data/
+  ingestion/        # dlt: odata.py, protocols.py → bronze
+  transformation/   # dbt: models/staging, intermediate, marts; seeds/ (codes, glossary, aliases) → silver, gold
+  nlp/              # chunk.py, embed.py, topics.py, sentiment.py → rag
+  notebooks/        # discovery and profiling
+  docs/             # questions the warehouse must answer
+  tests/            # pytest unit tests
   Makefile          # ingest → dbt → nlp → dbt
 
 knesset-agent/

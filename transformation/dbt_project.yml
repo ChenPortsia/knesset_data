@@ -2,6 +2,7 @@ name: knesset
 version: "0.1.0"
 profile: knesset
 
+# bronze (raw, from ingestion) -> silver (staging, intermediate) -> gold (marts)
 models:
   knesset:
     staging:
@@ -13,3 +14,7 @@ models:
     marts:
       +schema: gold
       +materialized: table
+
+seeds:
+  knesset:
+    +schema: silver
