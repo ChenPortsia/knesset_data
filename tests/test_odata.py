@@ -104,3 +104,8 @@ def test_table_columns_from_metadata():
     }
     with pytest.raises(KeyError):
         table_columns(METADATA, "KNS_Missing")
+
+
+def test_firewall_codes_are_retried_but_real_client_errors_are_not():
+    assert {429, 473, 481, 500, 503} <= set(odata.RETRY_STATUS)
+    assert not {400, 401, 403, 404} & set(odata.RETRY_STATUS)

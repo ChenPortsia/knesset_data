@@ -15,7 +15,7 @@ from typing import Any
 
 import dlt
 from dlt.extract.resource import DltResource
-from dlt.sources.helpers import requests
+from dlt.sources.helpers.requests import Client
 
 BASE_URL = "https://knesset.gov.il/OdataV4/ParliamentInfo/"
 FROM_KNESSET = 20
@@ -73,20 +73,31 @@ DLT_TYPES = {
 }
 EDM = "{http://docs.oasis-open.org/odata/ns/edm}"
 
+# The site's firewall sometimes answers a burst of requests with non-standard 4xx codes
+# (seen: 473, 481) for a few seconds. Retry those like rate limits (429) and server errors
+# (5xx), with exponential backoff: 1, 2, 4 ... 64s, up to 8 attempts.
+RETRY_STATUS = (429, *range(470, 500), *range(500, 600))
+http = Client(
+    request_timeout=120,
+    status_codes=RETRY_STATUS,
+    request_max_attempts=8,
+    request_backoff_factor=2,
+).session
+
 Row = dict[str, Any]
 GetJson = Callable[[str, dict[str, str]], dict[str, Any]]
 
 
 def get_json(url: str, params: dict[str, str]) -> dict[str, Any]:
-    """GET a URL and return its JSON body. dlt's requests retries 429, 5xx and lost connections."""
-    response = requests.get(url, params=params, timeout=120)
+    """GET a URL and return its JSON body; retries as set on `http` above."""
+    response = http.get(url, params=params)
     response.raise_for_status()
     return response.json()
 
 
 def get_metadata() -> bytes:
     """The API's `$metadata` XML: every table with its typed columns."""
-    return requests.get(BASE_URL + "$metadata", timeout=120).content
+    return http.get(BASE_URL + "$metadata").content
 
 
 def table_columns(metadata: bytes, table: str) -> dict[str, dict[str, Any]]:
