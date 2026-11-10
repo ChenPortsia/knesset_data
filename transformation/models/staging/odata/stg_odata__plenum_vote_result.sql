@@ -12,4 +12,4 @@ select
     {{ code_label('vote_result', 'result_code') }} as result,
     result_desc                                    as result_he,
     last_updated_date                              as updated_at
-from {{ source('odata', 'kns_plenum_vote_result') }}
+from {{ current_rows('kns_plenum_vote_result') }}

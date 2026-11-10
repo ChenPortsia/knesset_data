@@ -10,4 +10,4 @@ select
     ordinal,
     status_id,
     last_updated_date    as updated_at
-from {{ source('odata', 'kns_cmt_session_item') }}
+from {{ current_rows('kns_cmt_session_item') }}

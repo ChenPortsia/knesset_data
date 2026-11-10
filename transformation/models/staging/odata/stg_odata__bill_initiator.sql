@@ -8,4 +8,4 @@ select
     is_initiator,
     ordinal,
     last_updated_date as updated_at
-from {{ source('odata', 'kns_bill_initiator') }}
+from {{ current_rows('kns_bill_initiator') }}

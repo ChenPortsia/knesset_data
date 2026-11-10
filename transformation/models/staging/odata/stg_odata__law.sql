@@ -17,4 +17,4 @@ select
     {{ local_time('validity_finish_date') }}    as valid_until,
     validity_finish_date_notes                  as valid_until_notes,
     last_updated_date                           as updated_at
-from {{ source('odata', 'kns_israel_law') }}
+from {{ current_rows('kns_israel_law') }}

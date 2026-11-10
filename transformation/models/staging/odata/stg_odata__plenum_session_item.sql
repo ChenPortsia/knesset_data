@@ -12,4 +12,4 @@ select
     status_id,
     is_discussion = 1 as is_discussion,
     last_updated_date as updated_at
-from {{ source('odata', 'kns_plm_session_item') }}
+from {{ current_rows('kns_plm_session_item') }}

@@ -17,4 +17,4 @@ select
     {{ local_time('start_date') }}  as start_at,
     {{ local_time('finish_date') }} as finish_at,
     last_updated_date               as updated_at
-from {{ source('odata', 'kns_committee_session') }}
+from {{ current_rows('kns_committee_session') }}

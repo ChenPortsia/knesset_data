@@ -1,7 +1,9 @@
 version: 2
 sources:
 - name: odata
-  description: Knesset OData v4 tables loaded as-is by ingestion/odata.py | טבלאות OData של הכנסת, כפי שנטענו
+  description: 'Knesset OData v4 tables loaded by ingestion/. Every version of every row is kept (SCD2): _dlt_valid_from / _dlt_valid_to, current version has _dlt_valid_to null | טבלאות OData של הכנסת.
+    כל גרסה של כל שורה נשמרת; לגרסה הנוכחית אין _dlt_valid_to'
+  database: raw
   schema: bronze
   tables:
   - name: kns_person
@@ -44,3 +46,5 @@ sources:
     description: Status codes for bills, queries, sessions and more | קודי סטטוס להצעות חוק, שאילתות, ישיבות ועוד
   - name: kns_item_type
     description: Types of items discussed in sessions | סוגי פריטים הנדונים בישיבות
+  - name: deleted_ids
+    description: Rows still in bronze but deleted in the API, found by the weekly check | שורות שנמחקו ב-API, לפי הבדיקה השבועית

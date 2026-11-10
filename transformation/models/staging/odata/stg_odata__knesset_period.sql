@@ -11,4 +11,4 @@ select
     {{ local_time('plenum_finish') }} as finish_at,
     is_current,
     last_updated_date                 as updated_at
-from {{ source('odata', 'kns_knesset_dates') }}
+from {{ current_rows('kns_knesset_dates') }}

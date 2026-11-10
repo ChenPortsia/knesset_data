@@ -25,4 +25,4 @@ select
     page_number,
     summary_law                                    as summary,
     last_updated_date                              as updated_at
-from {{ source('odata', 'kns_bill') }}
+from {{ current_rows('kns_bill') }}

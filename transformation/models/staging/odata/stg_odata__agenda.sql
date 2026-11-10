@@ -22,4 +22,4 @@ select
     postopenment_reason_desc                    as postponement_reason,
     {{ local_time('president_decision_date') }} as president_decision_at,
     last_updated_date                           as updated_at
-from {{ source('odata', 'kns_agenda') }}
+from {{ current_rows('kns_agenda') }}

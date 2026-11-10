@@ -36,7 +36,10 @@ Data flows down from the sources into the warehouse and index; agents read every
 
 ## Project 1 — Data platform (knesset-data)
 
-One DuckDB file holds everything the agent needs, in five schemas: `bronze`, `silver`, `gold`, `rag` and `context`.
+Two DuckDB files, so ingestion and transformation are separate processes that share only the bronze tables:
+
+- `raw.duckdb` — written only by ingestion: `bronze` (every version of every source row) and `ops` (run records).
+- `warehouse.duckdb` — written by dbt and the NLP batch, which read `raw.duckdb` read-only: `silver`, `gold`, `rag` and `context`. This is the file the agent reads.
 
 ### Sources
 
@@ -48,9 +51,9 @@ One DuckDB file holds everything the agent needs, in five schemas: `bronze`, `si
 
 ### Ingestion — dlt
 
-- **OData pipeline:** a small dlt source, one resource per KNS table, paging by `Id` (keyset) because `@odata.nextLink` uses slow `$skip` paging. Incremental on `LastUpdatedDate` with merge on `Id`, so daily runs fetch only changes.
+- **OData pipeline:** one dlt resource per KNS table, loaded one table at a time so a failure stays contained. Pages by `Id` (keyset) because `@odata.nextLink` uses slow `$skip` paging; large tables are split into parallel `Id` ranges. Incremental on `LastUpdatedDate` with a 1-hour overlap, stored as SCD2 so bronze keeps every version of every row (e.g. bill status history). Checks after each load (reconciliation with the API's `$count`, volume, freshness) and a weekly check for rows deleted in the API; results go to `ops.ingestion_runs` / `ops.ingestion_tables` and a log file per run.
 - **Protocols pipeline:** `snapshot_download` with `allow_patterns` for `raw.protocol.txt`, `speakers*.txt`, `metadata.json`, then a dlt Python resource that yields three tables: `sessions`, `speakers`, `speaker_segments`.
-- Both land in `bronze` as-is. dlt's schema evolution and load info give you lineage for free.
+- Both land in `bronze` as-is. A schema contract fails a load if a column changes type; new columns are added and logged. `_dlt_load_id` links every row to its run.
 
 ### Transformation — dbt (dbt-duckdb)
 
@@ -234,7 +237,7 @@ Question-bank categories: lookups, aggregates, votes, oversight, text-only, hybr
 ### Infra
 
 - `docker-compose` with three services: `pipeline` (dlt + dbt + nlp, run on a schedule), `api` (FastAPI serving the LangGraph app), `ui` (Chainlit or Streamlit).
-- The DuckDB file is mounted read-only into `api`; the `context` schema is written through one small service function so agents can't write elsewhere.
+- `warehouse.duckdb` is mounted read-only into `api`; the `context` schema is written through one small service function so agents can't write elsewhere.
 - Scheduling: Airflow (see Pilot deployment, orchestration and observability).
 
 ### Repo layout

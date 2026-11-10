@@ -19,4 +19,4 @@ select
     against_option_id,
     against_option_desc                as against_option,
     last_updated_date                  as updated_at
-from {{ source('odata', 'kns_plenum_vote') }}
+from {{ current_rows('kns_plenum_vote') }}

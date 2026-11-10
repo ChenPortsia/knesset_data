@@ -6,4 +6,4 @@ select
     description       as position_name,
     gender_id,
     last_updated_date as updated_at
-from {{ source('odata', 'kns_position') }}
+from {{ current_rows('kns_position') }}

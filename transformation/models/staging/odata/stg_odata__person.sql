@@ -11,4 +11,4 @@ select
     email,
     is_current,
     last_updated_date                          as updated_at
-from {{ source('odata', 'kns_person') }}
+from {{ current_rows('kns_person') }}

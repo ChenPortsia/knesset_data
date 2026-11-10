@@ -15,4 +15,4 @@ select
     {{ local_time('reply_date_planned') }}  as reply_planned_at,
     {{ local_time('reply_minister_date') }} as replied_at,
     last_updated_date                       as updated_at
-from {{ source('odata', 'kns_query') }}
+from {{ current_rows('kns_query') }}

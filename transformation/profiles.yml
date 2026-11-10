@@ -1,11 +1,17 @@
+# dbt reads the raw database (written only by ingestion) read-only, as `raw`,
+# and writes silver and gold to its own warehouse file.
 knesset:
   target: dev
   outputs:
     dev:     # the full load
       type: duckdb
-      path: ../data/knesset.duckdb
+      path: ../data/warehouse.duckdb
       threads: 4
+      attach:
+        - {path: ../data/raw.duckdb, alias: raw, read_only: true}
     sample:  # the test load from `make sample`
       type: duckdb
-      path: ../data/knesset_sample.duckdb
+      path: ../data/warehouse_sample.duckdb
       threads: 4
+      attach:
+        - {path: ../data/raw_sample.duckdb, alias: raw, read_only: true}

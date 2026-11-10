@@ -9,4 +9,4 @@ select
     order_transition,
     is_active,
     last_updated_date as updated_at
-from {{ source('odata', 'kns_status') }}
+from {{ current_rows('kns_status') }}

@@ -9,4 +9,4 @@ select
     gov_id,
     is_active,
     last_updated_date as updated_at
-from {{ source('odata', 'kns_gov_ministry') }}
+from {{ current_rows('kns_gov_ministry') }}

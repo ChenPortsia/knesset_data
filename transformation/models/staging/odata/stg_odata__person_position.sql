@@ -18,4 +18,4 @@ select
     {{ local_time('finish_date') }} as finish_at,
     is_current,
     last_updated_date               as updated_at
-from {{ source('odata', 'kns_person_to_position') }}
+from {{ current_rows('kns_person_to_position') }}

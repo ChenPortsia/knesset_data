@@ -2,12 +2,13 @@
 name = "knesset-data"
 version = "0.1.0"
 requires-python = ">=3.12"
-dependencies = [
-    "dlt[duckdb]",
-    "dbt-duckdb",
-]
+dependencies = []
 
+# Each process has its own dependencies, so it can be installed and run on its own
+# (e.g. `uv sync --only-group ingestion` in an ingestion container).
 [dependency-groups]
+ingestion = ["dlt[duckdb]"]
+transformation = ["dbt-duckdb"]
 dev = ["pytest", "ruff"]
 notebook = [
     "ipykernel>=7.4.0",
@@ -15,6 +16,9 @@ notebook = [
     "nbconvert>=7.17.2",
     "pandas>=3.1.1",
 ]
+
+[tool.uv]
+default-groups = ["ingestion", "transformation", "dev", "notebook"]  # locally: everything
 
 [tool.pytest.ini_options]
 pythonpath = ["."]

@@ -1,16 +1,20 @@
+# Two separate processes that share only the bronze tables:
+#   1. ingestion       API -> data/raw.duckdb (bronze, ops)
+#   2. transformation  data/raw.duckdb (read-only) -> data/warehouse.duckdb (silver, gold)
 TARGET ?= dev
 
-.PHONY: all sample ingest dbt docs test lint clean
+.PHONY: sample ingest ingest-weekly dbt docs test lint clean
 
-all: ingest dbt
+sample:  ## Ingestion test load: 200 rows per table into data/raw_sample.duckdb (~1 min)
+	uv run python -m ingestion --mode sample $(TABLES)
 
-sample:  ## Test load: 200 rows per table into data/knesset_sample.duckdb (~1 min)
-	uv run python -m ingestion.odata --sample $(TABLES)
+ingest:  ## Ingestion daily run: changed rows only (first run loads everything, ~40 min)
+	uv run python -m ingestion --mode daily $(TABLES)
 
-ingest:  ## Full load into data/knesset.duckdb (pass TABLES="KNS_Person ..." for a subset)
-	uv run python -m ingestion.odata $(TABLES)
+ingest-weekly:  ## Ingestion weekly run: daily + check for rows deleted in the API
+	uv run python -m ingestion --mode weekly $(TABLES)
 
-dbt:  ## Build and test all dbt models (TARGET=sample to use the test load)
+dbt:  ## Transformation: build and test all models (TARGET=sample to use the test load)
 	cd transformation && uv run dbt build --profiles-dir . --target $(TARGET)
 
 docs:  ## Browse model and column docs at http://localhost:8080
@@ -23,5 +27,5 @@ lint:
 	uv run ruff check .
 	uv run ruff format --check .
 
-clean:  ## Delete all loaded data and pipeline state
-	rm -rf data/
+clean:  ## Delete all loaded data, pipeline state and logs
+	rm -rf data/ logs/
