@@ -1,0 +1,15 @@
+name: knesset
+version: "0.1.0"
+profile: knesset
+
+models:
+  knesset:
+    staging:
+      +schema: silver
+      +materialized: view
+    intermediate:
+      +schema: silver
+      +materialized: view
+    marts:
+      +schema: gold
+      +materialized: table

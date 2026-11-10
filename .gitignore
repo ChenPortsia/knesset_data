@@ -1,0 +1,12 @@
+__pycache__/
+*.py[cod]
+.venv/
+.env
+*.duckdb
+*.duckdb.wal
+.dlt/secrets.toml
+dbt/target/
+dbt/dbt_packages/
+dbt/logs/
+data/
+dbt/.user.yml
