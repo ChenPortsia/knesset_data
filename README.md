@@ -1,4 +1,4 @@
-# knesset-data
+# knesset_data
 
 Data platform for the Knesset agent: dlt ingests Knesset OData v4 and committee protocols into DuckDB, dbt models a star schema, and an NLP batch builds the search index.
 
