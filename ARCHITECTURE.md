@@ -48,7 +48,7 @@ One DuckDB file holds everything the agent needs, in five schemas: `bronze`, `si
 
 ### Ingestion — dlt
 
-- **OData pipeline:** a dlt `rest_api` source, one resource per KNS table, following `@odata.nextLink`. Incremental on `LastUpdatedDate` with merge on `Id`, so daily runs fetch only changes.
+- **OData pipeline:** a small dlt source, one resource per KNS table, paging by `Id` (keyset) because `@odata.nextLink` uses slow `$skip` paging. Incremental on `LastUpdatedDate` with merge on `Id`, so daily runs fetch only changes.
 - **Protocols pipeline:** `snapshot_download` with `allow_patterns` for `raw.protocol.txt`, `speakers*.txt`, `metadata.json`, then a dlt Python resource that yields three tables: `sessions`, `speakers`, `speaker_segments`.
 - Both land in `bronze` as-is. dlt's schema evolution and load info give you lineage for free.
 

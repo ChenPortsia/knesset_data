@@ -14,7 +14,7 @@ Python, dlt, DuckDB, dbt-duckdb, LangGraph, Chainlit, Postgres (ops + context), 
 
 ## Conventions
 
-- Knesset OData v4 base URL: `https://knesset.gov.il/OdataV4/ParliamentInfo/`. Follow `@odata.nextLink` for paging.
+- Knesset OData v4 base URL: `https://knesset.gov.il/OdataV4/ParliamentInfo/`. Page by key (`$filter=Id gt <last>` + `$orderby=Id`), not `@odata.nextLink`: its `$skip` links get slow on large tables.
 - dbt layers: `staging` → `intermediate` → `marts`. Every model and column gets a Hebrew + English description.
 - Agents never write to the warehouse; only the context layer, through one service function.
 - Log runs and steps to the `ops` schema with shared IDs (`run_id`, `trace_id`, `session_id`, `user_id`, `data_version`).

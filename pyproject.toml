@@ -6,3 +6,15 @@ dependencies = [
     "dlt[duckdb]",
     "dbt-duckdb",
 ]
+
+[dependency-groups]
+dev = ["pytest", "ruff"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
