@@ -33,3 +33,4 @@ select = ["E", "F", "I", "UP", "B"]
 
 [tool.ruff.lint.per-file-ignores]
 "notebooks/*" = ["E402", "E501"]  # imports after sys.path setup; long SQL lines
+"transformation/scripts/generate_staging.py" = ["E501"]  # the spec table has long bilingual lines

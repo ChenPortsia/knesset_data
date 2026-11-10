@@ -14,7 +14,20 @@ macros/            # is_current(), local_time(), code_label(), generate_schema_n
 tests/             # custom SQL tests
 analyses/          # ad-hoc SQL, compiled but not built
 snapshots/         # (unused: bronze already keeps every version of every row)
+scripts/           # generate_staging.py: writes the staging models (dev tool, not in the image)
 ```
+
+## Staging models are generated
+
+The 20 OData staging models and their YAML are written by `scripts/generate_staging.py`
+from one spec (columns, English | Hebrew descriptions, derived columns) and the API's
+`$metadata` (column types). To change a staging model, edit the spec and run:
+
+```bash
+make staging-models    # from the repo root; overwrites models/1_staging/odata/
+```
+
+Then `git diff` shows exactly what changed. Intermediate and mart models are written by hand.
 
 ## SQL style
 

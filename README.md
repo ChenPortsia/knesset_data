@@ -46,6 +46,7 @@ transformation/      # 2. Transformation: raw.duckdb → warehouse.duckdb (a dbt
   seeds/             #    small CSVs: code labels (later: glossary, aliases)
   macros/            #    is_current(), local_time(), code_label()
   tests/, analyses/, snapshots/   # the rest of the standard dbt layout
+  scripts/           #    generate_staging.py: writes the staging models (make staging-models)
 nlp/                 # 3. NLP batch (milestone 4+)
 common/jobs.py       # runs one background job at a time, used by both APIs
 compose.yaml         # both services, ports 8001 and 8002
