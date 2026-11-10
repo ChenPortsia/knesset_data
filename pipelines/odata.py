@@ -1,16 +1,20 @@
 """Load Knesset OData v4 tables into the `bronze` schema of the DuckDB warehouse.
 
-Run:  python -m pipelines.odata                 # all tables
-      python -m pipelines.odata KNS_Person ...  # only some tables
+Run:  python -m pipelines.odata                  # full load into data/knesset.duckdb
+      python -m pipelines.odata --sample         # 200 rows per table into data/sample.duckdb
+      python -m pipelines.odata KNS_Person ...   # only some tables
+
+Scope: only the 20th Knesset onward (2015-03-31 to today), which covers the
+committee protocols (Nov 2018+). Change `FROM_KNESSET` / `FROM_DATE` to widen it.
 
 Tables with `LastUpdatedDate` load incrementally: each run fetches only rows
 changed since the last run and merges them on `Id`. Lookup tables without it
 are fully replaced every run.
 """
 
-import os
-import sys
+import argparse
 from collections.abc import Callable, Iterator
+from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
@@ -18,35 +22,45 @@ import dlt
 from dlt.sources.helpers import requests
 
 BASE_URL = "https://knesset.gov.il/OdataV4/ParliamentInfo/"
-DB_PATH = os.environ.get("KNESSET_DB", "data/knesset.duckdb")
+FROM_KNESSET = 20
+FROM_DATE = "2015-03-31T00:00:00+03:00"  # the 20th Knesset was sworn in
+SAMPLE_PAGES = 2  # 100 rows per page
 
-# Table name -> True if it has `LastUpdatedDate` (incremental), False if not (full replace).
-TABLES: dict[str, bool] = {
+
+@dataclass(frozen=True)
+class Table:
+    where: str | None = None  # extra OData filter that limits the scope
+    incremental: bool = True  # False for tables without LastUpdatedDate
+
+
+BY_KNESSET = f"KnessetNum ge {FROM_KNESSET}"
+
+TABLES: dict[str, Table] = {
     # People, factions, positions
-    "KNS_Person": True,
-    "KNS_PersonToPosition": True,
-    "KNS_Position": True,
-    "KNS_Faction": True,
-    "KNS_KnessetDates": True,
-    "KNS_GovMinistry": True,
+    "KNS_Person": Table(),
+    "KNS_PersonToPosition": Table(BY_KNESSET),
+    "KNS_Position": Table(),
+    "KNS_Faction": Table(BY_KNESSET),
+    "KNS_KnessetDates": Table(),
+    "KNS_GovMinistry": Table(),
     # Committees and sessions
-    "KNS_Committee": True,
-    "KNS_CommitteeSession": True,
-    "KNS_CmtSessionItem": True,
-    "KNS_PlenumSession": True,
-    "KNS_PlmSessionItem": True,
+    "KNS_Committee": Table(BY_KNESSET),
+    "KNS_CommitteeSession": Table(BY_KNESSET),
+    "KNS_CmtSessionItem": Table(),  # no Knesset/date column; filtered in dbt
+    "KNS_PlenumSession": Table(BY_KNESSET),
+    "KNS_PlmSessionItem": Table(),  # no Knesset/date column; filtered in dbt
     # Bills, laws, votes
-    "KNS_Bill": True,
-    "KNS_BillInitiator": True,
-    "KNS_IsraelLaw": True,
-    "KNS_PlenumVote": True,
-    "KNS_PlenumVoteResult": True,
+    "KNS_Bill": Table(BY_KNESSET),
+    "KNS_BillInitiator": Table(),  # no Knesset/date column; filtered in dbt
+    "KNS_IsraelLaw": Table(),  # laws in force may come from any Knesset
+    "KNS_PlenumVote": Table(f"VoteDateTime ge {FROM_DATE}"),
+    "KNS_PlenumVoteResult": Table(f"VoteDate ge {FROM_DATE}"),
     # Oversight
-    "KNS_Query": True,
-    "KNS_Agenda": True,
+    "KNS_Query": Table(BY_KNESSET),
+    "KNS_Agenda": Table(BY_KNESSET),
     # Lookups
-    "KNS_Status": True,
-    "KNS_ItemType": False,
+    "KNS_Status": Table(),
+    "KNS_ItemType": Table(incremental=False),
 }
 
 Row = dict[str, Any]
@@ -60,16 +74,18 @@ def get_json(url: str, params: dict[str, str]) -> dict[str, Any]:
     return response.json()
 
 
-def build_filter(last_id: int, since: datetime | None) -> str:
-    """OData filter for the next page: rows after `last_id`, changed since `since`."""
-    condition = f"Id gt {last_id}"
+def build_filter(last_id: int, where: str | None = None, since: datetime | None = None) -> str:
+    """OData filter for the next page: rows after `last_id`, in scope, changed since `since`."""
+    conditions = [f"Id gt {last_id}"]
+    if where:
+        conditions.append(where)
     if since is not None:
-        condition += f" and LastUpdatedDate ge {since.isoformat()}"
-    return condition
+        conditions.append(f"LastUpdatedDate ge {since.isoformat()}")
+    return " and ".join(conditions)
 
 
 def fetch_pages(
-    table: str, since: datetime | None = None, get: GetJson = get_json
+    table: str, where: str | None = None, since: datetime | None = None, get: GetJson = get_json
 ) -> Iterator[list[Row]]:
     """Yield a table page by page, ordered by `Id`.
 
@@ -79,7 +95,7 @@ def fetch_pages(
     """
     last_id = 0
     while True:
-        params = {"$filter": build_filter(last_id, since), "$orderby": "Id"}
+        params = {"$filter": build_filter(last_id, where, since), "$orderby": "Id"}
         page = get(BASE_URL + table, params)["value"]
         if not page:
             return
@@ -95,40 +111,52 @@ def parse_row(row: Row) -> Row:
 
 
 def table_rows(
-    table: str, updated: dlt.sources.incremental[datetime] | None = None
+    table: str, where: str | None, updated: dlt.sources.incremental[datetime] | None = None
 ) -> Iterator[list[Row]]:
     """Rows of one table; with `updated`, only rows changed since the last run."""
     since = updated.last_value if updated is not None else None
-    for page in fetch_pages(table, since):
+    for page in fetch_pages(table, where, since):
         yield [parse_row(row) for row in page]
 
 
 @dlt.source(name="knesset_odata")
-def knesset_odata(tables: list[str] | None = None) -> Iterator[Any]:
-    """One dlt resource per OData table."""
-    for table in tables or list(TABLES):
-        incremental = TABLES[table]
+def knesset_odata(tables: list[str] | None = None, max_pages: int | None = None) -> Iterator[Any]:
+    """One dlt resource per OData table; `max_pages` caps each table for test loads."""
+    for name in tables or list(TABLES):
+        table = TABLES[name]
         resource = dlt.resource(
             table_rows,
-            name=table,
+            name=name,
             primary_key="Id",
-            write_disposition="merge" if incremental else "replace",
+            write_disposition="merge" if table.incremental else "replace",
             parallelized=True,
         )
-        updated = dlt.sources.incremental("LastUpdatedDate") if incremental else None
-        yield resource(table, updated)
+        updated = dlt.sources.incremental("LastUpdatedDate") if table.incremental else None
+        resource = resource(name, table.where, updated)
+        yield resource.add_limit(max_pages) if max_pages else resource
 
 
-def main(tables: list[str]) -> None:
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("tables", nargs="*", help="table names, default: all")
+    parser.add_argument("--sample", action="store_true", help="test load of a few rows per table")
+    args = parser.parse_args()
+    if unknown := set(args.tables) - set(TABLES):
+        parser.error(f"unknown tables: {sorted(unknown)}")
+
+    name = "knesset_sample" if args.sample else "knesset"
     pipeline = dlt.pipeline(
-        pipeline_name="knesset_odata",
-        destination=dlt.destinations.duckdb(DB_PATH),
+        pipeline_name=name,
+        pipelines_dir="data/.dlt",  # pipeline state lives next to the data; delete data/ to reset
+        destination=dlt.destinations.duckdb(f"data/{name}.duckdb"),
         dataset_name="bronze",
         progress="log",
     )
-    load_info = pipeline.run(knesset_odata(tables or None))
+    source = knesset_odata(args.tables or None, SAMPLE_PAGES if args.sample else None)
+    # A sample starts from scratch every time, so it never blocks a later full load.
+    load_info = pipeline.run(source, refresh="drop_sources" if args.sample else None)
     print(load_info)
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    main()

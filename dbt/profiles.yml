@@ -3,5 +3,5 @@ knesset:
   outputs:
     dev:
       type: duckdb
-      path: "{{ env_var('KNESSET_DB', '../data/knesset.duckdb') }}"
+      path: ../data/knesset.duckdb
       threads: 4

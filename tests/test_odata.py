@@ -9,7 +9,13 @@ def test_build_filter_first_full_load():
 
 def test_build_filter_incremental():
     since = datetime(2026, 11, 1, 8, 30, tzinfo=timezone(timedelta(hours=2)))
-    assert build_filter(42, since) == "Id gt 42 and LastUpdatedDate ge 2026-11-01T08:30:00+02:00"
+    assert (
+        build_filter(42, since=since) == "Id gt 42 and LastUpdatedDate ge 2026-11-01T08:30:00+02:00"
+    )
+
+
+def test_build_filter_with_scope():
+    assert build_filter(0, "KnessetNum ge 20") == "Id gt 0 and KnessetNum ge 20"
 
 
 def test_fetch_pages_uses_last_id_of_each_page():
@@ -36,3 +42,8 @@ def test_parse_row_keeps_missing_date():
 
 def test_source_has_one_resource_per_table():
     assert set(knesset_odata().resources) == set(TABLES)
+
+
+def test_sample_source_is_limited():
+    source = knesset_odata(["KNS_Person"], max_pages=2)
+    assert source.resources["KNS_Person"].limit is not None
