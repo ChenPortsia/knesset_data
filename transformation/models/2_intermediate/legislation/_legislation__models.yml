@@ -1,0 +1,66 @@
+version: 2
+
+models:
+  - name: int_bills_joined_to_stages
+    description: "Bills with their current stage and outcome, from the bill_status_stages seed. Grain: one row per bill | הצעות חוק עם השלב והתוצאה הנוכחיים"
+    columns:
+      - name: bill_id
+        description: "Bill ID | מזהה הצעת חוק"
+        data_tests: [unique, not_null]
+      - name: knesset_num
+        description: "Knesset number | מספר הכנסת"
+      - name: bill_name
+        description: "Bill title (Hebrew) | שם הצעת החוק"
+      - name: origin
+        description: "Who proposed it: government / private / committee | מקור ההצעה"
+      - name: committee_id
+        description: "Committee that prepared the bill | הוועדה שהכינה את ההצעה"
+      - name: status_id
+        description: "Current status ID | מזהה הסטטוס הנוכחי"
+      - name: status_he
+        description: "Current status (Hebrew) | הסטטוס הנוכחי"
+      - name: status_en
+        description: "Current status (English, from the seed) | הסטטוס הנוכחי באנגלית"
+      - name: stage
+        description: "Legislative stage: preliminary, committee_assignment, first_reading, second_third_reading, passed, continuity, split_or_merge, stopped, merged, converted | שלב החקיקה"
+        data_tests:
+          - not_null:
+              config: {severity: warn}  # a new status without a mapping in the seed
+          - accepted_values:
+              arguments:
+                values: [preliminary, committee_assignment, first_reading, second_third_reading, passed, continuity, split_or_merge, stopped, merged, converted]
+      - name: stage_order
+        description: "Order of the stage in the process: 1 preliminary ... 5 passed; 0 side processes; 9 ended without passing | סדר השלב"
+      - name: outcome
+        description: "active / passed / stopped / merged / converted | תוצאה"
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [active, passed, stopped, merged, converted]
+      - name: is_passed
+        description: "True if the bill passed third reading and became law | האם התקבלה בקריאה שלישית"
+      - name: published_at
+        description: "Publication date in Reshumot | מועד פרסום ברשומות"
+      - name: is_continuation_bill
+        description: "True if continued from a previous Knesset | האם בדין רציפות"
+      - name: updated_at
+        description: "When the source row last changed | מועד העדכון האחרון במקור"
+
+  - name: int_bill_initiators_filtered
+    description: "Initiators of bills in scope (20th Knesset onward). Grain: one row per bill and person | יוזמי הצעות חוק מהכנסת ה-20 ואילך"
+    columns:
+      - name: bill_initiator_id
+        description: "Row ID | מזהה שורה"
+        data_tests: [unique, not_null]
+      - name: bill_id
+        description: "Bill ID | מזהה הצעת חוק"
+      - name: person_id
+        description: "Initiating or joining MK | הח\"כ היוזם או המצטרף"
+      - name: knesset_num
+        description: "Knesset of the bill | הכנסת של ההצעה"
+      - name: is_initiator
+        description: "True for an initiator, false for a joiner | יוזם (אמת) או מצטרף (שקר)"
+      - name: ordinal
+        description: "Order among the initiators | מספר סידורי בין היוזמים"
+      - name: is_first_initiator
+        description: "True for the first-named initiator | האם היוזם הראשון"

@@ -5,7 +5,7 @@ Run:  python -m ingestion                       # daily: changed rows of all tab
       python -m ingestion --mode sample         # test load: 200 rows per table, separate file
       python -m ingestion KNS_Person KNS_Bill   # only some tables
 
-Writes only to data/raw.duckdb (data/raw_sample.duckdb for samples):
+Writes only to data/raw/raw.duckdb (data/raw/raw_sample.duckdb for samples):
   bronze.*  the tables, every version of every row (SCD2)
   ops.*     one record per run and per table: status, counts, warnings, errors
 Logs go to the console and logs/ingestion/<run_id>.log.
@@ -26,7 +26,7 @@ from dlt.common.normalizers.naming.snake_case import NamingConvention
 from ingestion import checks, runlog
 from ingestion.odata import TABLES, Api, Settings, api_count, knesset_odata, load_settings, scope
 
-DATA_DIR = Path("data")
+DATA_DIR = Path("data/raw")  # ingestion owns this folder; dbt mounts it read-only
 
 log = logging.getLogger("ingestion")
 bronze_name = NamingConvention().normalize_table_identifier  # KNS_PlenumVote -> kns_plenum_vote
@@ -92,7 +92,9 @@ def load_table(
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Load Knesset OData tables into data/raw.duckdb")
+    parser = argparse.ArgumentParser(
+        description="Load Knesset OData tables into data/raw/raw.duckdb"
+    )
     parser.add_argument("tables", nargs="*", help="table names, default: all")
     parser.add_argument("--mode", choices=["daily", "weekly", "sample"], default="daily")
     parser.add_argument("--run-id", help="set by the API; default: the start time")
@@ -111,7 +113,7 @@ def main() -> int:
 
     run_id = args.run_id or runlog.new_run_id()
     log_file = runlog.setup_logging(run_id)
-    DATA_DIR.mkdir(exist_ok=True)
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
     runlog.init(db)
     run: dict[str, Any] = {
         "run_id": run_id,

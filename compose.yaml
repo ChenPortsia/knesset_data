@@ -2,16 +2,24 @@
 #   docker compose up -d --build     start both services
 #   http://localhost:8001/docs       ingestion API
 #   http://localhost:8002/docs       transformation API
-# Both share ./data (DuckDB files) and ./logs with the host.
+#
+# Each container mounts only what it may touch:
+#   ingestion       data/raw (read-write)
+#   transformation  data/raw (READ-ONLY) and data/warehouse (read-write)
 services:
   ingestion:
     build: {context: ., dockerfile: ingestion/Dockerfile}
     ports: ["8001:8000"]
-    volumes: ["./data:/app/data", "./logs:/app/logs"]
+    volumes:
+      - ./data/raw:/app/data/raw
+      - ./logs:/app/logs
     restart: unless-stopped
 
   transformation:
     build: {context: ., dockerfile: transformation/Dockerfile}
     ports: ["8002:8000"]
-    volumes: ["./data:/app/data", "./logs:/app/logs"]
+    volumes:
+      - ./data/raw:/app/data/raw:ro
+      - ./data/warehouse:/app/data/warehouse
+      - ./logs:/app/logs
     restart: unless-stopped

@@ -12,18 +12,18 @@ Two separate processes. They share only the bronze tables, each has its own depe
 Knesset OData API
       │  1. ingestion/       (dlt, Python)   make ingest
       ▼
-data/raw.duckdb          written only by ingestion
-  bronze.*               every version of every row, as the API returns it
-  ops.ingestion_*        one record per run and per table: status, counts, warnings
+data/raw/raw.duckdb              written only by ingestion
+  bronze.*                       every version of every row, as the API returns it
+  ops.ingestion_*                one record per run and per table: status, counts, warnings
       │  2. transformation/  (dbt, SQL)      make dbt    (reads raw.duckdb read-only)
       ▼
-data/warehouse.duckdb    written only by dbt
-  silver.stg_*           staging: current rows, clean names, local times, decoded codes   ← done
-  silver.int_*           intermediate: joins and business logic                          ← next
-  gold.dim_* / fct_*     marts: the star schema the agent queries
+data/warehouse/warehouse.duckdb  written only by dbt
+  silver.stg_*                   staging: current rows, clean names, local times, codes   ← done
+  silver.int_*                   intermediate: faction periods, votes, bill stages         ← done
+  gold.dim_* / fct_*             marts: the star schema the agent queries                  ← next
 ```
 
-Test loads use `data/raw_sample.duckdb` and `data/warehouse_sample.duckdb`.
+Test loads use `data/raw/raw_sample.duckdb` and `data/warehouse/warehouse_sample.duckdb`.
 DuckDB allows one writer per file, so run dbt after ingestion finishes, not during it.
 
 ## Repo layout
@@ -53,7 +53,8 @@ compose.yaml         # both services, ports 8001 and 8002
 notebooks/           # discovery and profiling of the source
 docs/                # questions the warehouse must answer
 tests/               # pytest unit tests for the Python code (no network)
-data/                # DuckDB files and pipeline state, git-ignored
+data/raw/            # written by ingestion: raw.duckdb, raw_sample.duckdb, dlt state (git-ignored)
+data/warehouse/      # written by dbt: warehouse.duckdb, warehouse_sample.duckdb (git-ignored)
 logs/ingestion/      # one log file per ingestion run, git-ignored
 Makefile             # every command you need
 ```
@@ -86,8 +87,8 @@ make down    # stop them
 
 | Service | URL | What it does |
 | --- | --- | --- |
-| ingestion | http://localhost:8001/docs | load the OData tables into `data/raw.duckdb` |
-| transformation | http://localhost:8002/docs | run `dbt build` into `data/warehouse.duckdb` |
+| ingestion | http://localhost:8001/docs | load the OData tables into `data/raw/raw.duckdb` |
+| transformation | http://localhost:8002/docs | run `dbt build` into `data/warehouse/warehouse.duckdb` |
 
 The `/docs` pages let you try every endpoint in the browser.
 
@@ -155,7 +156,7 @@ Rules:
 
 **Errors.** Each request is retried up to 5 times with backoff on HTTP 429, 5xx and lost connections (dlt defaults), with a 120-second timeout. A load is all-or-nothing, and incremental state is saved only when it succeeds, so a rerun picks up exactly where it should.
 
-**Logs.** Each run writes `logs/ingestion/<run_id>.log` and records in `data/raw.duckdb`:
+**Logs.** Each run writes `logs/ingestion/<run_id>.log` and records in `data/raw/raw.duckdb`:
 
 ```sql
 select * from ops.ingestion_runs order by started_at desc;    -- one row per run

@@ -1,0 +1,58 @@
+version: 2
+
+models:
+  - name: int_votes_joined_to_items
+    description: "Plenum votes with the type of item voted on and its bill. Grain: one row per vote | הצבעות במליאה עם סוג הפריט והצעת החוק"
+    columns:
+      - name: vote_id
+        description: "Vote ID | מזהה הצבעה"
+        data_tests: [unique, not_null]
+      - name: plenum_session_id
+        description: "Plenum session ID | מזהה ישיבת מליאה"
+      - name: voted_at
+        description: "When the vote took place, Israel local time | מועד ההצבעה"
+      - name: vote_title
+        description: "Vote title, usually the bill or motion (Hebrew) | כותרת ההצבעה"
+      - name: vote_subject
+        description: "What was voted on, e.g. first reading (Hebrew) | נושא ההצבעה"
+      - name: vote_method
+        description: "Voting method (Hebrew) | שיטת הצבעה"
+      - name: is_no_confidence
+        description: "True for a no-confidence vote | האם הצבעת אי-אמון"
+      - name: for_option
+        description: "Meaning of a 'for' vote (Hebrew) | משמעות הצבעה בעד"
+      - name: against_option
+        description: "Meaning of an 'against' vote (Hebrew) | משמעות הצבעה נגד"
+      - name: item_id
+        description: "ID of the item voted on | מזהה הפריט שעליו הצביעו"
+      - name: item_type_id
+        description: "Item type ID, from the plenum session agenda; null if the item is not on it | מזהה סוג הפריט"
+      - name: item_type
+        description: "Item type (Hebrew) | סוג הפריט"
+      - name: bill_id
+        description: "Bill ID when the item is a bill (item type 2), else null | מזהה הצעת החוק, אם הפריט הוא הצעת חוק"
+
+  - name: int_vote_results_joined_to_factions
+    description: "Each MK's vote with the faction they belonged to on the day of the vote. Grain: one row per vote and MK | הצבעת כל ח\"כ עם סיעתו ביום ההצבעה"
+    columns:
+      - name: vote_result_id
+        description: "Vote result ID | מזהה תוצאת הצבעה"
+        data_tests: [unique, not_null]
+      - name: vote_id
+        description: "Vote ID | מזהה הצבעה"
+      - name: person_id
+        description: "MK who voted | חבר הכנסת המצביע"
+      - name: faction_id
+        description: "MK's faction on the day of the vote; null if no membership covers that day | סיעת הח\"כ ביום ההצבעה"
+      - name: faction_name
+        description: "Faction name (Hebrew) | שם הסיעה"
+      - name: plenum_session_id
+        description: "Plenum session ID | מזהה ישיבת מליאה"
+      - name: voted_at
+        description: "When the vote took place, Israel local time | מועד ההצבעה"
+      - name: result_code
+        description: "Result code: 7 for, 8 against, 9 abstain, 10 absent, 11 secret ballot | קוד תוצאה"
+      - name: result
+        description: "Result: for / against / abstain / absent / voted | תוצאה"
+      - name: took_part
+        description: "True if the MK voted for, against or abstained | האם הח\"כ השתתף בהצבעה"

@@ -1,0 +1,37 @@
+status_id,status_he,status_en,stage,stage_order,outcome
+104,הונחה על שולחן הכנסת לדיון מוקדם,Tabled for preliminary reading,preliminary,1,active
+150,במליאה לדיון מוקדם,In plenum for preliminary reading,preliminary,1,active
+106,בוועדת הכנסת לקביעת הוועדה המטפלת,At the House Committee to assign a committee,committee_assignment,2,active
+142,בוועדת הכנסת לקביעת הוועדה המטפלת,At the House Committee to assign a committee,committee_assignment,2,active
+101,הכנה לקריאה ראשונה,In committee: preparing for first reading,first_reading,3,active
+108,הכנה לקריאה ראשונה,In committee: preparing for first reading,first_reading,3,active
+109,אושרה בוועדה לקריאה ראשונה,Approved in committee for first reading,first_reading,3,active
+167,אושרה בוועדה לקריאה ראשונה,Approved in committee for first reading,first_reading,3,active
+141,הונחה על שולחן הכנסת לקריאה ראשונה,Tabled for first reading,first_reading,3,active
+111,לדיון במליאה לקראת הקריאה הראשונה,In plenum for first reading,first_reading,3,active
+113,הכנה לקריאה שנייה ושלישית,In committee: preparing for second and third readings,second_third_reading,4,active
+115,הוחזרה לוועדה להכנה לקריאה שלישית,Returned to committee to prepare for third reading,second_third_reading,4,active
+178,אושרה בוועדה לקריאה שנייה-שלישית,Approved in committee for second-third reading,second_third_reading,4,active
+179,אושרה בוועדה לקריאה שנייה-שלישית,Approved in committee for second-third reading,second_third_reading,4,active
+130,הונחה על שולחן הכנסת לקריאה שנייה-שלישית,Tabled for second-third reading,second_third_reading,4,active
+131,הונחה על שולחן הכנסת לקריאה שלישית,Tabled for third reading,second_third_reading,4,active
+114,לדיון במליאה לקראת קריאה שנייה-שלישית,In plenum for second-third reading,second_third_reading,4,active
+117,לדיון במליאה לקראת קריאה שלישית,In plenum for third reading,second_third_reading,4,active
+118,התקבלה בקריאה שלישית,Passed third reading (became law),passed,5,passed
+181,הודעה על בקשה להחלת דין רציפות,Notice of request to continue from the previous Knesset,continuity,0,active
+182,בוועדת הכנסת לקביעת ועדה לצורך החלת דין רציפות,At the House Committee to assign a committee for continuity,continuity,0,active
+175,בדיון בוועדה על החלת דין רציפות,In committee: discussing continuity,continuity,0,active
+120,לדיון במליאה על החלת דין רציפות,In plenum: discussing continuity,continuity,0,active
+158,לאישור פיצול במליאה,Awaiting plenum approval to split,split_or_merge,0,active
+161,לאישור פיצול במליאה,Awaiting plenum approval to split,split_or_merge,0,active
+162,לאישור פיצול במליאה,Awaiting plenum approval to split,split_or_merge,0,active
+165,לאישור פיצול במליאה,Awaiting plenum approval to split,split_or_merge,0,active
+126,לאישור מיזוג בוועדת הכנסת,Awaiting House Committee approval to merge,split_or_merge,0,active
+169,לאישור מיזוג בוועדת הכנסת,Awaiting House Committee approval to merge,split_or_merge,0,active
+177,נעצרה,Stopped,stopped,9,stopped
+140,להסרה מסדר היום לבקשת ועדה,Removed from the agenda at a committee's request,stopped,9,stopped
+143,להסרה מסדר היום לבקשת ועדה,Removed from the agenda at a committee's request,stopped,9,stopped
+110,הבקשה לדין רציפות נדחתה במליאה,Continuity request rejected in plenum,stopped,9,stopped
+176,הבקשה לדין רציפות נדחתה בוועדה,Continuity request rejected in committee,stopped,9,stopped
+122,מוזגה עם הצעת חוק אחרת,Merged into another bill,merged,9,merged
+124,הוסבה להצעה לסדר היום,Converted to a motion for the agenda,converted,9,converted

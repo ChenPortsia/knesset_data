@@ -1,4 +1,4 @@
-# Ingestion service: OData API -> data/raw.duckdb, triggered over HTTP (see ingestion/api.py).
+# Ingestion service: OData API -> data/raw/raw.duckdb, triggered over HTTP (see ingestion/api.py).
 # Build from the repo root: docker build -f ingestion/Dockerfile .
 FROM python:3.13-slim
 

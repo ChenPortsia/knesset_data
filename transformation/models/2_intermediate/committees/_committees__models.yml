@@ -1,0 +1,23 @@
+version: 2
+
+models:
+  - name: int_committee_sessions_bridged_to_bills
+    description: "Which bills each committee session discussed (20th Knesset onward). Grain: one row per committee session and bill | אילו הצעות חוק נדונו בכל ישיבת ועדה"
+    columns:
+      - name: session_bill_id
+        description: "Key: hash of session and bill | מפתח: גיבוב של ישיבה והצעה"
+        data_tests: [unique, not_null]
+      - name: committee_session_id
+        description: "Committee session ID | מזהה ישיבת ועדה"
+      - name: bill_id
+        description: "Bill discussed | הצעת החוק שנדונה"
+      - name: committee_id
+        description: "Committee ID | מזהה ועדה"
+      - name: knesset_num
+        description: "Knesset number | מספר הכנסת"
+      - name: session_start_at
+        description: "Session start, Israel local time | תחילת הישיבה"
+      - name: agenda_items
+        description: "Times the bill appears on the session agenda | מספר הופעות ההצעה בסדר היום"
+      - name: first_ordinal
+        description: "Position of the bill's first appearance on the agenda | מיקום ההופעה הראשונה בסדר היום"
