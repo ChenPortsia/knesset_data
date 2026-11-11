@@ -20,7 +20,7 @@ seeds:
   - name: bill_status_stages
     description: "Bill status -> legislative stage and outcome, with English names. Hand-made: review when the API adds statuses | מיפוי סטטוס הצעת חוק לשלב חקיקה ולתוצאה"
     config:
-      column_types: {status_id: integer, status_he: varchar, status_en: varchar, stage: varchar, stage_order: integer, outcome: varchar}
+      column_types: {status_id: integer, status_he: varchar, status_en: varchar, stage: varchar, stage_order: integer, outcome: varchar, plenum_reading: varchar}
     columns:
       - name: status_id
         description: "Status ID (KNS_Status, type bill) | מזהה סטטוס"
@@ -35,3 +35,45 @@ seeds:
         description: "1 preliminary ... 5 passed; 0 side processes; 9 ended without passing | סדר השלב"
       - name: outcome
         description: "active / passed / stopped / merged / converted | תוצאה"
+      - name: plenum_reading
+        description: "The plenum reading a bill on the agenda with this status is at: tabled / preliminary / first / second_third; empty for statuses outside the plenum | הקריאה במליאה"
+
+  - name: position_roles
+    description: "Position code -> role and role group (committee, government, knesset, faction). Hand-made: review when the API adds positions | מיפוי קוד תפקיד לתפקיד"
+    config:
+      column_types: {position_id: integer, position_he: varchar, role: varchar, role_group: varchar}
+    columns:
+      - name: position_id
+        description: "Position ID (KNS_Position) | מזהה תפקיד"
+        data_tests: [unique, not_null]
+      - name: position_he
+        description: "Position name as in the source | שם התפקיד במקור"
+      - name: role
+        description: "Role, the same for male and female forms | תפקיד"
+      - name: role_group
+        description: "committee / government / knesset / faction | קבוצת תפקיד"
+
+  - name: coalition_overrides
+    description: "Known exceptions to the rule 'a faction is in the coalition while it holds government posts'. Each row replaces the derived periods of a faction in a government; every row says why. Hand-made | חריגים ידועים לכלל הקואליציה"
+    config:
+      column_types: {faction_id: integer, government_num: integer, camp: varchar, start_date: date, finish_date: date, reason: varchar}
+    columns:
+      - name: faction_id
+        description: "Faction ID | מזהה סיעה"
+        data_tests: [not_null]
+      - name: government_num
+        description: "Government number | מספר הממשלה"
+        data_tests: [not_null]
+      - name: camp
+        description: "coalition (add this period) / opposition (remove the derived periods) | מחנה"
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [coalition, opposition]
+      - name: start_date
+        description: "Start of the coalition period (coalition rows only) | תחילה"
+      - name: finish_date
+        description: "End of the coalition period (coalition rows only) | סיום"
+      - name: reason
+        description: "Why the rule is wrong here | הסיבה"
+        data_tests: [not_null]

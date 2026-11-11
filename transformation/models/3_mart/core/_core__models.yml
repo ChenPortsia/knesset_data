@@ -154,6 +154,12 @@ models:
   - name: members
     data_type: integer
     description: MKs who were members at any time | מספר החברים לאורך הכהונה
+  - name: was_in_coalition
+    data_type: boolean
+    description: True if the faction was in the coalition at any time (fct_coalition_period) | האם הייתה בקואליציה
+  - name: coalition_governments
+    data_type: varchar
+    description: Governments whose coalition the faction was in, e.g. '36, 37' | הממשלות שבקואליציה שלהן הייתה
 - name: dim_committee
   description: 'Knesset committees per Knesset. Grain: one row per committee | ועדות הכנסת בכל כנסת'
   config:

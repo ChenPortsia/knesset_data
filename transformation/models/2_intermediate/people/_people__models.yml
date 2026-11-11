@@ -24,3 +24,86 @@ models:
         description: "Membership end, Israel local time; null if still a member | סיום החברות; ריק אם עדיין חבר"
       - name: is_current
         description: "True if still a member | האם עדיין חבר בסיעה"
+
+  - name: int_person_knesset_factions
+    description: "Each MK's faction in each Knesset, when they had only one; the fallback when no dated membership covers a date. Grain: one row per person and Knesset | הסיעה של כל ח\"כ בכל כנסת, אם הייתה אחת"
+    columns:
+      - name: person_id
+        description: "Person ID | מזהה אדם"
+        data_tests: [not_null]
+      - name: knesset_num
+        description: "Knesset number | מספר הכנסת"
+      - name: factions
+        description: "Number of factions the MK belonged to in that Knesset | מספר הסיעות של הח\"כ באותה כנסת"
+      - name: faction_id
+        description: "The MK's faction in that Knesset; null if more than one | סיעת הח\"כ; ריק אם היו כמה"
+      - name: faction_name
+        description: "Faction name (Hebrew) | שם הסיעה"
+
+  - name: int_person_roles_classified
+    description: "Committee, government and Knesset roles, from the position_roles seed, overlapping rows merged. Grain: one row per person, role, committee or ministry, government and continuous period | תפקידים בוועדות, בממשלה ובכנסת"
+    columns:
+      - name: person_role_id
+        description: "Key: hash of person, role, committee, ministry, government and start | מפתח"
+        data_tests: [unique, not_null]
+      - name: person_id
+        description: "Person ID | מזהה אדם"
+      - name: role
+        description: "Role, from the position_roles seed: committee_chair, committee_member, minister, deputy_minister, prime_minister, speaker, opposition_leader... | תפקיד"
+        data_tests: [not_null]
+      - name: role_group
+        description: "committee / government / knesset / faction | קבוצת תפקיד"
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [committee, government, knesset, faction]
+      - name: knesset_num
+        description: "Knesset number | מספר הכנסת"
+      - name: committee_id
+        description: "Committee, for committee roles | הוועדה"
+      - name: ministry_id
+        description: "Ministry, for government roles | המשרד"
+      - name: government_num
+        description: "Government number, for government roles | מספר הממשלה"
+      - name: start_at
+        description: "Start, Israel local time | תחילת התפקיד"
+      - name: finish_at
+        description: "End, Israel local time; null if ongoing. Some 25th-Knesset end dates were rewritten by the source to 2026-11-10 | סיום התפקיד"
+
+  - name: int_coalition_periods_derived
+    description: "When each faction held government posts: the coalition as derived from the data, before overrides. Grain: one row per faction, government and continuous period | מתי סיעה החזיקה בתפקידים בממשלה"
+    columns:
+      - name: faction_id
+        description: "Faction ID | מזהה סיעה"
+        data_tests: [not_null]
+      - name: government_num
+        description: "Government number | מספר הממשלה"
+      - name: start_at
+        description: "First government post of the period | תחילת התקופה"
+      - name: finish_at
+        description: "End of the last government post of the period; null if ongoing | סוף התקופה"
+
+  - name: int_coalition_periods
+    description: "When each faction was in the coalition: derived periods with the coalition_overrides seed applied. Grain: one row per faction, government and continuous coalition period | מתי כל סיעה הייתה בקואליציה"
+    columns:
+      - name: coalition_period_id
+        description: "Key: hash of faction, government and start | מפתח"
+        data_tests: [unique, not_null]
+      - name: faction_id
+        description: "Faction ID | מזהה סיעה"
+      - name: faction_name
+        description: "Faction name (Hebrew) | שם הסיעה"
+      - name: knesset_num
+        description: "Knesset of the faction | הכנסת של הסיעה"
+      - name: government_num
+        description: "Government number | מספר הממשלה"
+      - name: start_at
+        description: "Start of the coalition period | תחילת התקופה"
+      - name: finish_at
+        description: "End of the coalition period; null if ongoing | סוף התקופה"
+      - name: source
+        description: "government_posts (derived) or override (from the seed) | מקור"
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [government_posts, override]

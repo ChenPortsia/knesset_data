@@ -77,6 +77,21 @@ models:
   - name: is_accepted
     data_type: boolean
     description: True if more MKs voted for than against | האם התקבלה
+  - name: coalition_for
+    data_type: integer
+    description: Coalition MKs who voted for | חברי קואליציה בעד
+  - name: coalition_against
+    data_type: integer
+    description: Coalition MKs who voted against | חברי קואליציה נגד
+  - name: opposition_for
+    data_type: integer
+    description: Opposition MKs who voted for | חברי אופוזיציה בעד
+  - name: opposition_against
+    data_type: integer
+    description: Opposition MKs who voted against | חברי אופוזיציה נגד
+  - name: is_coalition_split
+    data_type: boolean
+    description: True if coalition MKs voted both for and against | האם הקואליציה התפצלה
 - name: fct_vote_result
   description: 'How each MK voted in each plenum vote, with their faction. Grain: one row per vote and MK | איך הצביע כל ח"כ בכל הצבעה, עם סיעתו'
   config:
@@ -120,6 +135,15 @@ models:
           - dated
           - knesset
           - none
+  - name: camp
+    data_type: varchar
+    description: 'coalition / opposition: the MK''s faction''s camp on the day of the vote (fct_coalition_period); null if the faction is unknown | מחנה: קואליציה / אופוזיציה'
+    data_tests:
+    - accepted_values:
+        arguments:
+          values:
+          - coalition
+          - opposition
   - name: knesset_num
     data_type: integer
     description: Knesset number (dim_knesset) | מספר הכנסת
@@ -156,3 +180,68 @@ models:
   - name: voted_with_faction
     data_type: boolean
     description: True if the MK voted like the faction majority; null if not comparable | האם הצביע כרוב סיעתו
+- name: agg_faction_pair_agreement_month
+  description: 'How often each pair of factions voted the same way, per month: their majorities matched. Grain: one row per month, pair of factions (faction_a_id < faction_b_id) and camp pair | באיזו תדירות
+    הצביעו שתי סיעות באותו אופן, לפי חודש'
+  config:
+    contract:
+      enforced: true
+  columns:
+  - name: pair_month_id
+    data_type: varchar
+    description: 'Key: hash of month and faction pair | מפתח'
+    data_tests:
+    - unique
+    - not_null
+  - name: month_start
+    data_type: date
+    description: First day of the month | תחילת החודש
+  - name: year_month
+    data_type: varchar
+    description: Year and month, e.g. 2024-11 | שנה וחודש
+  - name: knesset_num
+    data_type: integer
+    description: Knesset of the factions | הכנסת
+  - name: faction_a_id
+    data_type: integer
+    description: First faction (dim_faction) | סיעה א
+    data_tests:
+    - relationships:
+        arguments:
+          to: ref('dim_faction')
+          field: faction_id
+        config: *id002
+  - name: faction_a_name
+    data_type: varchar
+    description: First faction name (Hebrew) | שם סיעה א
+  - name: faction_b_id
+    data_type: integer
+    description: Second faction (dim_faction) | סיעה ב
+    data_tests:
+    - relationships:
+        arguments:
+          to: ref('dim_faction')
+          field: faction_id
+        config: *id002
+  - name: faction_b_name
+    data_type: varchar
+    description: Second faction name (Hebrew) | שם סיעה ב
+  - name: camp_pair
+    data_type: varchar
+    description: 'The factions'' camps at the time: coalition-coalition / coalition-opposition / opposition-opposition | צירוף המחנות'
+    data_tests:
+    - accepted_values:
+        arguments:
+          values:
+          - coalition-coalition
+          - coalition-opposition
+          - opposition-opposition
+  - name: votes
+    data_type: integer
+    description: Votes where both factions had a majority | הצבעות משותפות
+  - name: agreed
+    data_type: integer
+    description: Votes where both majorities were the same | הצבעות בהסכמה
+  - name: agreement_percent
+    data_type: double
+    description: agreed / votes, in percent | אחוז הסכמה

@@ -13,7 +13,7 @@ plenum_sessions AS (
 
 vote_results AS (
     SELECT *
-    FROM {{ ref('stg_odata__plenum_vote_result') }}
+    FROM {{ ref('int_vote_results_joined_to_camps') }}
 ),
 
 totals_per_vote AS (
@@ -22,7 +22,11 @@ totals_per_vote AS (
         COUNT(*) FILTER (WHERE result = 'for') AS votes_for,
         COUNT(*) FILTER (WHERE result = 'against') AS votes_against,
         COUNT(*) FILTER (WHERE result = 'abstain') AS votes_abstain,
-        COUNT(*) FILTER (WHERE result IN ('for', 'against', 'abstain')) AS mks_took_part
+        COUNT(*) FILTER (WHERE result IN ('for', 'against', 'abstain')) AS mks_took_part,
+        COUNT(*) FILTER (WHERE camp = 'coalition' AND result = 'for') AS coalition_for,
+        COUNT(*) FILTER (WHERE camp = 'coalition' AND result = 'against') AS coalition_against,
+        COUNT(*) FILTER (WHERE camp = 'opposition' AND result = 'for') AS opposition_for,
+        COUNT(*) FILTER (WHERE camp = 'opposition' AND result = 'against') AS opposition_against
     FROM vote_results
     GROUP BY vote_id
 ),
@@ -44,7 +48,12 @@ enhanced AS (
         CAST(COALESCE(totals_per_vote.votes_against, 0) AS INTEGER) AS votes_against,
         CAST(COALESCE(totals_per_vote.votes_abstain, 0) AS INTEGER) AS votes_abstain,
         CAST(COALESCE(totals_per_vote.mks_took_part, 0) AS INTEGER) AS mks_took_part,
-        CAST(totals_per_vote.votes_for > totals_per_vote.votes_against AS BOOLEAN) AS is_accepted
+        CAST(totals_per_vote.votes_for > totals_per_vote.votes_against AS BOOLEAN) AS is_accepted,
+        CAST(COALESCE(totals_per_vote.coalition_for, 0) AS INTEGER) AS coalition_for,
+        CAST(COALESCE(totals_per_vote.coalition_against, 0) AS INTEGER) AS coalition_against,
+        CAST(COALESCE(totals_per_vote.opposition_for, 0) AS INTEGER) AS opposition_for,
+        CAST(COALESCE(totals_per_vote.opposition_against, 0) AS INTEGER) AS opposition_against,
+        CAST(totals_per_vote.coalition_for > 0 AND totals_per_vote.coalition_against > 0 AS BOOLEAN) AS is_coalition_split
     FROM votes
     LEFT JOIN plenum_sessions
         ON votes.plenum_session_id = plenum_sessions.plenum_session_id

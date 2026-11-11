@@ -45,6 +45,22 @@ committee_sessions_per_bill AS (
     GROUP BY bill_id
 ),
 
+readings AS (
+    SELECT *
+    FROM {{ ref('int_bill_plenum_readings') }}
+),
+
+readings_per_bill AS (
+    SELECT
+        bill_id,
+        MIN(first_at) FILTER (WHERE reading = 'tabled') AS tabled_at,
+        MIN(first_at) FILTER (WHERE reading = 'preliminary') AS preliminary_reading_at,
+        MIN(first_at) FILTER (WHERE reading = 'first') AS first_reading_at,
+        MIN(first_at) FILTER (WHERE reading = 'second_third') AS final_reading_at
+    FROM readings
+    GROUP BY bill_id
+),
+
 votes_per_bill AS (
     SELECT
         bill_id,
@@ -77,6 +93,16 @@ enhanced AS (
         CAST(committee_sessions_per_bill.first_committee_session_at AS TIMESTAMP) AS first_committee_session_at,
         CAST(COALESCE(votes_per_bill.plenum_votes, 0) AS INTEGER) AS plenum_votes,
         CAST(votes_per_bill.last_voted_at AS TIMESTAMP) AS last_voted_at,
+        CAST(CAST(readings_per_bill.tabled_at AS DATE) AS DATE) AS tabled_date,
+        CAST(CAST(readings_per_bill.preliminary_reading_at AS DATE) AS DATE) AS preliminary_reading_date,
+        CAST(CAST(readings_per_bill.first_reading_at AS DATE) AS DATE) AS first_reading_date,
+        CAST(CAST(readings_per_bill.final_reading_at AS DATE) AS DATE) AS final_reading_date,
+        CAST(
+            CASE
+                WHEN bills.is_passed
+                    THEN DATE_DIFF('day', readings_per_bill.first_reading_at, readings_per_bill.final_reading_at)
+            END AS INTEGER
+        ) AS days_first_to_final_reading,
         CAST(bills.published_at AS TIMESTAMP) AS published_at,
         CAST(bills.is_continuation_bill AS BOOLEAN) AS is_continuation_bill
     FROM bills
@@ -88,6 +114,8 @@ enhanced AS (
         ON bills.bill_id = committee_sessions_per_bill.bill_id
     LEFT JOIN votes_per_bill
         ON bills.bill_id = votes_per_bill.bill_id
+    LEFT JOIN readings_per_bill
+        ON bills.bill_id = readings_per_bill.bill_id
 )
 
 SELECT *

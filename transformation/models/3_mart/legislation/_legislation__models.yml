@@ -99,6 +99,21 @@ models:
   - name: last_voted_at
     data_type: timestamp
     description: Latest plenum vote on the bill | ההצבעה האחרונה במליאה
+  - name: tabled_date
+    data_type: date
+    description: First tabled in the plenum | הונחה לראשונה על שולחן הכנסת
+  - name: preliminary_reading_date
+    data_type: date
+    description: Preliminary reading held (private bills) | קריאה טרומית
+  - name: first_reading_date
+    data_type: date
+    description: First reading held | קריאה ראשונה
+  - name: final_reading_date
+    data_type: date
+    description: Second and third readings held | קריאה שנייה ושלישית
+  - name: days_first_to_final_reading
+    data_type: integer
+    description: Days from first to final reading, for passed bills | ימים מקריאה ראשונה לשלישית
   - name: published_at
     data_type: timestamp
     description: Publication in Reshumot | פרסום ברשומות
@@ -147,3 +162,50 @@ models:
   - name: ordinal
     data_type: integer
     description: Order among the initiators | מספר סידורי
+- name: fct_bill_reading
+  description: 'When each bill reached each plenum reading, from the bill''s status on the plenum agenda. Grain: one row per bill and reading | מתי הגיעה כל הצעת חוק לכל קריאה במליאה'
+  config:
+    contract:
+      enforced: true
+  columns:
+  - name: bill_reading_id
+    data_type: varchar
+    description: 'Key: hash of bill and reading | מפתח'
+    data_tests:
+    - unique
+    - not_null
+  - name: bill_id
+    data_type: integer
+    description: Bill ID (dim_bill) | מזהה הצעת חוק
+    data_tests:
+    - relationships:
+        arguments:
+          to: ref('dim_bill')
+          field: bill_id
+        config: *id001
+  - name: knesset_num
+    data_type: integer
+    description: Knesset number (dim_knesset) | מספר הכנסת
+  - name: reading
+    data_type: varchar
+    description: tabled / preliminary / first / second_third. Held, not necessarily passed | הקריאה
+    data_tests:
+    - accepted_values:
+        arguments:
+          values:
+          - tabled
+          - preliminary
+          - first
+          - second_third
+  - name: reading_order
+    data_type: integer
+    description: 0 tabled, 1 preliminary, 2 first, 3 second_third | סדר
+  - name: reading_date
+    data_type: date
+    description: First plenum session with the bill on the agenda for this reading | תאריך הקריאה
+  - name: last_agenda_date
+    data_type: date
+    description: Last plenum session with the bill on the agenda for this reading | הופעה אחרונה בסדר היום
+  - name: agenda_items
+    data_type: integer
+    description: Times on the agenda for this reading | מספר הופעות

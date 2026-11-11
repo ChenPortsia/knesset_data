@@ -1,0 +1,30 @@
+position_id,position_he,role,role_group
+29,יושבת–ראש הקואליציה,coalition_chair,knesset
+30,יושב–ראש הקואליציה,coalition_chair,knesset
+31,משנה לראש הממשלה,vice_prime_minister,government
+39,שר,minister,government
+40,סגן שר,deputy_minister,government
+41,"יו""ר ועדה",committee_chair,committee
+42,חבר ועדה,committee_member,committee
+43,חבר הכנסת,mk,knesset
+45,ראש הממשלה,prime_minister,government
+48,"יו""ר סיעה",faction_chair,faction
+50,סגן ראש הממשלה,deputy_prime_minister,government
+51,"מ""מ ראש הממשלה",acting_prime_minister,government
+54,חבר/ת סיעה,faction_member,faction
+57,שרה,minister,government
+59,סגנית שר,deputy_minister,government
+61,חברת הכנסת,mk,knesset
+65,סגנית ראש הממשלה,deputy_prime_minister,government
+66,חברת ועדה,committee_member,committee
+67,"מ""מ חבר ועדה",committee_substitute,committee
+70,סגן יושב-ראש הכנסת,deputy_speaker,knesset
+71,סגנית יושב-ראש הכנסת,deputy_speaker,knesset
+73,ראש הממשלה החילופי,alternate_prime_minister,government
+122,יושב–ראש הכנסת,speaker,knesset
+123,יושבת–ראש הכנסת,speaker,knesset
+130,ראשת האופוזיציה,opposition_leader,knesset
+131,ראש האופוזיציה,opposition_leader,knesset
+663,משקיף ועדה,committee_observer,committee
+285078,"יו""ר הכנסת הזמני",temporary_speaker,knesset
+285079,סגן שרה,deputy_minister,government

@@ -3,7 +3,7 @@
 
 WITH vote_results AS (
     SELECT *
-    FROM {{ ref('int_vote_results_compared_to_faction_majority') }}
+    FROM {{ ref('int_vote_results_joined_to_camps') }}
 ),
 
 enhanced AS (
@@ -13,6 +13,7 @@ enhanced AS (
         CAST(person_id AS INTEGER) AS person_id,
         CAST(faction_id AS INTEGER) AS faction_id,
         CAST(faction_match AS VARCHAR) AS faction_match,
+        CAST(camp AS VARCHAR) AS camp,
         CAST(knesset_num AS INTEGER) AS knesset_num,
         CAST(CAST(voted_at AS DATE) AS DATE) AS vote_date,
         CAST(voted_at AS TIMESTAMP) AS voted_at,

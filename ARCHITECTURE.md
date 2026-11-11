@@ -68,8 +68,8 @@ Two DuckDB files, so ingestion and transformation are separate processes that sh
 | Type | Models |
 | --- | --- |
 | Dimensions | `dim_person`, `dim_faction`, `dim_committee`, `dim_ministry`, `dim_knesset`, `dim_date`, `dim_bill` (with current stage and outcome), `dim_topic` (M6) |
-| Facts | `fct_vote_result` (vote × MK, with faction and faction-majority alignment), `fct_plenum_vote`, `fct_plenum_session`, `fct_committee_session`, `fct_committee_session_bill`, `fct_bill_initiator`, `fct_faction_membership`, `fct_query`, `fct_agenda`; later `fct_bill_stage` (from bronze's version history) and `fct_turn` (text + topic + sentiment, M4/M6) |
-| Aggregates | `agg_topic_month`, `agg_topic_faction_month`, `agg_person_topic_quarter` (min-count rule) |
+| Facts | `fct_vote_result` (vote × MK, with faction, camp and faction-majority alignment), `fct_plenum_vote` (totals by camp), `fct_plenum_session`, `fct_committee_session`, `fct_committee_session_bill`, `fct_bill_initiator`, `fct_bill_reading`, `fct_faction_membership`, `fct_coalition_period` (derived from government posts + override seed), `fct_person_role` (committee chairs, ministers...), `fct_query` (with the asker's camp), `fct_agenda`; later `fct_bill_stage` (from bronze's version history) and `fct_turn` (text + topic + sentiment, M4/M6) |
+| Aggregates | `agg_faction_pair_agreement_month` (voting blocs, by camp pair); later `agg_topic_month`, `agg_topic_faction_month`, `agg_person_topic_quarter` (min-count rule) |
 
 - **tests:** unique / not-null keys, relationships between facts and dims, accepted values on decoded codes, a speaker-link match-rate threshold.
 - **docs:** every model and column gets a Hebrew + English description. These feed the context layer directly.

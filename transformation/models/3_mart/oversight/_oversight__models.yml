@@ -55,6 +55,15 @@ models:
   - name: is_replied
     data_type: boolean
     description: True if the minister replied | האם נענתה
+  - name: asker_camp
+    data_type: varchar
+    description: 'coalition / opposition: the asking MK''s camp when the query was submitted; null if unknown | מחנה הח"כ השואל'
+    data_tests:
+    - accepted_values:
+        arguments:
+          values:
+          - coalition
+          - opposition
 - name: fct_agenda
   description: 'Motions for the agenda. Grain: one row per motion, 20th Knesset onward | הצעות לסדר היום'
   config:

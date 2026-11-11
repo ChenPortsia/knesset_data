@@ -95,8 +95,8 @@ with what it takes to answer, which makes the list a roadmap for the next models
 - ✅ Which MKs propose the most private bills, and what share of them ever pass? Who proposes many and passes none?
 - ✅ What share of government bills passed in each Knesset? Did the current government pass more or less of its agenda than the last one?
 - ✅ Which bills passed with the most committee sessions behind them, and which passed with almost no committee discussion?
-- 🧩 How long does a bill take from first reading to final approval, and which laws were rushed through in days? (reading dates come from the plenum votes' subjects)
-- 🧩 Which laws passed in the last weeks before the Knesset dissolved? Is there a pre-election rush?
+- ✅ How long does a bill take from first reading to final approval, and which laws were rushed through in days? (`dim_bill.days_first_to_final_reading`; analysis J4)
+- ✅ Which laws passed in the last weeks before the Knesset dissolved? Is there a pre-election rush? (analysis J5: 38 laws in the 25th Knesset's last month)
 - 🧩 How many bills are "copy-paste": the same title proposed again by different MKs or in a new Knesset? (needs fuzzy matching of bill names)
 - 📥 Which existing laws were amended most often in this Knesset? (`KNS_IsraelLawBinding`, `KNS_LawBinding`)
 - 📥 Which government bills were split or merged on the way, and with what? (`KNS_BillSplit`, `KNS_BillUnion`)
@@ -107,27 +107,27 @@ with what it takes to answer, which makes the list a roadmap for the next models
 - ✅ How did each faction vote on a given bill or vote? Was any faction split?
 - ✅ Which votes were decided by the smallest margin? Who was absent from them?
 - ✅ Which MKs miss the most plenum votes? Does attendance drop near elections?
-- 🧩 Which opposition factions vote with the coalition most often, and on what? (needs a seed: coalition or opposition per faction and government)
-- 🧩 Which pairs of factions vote alike most often? Has that changed since the last election? (a faction × faction agreement model)
-- 🧩 How did MKs who later switched factions vote in the months before they switched?
+- ✅ Which opposition factions vote with the coalition most often, and on what? (`agg_faction_pair_agreement_month`, camp at the time; analysis J6)
+- ✅ Which pairs of factions vote alike most often? Has that changed since the last election? (`agg_faction_pair_agreement_month`)
+- ✅ How did MKs who later switched factions vote in the months before they switched? (`fct_faction_membership` + `fct_vote_result`)
 - 🗣 Do MKs who speak against a bill in committee still vote for it in the plenum?
 
 ### Government oversight
 - ✅ Which ministries take longest to answer parliamentary queries, and which leave the most unanswered?
 - ✅ Which MKs ask the most queries, and of which ministries?
-- 🧩 Do opposition MKs ask more queries than coalition MKs? (needs the coalition seed)
+- ✅ Do opposition MKs ask more queries than coalition MKs? (`fct_query.asker_camp`; analysis J7: about 80% come from the opposition in every Knesset)
 - ✅ Has the share of answered queries risen or fallen from Knesset to Knesset?
 - ✅ How many motions for the agenda does each MK propose, and how many does the government accept?
-- 🧩 Which ministers answered their queries least often? (queries joined to the minister holding the ministry at the time, from positions)
-- 🧩 How many no-confidence votes did each government face, and what was the closest one?
+- ✅ Which ministers answered their queries least often? (`fct_query` joined to `fct_person_role` ministers by ministry and date)
+- ✅ How many no-confidence votes did each government face, and what was the closest one? (`fct_plenum_vote.is_no_confidence`; governments by date from `fct_person_role`)
 - 📥 What do the query and motion documents actually say? (`KNS_DocumentQuerie`, `KNS_DocumentAgenda`)
 
 ### Committees: where the power is
 - ✅ Which committees meet most and least? Which meet behind closed doors most often?
 - ✅ Which committees handle the most bills, and how many of those bills pass?
 - ✅ How has committee activity changed month by month, around wars, recesses and elections?
-- 🧩 Who chairs each committee, and how long has each chair held the post? (committee positions 41/42 in `KNS_PersonToPosition`)
-- 🧩 Which committees are run by coalition chairs and which by opposition chairs?
+- ✅ Who chairs each committee, and how long has each chair held the post? (`fct_person_role`; analysis J3)
+- ✅ Which committees are run by coalition chairs and which by opposition chairs? (`fct_person_role` + `fct_coalition_period`)
 - 🗣 Which MKs speak most in committee, and which never speak? Which members actually attend? (attendance lists are in the protocols)
 - 🗣 How much of a committee session is spent on the bill on the agenda versus other topics?
 
@@ -135,23 +135,23 @@ with what it takes to answer, which makes the list a roadmap for the next models
 - ✅ For any MK: bills initiated and passed, votes attended, loyalty to the faction, queries asked, motions proposed.
 - ✅ Which MKs who entered from the 20th Knesset on are most active? (careers before the 20th need a lower `from_knesset`)
 - ✅ Which MKs changed faction during a Knesset, and when?
-- 🧩 Which MKs were also ministers or deputy ministers, and does their parliamentary activity drop while in government? (government positions in `KNS_PersonToPosition`)
-- 🧩 How did each MK's activity change after their party joined or left the coalition?
+- ✅ Which MKs were also ministers or deputy ministers, and does their parliamentary activity drop while in government? (`fct_person_role`)
+- ✅ How did each MK's activity change after their party joined or left the coalition? (`fct_vote_result.camp`, `fct_coalition_period`)
 - 📥 Which lobbyists are registered, and which clients do they represent? (`V_Lobbyists`, `V_LobbyistsClients`)
 - ⛔ How do MKs' parliamentary records compare with their public statements, assets or expenses? (outside sources)
 
 ### Coalition dynamics and political crises
-- 🧩 Which votes split the coalition? On which did coalition MKs vote with the opposition? (needs the coalition seed)
-- 🧩 How stable was each government: defections, no-confidence votes, failed coalition votes? (needs the coalition seed)
-- 🧩 What legislation passed in the 24th Knesset's Bennett–Lapid government compared with the 25th Knesset's Netanyahu government? (governments from positions)
-- 🧩 Which coalition bills were blocked by coalition members, not by the opposition?
+- ✅ Which votes split the coalition? On which did coalition MKs vote with the opposition? (`fct_plenum_vote.is_coalition_split`; analyses J1, J2)
+- ✅ How stable was each government: parties joining and leaving, no-confidence votes, failed coalition votes? (`fct_coalition_period`, `fct_plenum_vote`)
+- ✅ What legislation passed under the Bennett–Lapid government compared with Netanyahu's 2022 government? (`dim_bill.final_reading_date` + government periods)
+- ✅ Which bills were voted down with coalition MKs voting against? (`fct_plenum_vote`: `is_accepted`, `coalition_against`)
 - ⛔ How did public polls move around key votes? (outside source)
 
 ### Timing and the calendar
 - ✅ How many votes take place after midnight, and on what kinds of bills? (4,204 of 19,663 votes since 2015 were held between midnight and 6am; 655 carry a date only, shown as exactly 00:00, so leave those out)
 - ✅ How does activity differ between the winter and summer sittings and the recesses?
 - ✅ Did plenum and committee activity change during the war that began in October 2023?
-- 🧩 Which bills were passed in long "voting marathons", with dozens of votes in one night?
+- ✅ Which bills were passed in long "voting marathons", with dozens of votes in one night? (`fct_plenum_session.votes`, `fct_plenum_vote.voted_at`)
 
 ### What was said (protocols and topics)
 - 🗣 What did MKs say about a given bill in committee, and did their vote match?
@@ -163,14 +163,23 @@ with what it takes to answer, which makes the list a roadmap for the next models
 ### Comparisons across Knessets
 - ✅ How do the 20th to 25th Knessets compare on bills proposed and passed, votes held, committee sessions and queries?
 - ✅ How has the share of women MKs changed, and are women MKs as active by these measures?
-- 🧩 Are short Knessets (the 21st and 22nd lasted months) productive at all, per month of their term?
+- ✅ Are short Knessets (the 21st and 22nd lasted months) productive at all, per month of their term? (`dim_knesset` dates + `dim_bill`)
 - 📥 How does today's Knesset compare with the 1990s? (lower `from_knesset` in the ingestion config; vote results start in 2003)
 
-### What to build next for these questions
-In order of how many questions each unlocks:
-1. **A coalition/opposition seed** (faction × government): coalition rebellions, cross-camp voting, committee chairs by camp, government stability.
-2. **Committee and government roles** from `KNS_PersonToPosition` (chairs, members, ministers): committee power and MK profiles.
-3. **Reading dates per bill** from the plenum votes' subjects: legislation speed and pre-election rushes.
-4. **Faction × faction agreement**: voting blocs over time.
-5. **The protocols** (milestone 4): everything tagged 🗣.
+### How the coalition is known
+No Knesset table says which factions are in the coalition. `fct_coalition_period` derives it:
+a faction is in the coalition while one of its MKs holds a government post. Three known
+exceptions are corrected in `transformation/seeds/coalition_overrides.csv`, each with its reason:
+Ra'am (in the Bennett–Lapid coalition without ministries), Yamina (in opposition while one MK
+joined the government) and Shas (left the government in July 2025 but stayed in the coalition,
+voting with Likud on 99.7% of votes). When a result looks wrong, check whether a party supported
+the government without posts, or held posts without supporting it, and add a row with its reason.
 
+### Answered so far
+`transformation/analyses/journalist/` answers seven of these questions (J1–J7); run them with
+`uv run python transformation/scripts/run_analyses.py --folder journalist`.
+
+### What to build next
+1. **The protocols** (milestone 4): everything tagged 🗣.
+2. **Bill similarity**: the remaining 🧩, "copy-paste" bills proposed again and again.
+3. **API tables not loaded yet** (📥): law amendments, bill splits and merges, lobbyists, and the text of queries and motions.

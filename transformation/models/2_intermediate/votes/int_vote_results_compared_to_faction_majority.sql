@@ -1,47 +1,14 @@
 -- Each MK's vote compared with how most of their faction voted | השוואת הצבעת כל ח"כ לרוב סיעתו
 -- Grain: one row per vote and MK (same as int_vote_results_joined_to_factions)
--- The faction majority is the most common result (for / against / abstain) among the
--- faction's MKs who took part. A tie has no majority.
 
 WITH vote_results AS (
     SELECT *
     FROM {{ ref('int_vote_results_joined_to_factions') }}
 ),
 
-filtered AS (
-    SELECT *
-    FROM vote_results
-    WHERE took_part
-      AND faction_id IS NOT NULL
-),
-
-results_per_faction AS (
-    SELECT
-        vote_id,
-        faction_id,
-        result,
-        COUNT(*) AS mks
-    FROM filtered
-    GROUP BY vote_id, faction_id, result
-),
-
 faction_majorities AS (
-    -- One row per vote and faction: the top result, unless tied
-    SELECT
-        vote_id,
-        faction_id,
-        CASE
-            WHEN COUNT(*) FILTER (WHERE mks = max_mks) = 1
-                THEN MAX(CASE WHEN mks = max_mks THEN result END)
-        END AS majority_result,
-        SUM(mks) AS mks_took_part
-    FROM (
-        SELECT
-            *,
-            MAX(mks) OVER (PARTITION BY vote_id, faction_id) AS max_mks
-        FROM results_per_faction
-    )
-    GROUP BY vote_id, faction_id
+    SELECT *
+    FROM {{ ref('int_faction_vote_majorities') }}
 ),
 
 enhanced AS (

@@ -15,10 +15,10 @@ models/
     people/  votes/  legislation/  committees/
   3_mart/           # gold: the star schema the agent queries, by business area
     core/  people/  votes/  legislation/  committees/  plenum/  oversight/
-seeds/              # small hand-made CSVs: code labels, bill status -> stage
+seeds/              # small hand-made CSVs: code labels, status/position mappings, coalition overrides
 macros/             # is_current(), local_time(), code_label(), generate_schema_name()
 tests/              # singular tests: anomalies across models
-analyses/           # SQL that is compiled but not built: milestone_1/ questions
+analyses/           # SQL that is compiled but not built: milestone_1/, journalist/ questions
 snapshots/          # unused: bronze already keeps every version of every row
 scripts/            # generate_staging.py, run_analyses.py (dev tools, not in the image)
 ```
@@ -41,8 +41,10 @@ Folders are numbered so they sort in build order. Each folder groups YAML files 
   `raw.duckdb`, so they only work where dbt attaches it; gold tables are self-contained.
 - **No business logic in staging; no joins in staging.** Staging only renames, casts and
   cleans, so every later model starts from the same clean columns.
-- **Don't build the same concept twice.** One `dim_bill`, used by everyone; if two models
-  need the same logic, it moves to an intermediate model.
+- **Don't build the same concept twice.** One `dim_bill`, used by everyone. When a CTE is
+  needed by a second model, it moves to its own intermediate model: e.g.
+  `int_person_knesset_factions` (used by votes, coalition periods and queries) and
+  `int_faction_vote_majorities` (used by loyalty and faction agreement).
 
 ## SQL style
 
@@ -95,6 +97,36 @@ FROM enhanced
 - `LEFT JOIN` when the left side's rows must all survive (the usual case in marts);
   `INNER JOIN` only when dropping unmatched rows is the point (scoping link tables).
 
+## Seeds
+
+Seeds are small CSVs kept in git and reviewed like code. Three kinds:
+
+| Kind | Example | Rule |
+| --- | --- | --- |
+| Code labels | `code_labels` | English label for a source code; a code without a label fails a test |
+| Mappings | `bill_status_stages`, `position_roles` | source code -> our concept (stage, reading, role); include the source's Hebrew so a reviewer can check the mapping |
+| Overrides | `coalition_overrides` | corrections to a rule derived from data; every row has a `reason` |
+
+- Seeds are always recreated (`+full_refresh: true`), so adding a column just works.
+- A hand-made seed says so in its description, and what to do when the source changes.
+
+## Derived facts
+
+Some facts the source doesn't record are derived from the data, by a rule that is written in
+the model's header comment, with known exceptions in an override seed. The pattern:
+
+1. **Derive** with a simple, explainable rule (`int_coalition_periods_derived`: a faction is in the
+   coalition while one of its MKs holds a government post).
+2. **Correct** documented exceptions in a seed with a reason per row (`coalition_overrides`:
+   Ra'am, Yamina, Shas), applied in a separate model (`int_coalition_periods`).
+3. **Record the source** of every row (`source`: `government_posts` or `override`), so a consumer
+   knows which rows are rules and which are corrections.
+4. **Check the result against reality** with an analysis: a coalition faction voting with the
+   opposition, or the reverse, points to a missing exception (that's how Shas was found).
+
+The same applies to `faction_match` on votes (`dated`, `knesset` or `none`): whenever a
+fallback rule fills a gap, a column says which rule was used.
+
 ## Keys and grain
 
 - Source IDs are stable integers, so dimensions use them as keys (`bill_id`, `person_id`)
@@ -133,7 +165,11 @@ Quirks handled later, because they need joins:
 | --- | --- |
 | Link tables (initiators, session items) load for all Knessets | intermediate joins them to in-scope parents |
 | A chair and a member row for the same faction period | `int_faction_memberships_collapsed` merges overlapping periods |
-| The source rewrote most 25th-Knesset membership dates on 2026-11-04 | `int_vote_results_joined_to_factions` falls back to the MK's only faction in that Knesset; `faction_match` says which rule matched |
+| The source rewrote most 25th-Knesset membership dates on 2026-11-04 | votes and queries fall back to the MK's only faction in that Knesset (`int_person_knesset_factions`); `faction_match` says which rule matched |
+| Posts are re-issued when a new Knesset starts | `int_person_roles_classified` starts a new period per Knesset, so a post belongs to the MK's faction in that Knesset |
+| The same role repeated with different end dates | `int_person_roles_classified` merges overlapping rows of the same role |
+| No table says which factions are in the coalition | derived from government posts, with `coalition_overrides` (see Derived facts) |
+| Readings are not recorded per bill | `int_bill_plenum_readings`: the bill's status on the plenum agenda, mapped to a reading in `bill_status_stages` |
 
 ## Tests
 
@@ -162,7 +198,21 @@ Each layer tests what it adds, not what it passes through (dbt Labs, "Test smart
 Every gold model has an enforced contract (`contract: {enforced: true}`): its YAML lists
 every column with its `data_type`, and dbt refuses to build the model if the SQL's output
 differs. Consumers (the agent) can rely on gold's columns and types never changing silently.
-Changing a gold column means changing its YAML in the same commit.
+Changing a gold column means changing its YAML in the same commit. To see a model's output
+types before writing the YAML, compile it (`dbt compile --select <model>`) and run
+`DESCRIBE (<compiled SQL>)` in DuckDB.
+
+## Analyses
+
+`analyses/` holds questions answered in SQL against gold only, compiled by dbt so they
+always use the current model names, and never built as tables:
+
+- `milestone_1/`: the 10 questions that define milestone 1 (`make answers`).
+- `journalist/`: questions from `docs/questions.md`'s journalist question bank, J1–J7.
+
+Run a folder with `uv run python transformation/scripts/run_analyses.py --folder <folder>`.
+It opens the warehouse read-only without `raw.duckdb`, which proves the answer needs gold only.
+Analyses are also the check that a derived model matches reality.
 
 ## Documentation
 

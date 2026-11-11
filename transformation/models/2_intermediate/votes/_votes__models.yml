@@ -81,3 +81,45 @@ models:
         description: "How many of the faction's MKs took part in the vote | כמה מחברי הסיעה השתתפו"
       - name: voted_with_faction
         description: "True if the MK voted like the faction majority; null if the MK did not take part or there is no majority | האם הצביע כמו רוב סיעתו"
+
+  - name: int_faction_vote_majorities
+    description: "How most of each faction voted in each vote. Grain: one row per vote and faction | איך הצביע רוב כל סיעה בכל הצבעה"
+    columns:
+      - name: vote_faction_id
+        description: "Key: hash of vote and faction | מפתח"
+        data_tests: [unique, not_null]
+      - name: vote_id
+        description: "Vote ID | מזהה הצבעה"
+      - name: faction_id
+        description: "Faction ID | מזהה סיעה"
+      - name: majority_result
+        description: "Most common result among the faction's MKs who took part; null on a tie | תוצאת הרוב בסיעה"
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [for, against, abstain]
+      - name: mks_took_part
+        description: "Faction MKs who took part | חברי הסיעה שהשתתפו"
+      - name: mks_with_majority
+        description: "Faction MKs who voted with the majority | חברי הסיעה שהצביעו כרוב"
+      - name: is_split
+        description: "True if any faction MK voted differently from the majority | האם הסיעה התפצלה"
+      - name: camp
+        description: "The faction's camp on the day of the vote: coalition / opposition | מחנה הסיעה ביום ההצבעה"
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [coalition, opposition]
+
+  - name: int_vote_results_joined_to_camps
+    description: "Each MK's vote with their camp, coalition or opposition, on the day of the vote. Grain: one row per vote and MK | הצבעת כל ח\"כ עם המחנה שלו"
+    columns:
+      - name: vote_result_id
+        description: "Vote result ID | מזהה תוצאת הצבעה"
+        data_tests: [unique, not_null]
+      - name: camp
+        description: "coalition / opposition on the day of the vote; null if the MK's faction is unknown | קואליציה / אופוזיציה"
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [coalition, opposition]

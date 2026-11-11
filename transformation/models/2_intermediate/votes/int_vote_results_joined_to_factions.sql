@@ -24,14 +24,8 @@ plenum_sessions AS (
 ),
 
 factions_per_knesset AS (
-    -- One row per MK and Knesset; the faction only if there was exactly one
-    SELECT
-        person_id,
-        knesset_num,
-        CASE WHEN COUNT(DISTINCT faction_id) = 1 THEN MIN(faction_id) END AS faction_id,
-        CASE WHEN COUNT(DISTINCT faction_id) = 1 THEN MIN(faction_name) END AS faction_name
-    FROM memberships
-    GROUP BY person_id, knesset_num
+    SELECT *
+    FROM {{ ref('int_person_knesset_factions') }}
 ),
 
 dated_joined AS (

@@ -11,6 +11,20 @@ memberships AS (
     FROM {{ ref('int_faction_memberships_collapsed') }}
 ),
 
+coalition_periods AS (
+    SELECT *
+    FROM {{ ref('int_coalition_periods') }}
+),
+
+coalition_per_faction AS (
+    SELECT
+        faction_id,
+        COUNT(*) AS coalition_periods,
+        STRING_AGG(DISTINCT CAST(government_num AS VARCHAR), ', ') AS coalition_governments
+    FROM coalition_periods
+    GROUP BY faction_id
+),
+
 members_per_faction AS (
     SELECT
         faction_id,
@@ -27,10 +41,14 @@ enhanced AS (
         CAST(factions.start_at AS TIMESTAMP) AS start_at,
         CAST(factions.finish_at AS TIMESTAMP) AS finish_at,
         CAST(factions.is_current AS BOOLEAN) AS is_current,
-        CAST(COALESCE(members_per_faction.members, 0) AS INTEGER) AS members
+        CAST(COALESCE(members_per_faction.members, 0) AS INTEGER) AS members,
+        CAST(coalition_per_faction.faction_id IS NOT NULL AS BOOLEAN) AS was_in_coalition,
+        CAST(coalition_per_faction.coalition_governments AS VARCHAR) AS coalition_governments
     FROM factions
     LEFT JOIN members_per_faction
         ON factions.faction_id = members_per_faction.faction_id
+    LEFT JOIN coalition_per_faction
+        ON factions.faction_id = coalition_per_faction.faction_id
 )
 
 SELECT *
