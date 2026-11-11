@@ -151,9 +151,12 @@ Rules:
 | Column types unchanged (dlt schema contract) | each load | table fails, nothing saved |
 | New columns in the API | each load | added and logged |
 | Bronze rows = API `$count` in scope (reconciliation) | after each load | warning |
+| The API can't count (its server times out on date-filtered counts, answering 200 with an empty body after 30 s) | after each load | warning "row count unavailable"; the loaded data is kept |
 | 0 rows fetched for a table that usually changes (volume) | after each load | warning |
 | Newest `LastUpdatedDate` (freshness) | after each load | recorded |
 | Rows deleted in the API (Id-only comparison) | weekly | recorded in `bronze.deleted_ids`, dbt leaves them out |
+
+Checks after loading never fail a table: its data is already safely in bronze. If a check can't run, it becomes a warning. An empty API response is reported as a server-side timeout.
 
 **Errors.** Each request is retried up to 5 times with backoff on HTTP 429, 5xx and lost connections (dlt defaults), with a 120-second timeout. A load is all-or-nothing, and incremental state is saved only when it succeeds, so a rerun picks up exactly where it should.
 

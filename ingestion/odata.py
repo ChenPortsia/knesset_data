@@ -3,6 +3,7 @@
 Settings come from ingestion/.dlt/config.toml, section [sources.knesset_odata].
 """
 
+import json
 import logging
 import queue
 import threading
@@ -127,13 +128,24 @@ class Api:
     def json(self, path: str, params: dict[str, str]) -> dict[str, Any]:
         response = self.session.get(self.base_url + path, params=params)
         response.raise_for_status()
-        return response.json()
+        return decode(path, response.content)
 
     def metadata(self) -> bytes:
         """The `$metadata` XML: every table with its typed columns."""
         response = self.session.get(self.base_url + "$metadata")
         response.raise_for_status()
         return response.content
+
+
+class EmptyResponse(Exception):
+    """The API answered 200 with no body: its server timed out (seen after exactly 30 s)."""
+
+
+def decode(path: str, body: bytes) -> dict[str, Any]:
+    """Parse a JSON body; an empty one means the API's server gave up on the query."""
+    if not body.strip():
+        raise EmptyResponse(f"{path}: the API returned an empty response (a server-side timeout)")
+    return json.loads(body)
 
 
 def table_columns(metadata: bytes, table: str) -> dict[str, dict[str, Any]]:

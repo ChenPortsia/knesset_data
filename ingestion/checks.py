@@ -8,7 +8,7 @@ from datetime import datetime
 
 import duckdb
 
-from ingestion.odata import GetJson, fetch_table
+from ingestion.odata import GetJson, api_count, fetch_table
 
 MIN_USUAL_ROWS = 100  # a table that usually changes this much per run should not return 0
 
@@ -31,6 +31,20 @@ def bronze_stats(
     ).fetchone()[0]
     newest = "MAX(last_updated_date)" if has_date else "NULL"
     return con.execute(f"SELECT COUNT(*), {newest} {current_rows_sql(table, scd2)}").fetchone()
+
+
+def api_rows_or_warning(
+    get: GetJson, name: str, where: str | None
+) -> tuple[int | None, str | None]:
+    """The API's row count in scope, or a warning if the API can't answer.
+
+    Counting with a date filter (the vote tables) sometimes times out on the API's server.
+    That must not fail a table whose data already loaded, so it becomes a warning.
+    """
+    try:
+        return api_count(get, name, where), None
+    except Exception as error:
+        return None, f"API row count unavailable ({type(error).__name__}): not reconciled"
 
 
 def reconcile(api_rows: int, bronze_rows: int) -> str | None:

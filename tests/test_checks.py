@@ -1,6 +1,6 @@
 import duckdb
 
-from ingestion import checks, runlog
+from ingestion import checks, odata, runlog
 
 
 def test_reconcile():
@@ -27,3 +27,17 @@ def test_ops_records_and_usual_rows(tmp_path):
     with duckdb.connect(db) as con:
         # The first run (the full load) is skipped, the later ones averaged.
         assert checks.usual_rows(con, "kns_bill") == (100 + 200 + 300) / 3
+
+
+def test_api_row_count_failure_is_a_warning_not_an_error():
+    def timing_out(path, params):
+        raise odata.EmptyResponse("KNS_PlenumVote: empty response")
+
+    assert checks.api_rows_or_warning(timing_out, "KNS_PlenumVote", None) == (
+        None,
+        "API row count unavailable (EmptyResponse): not reconciled",
+    )
+    assert checks.api_rows_or_warning(lambda path, params: {"@odata.count": 7}, "T", None) == (
+        7,
+        None,
+    )
