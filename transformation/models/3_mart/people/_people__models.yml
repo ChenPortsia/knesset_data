@@ -1,0 +1,168 @@
+version: 2
+models:
+- name: fct_faction_membership
+  description: 'MK faction memberships over time. Grain: one row per person, faction and continuous period | חברות ח"כים בסיעות לאורך זמן'
+  config:
+    contract:
+      enforced: true
+  columns:
+  - name: membership_id
+    data_type: varchar
+    description: Membership period key | מפתח תקופת חברות
+    data_tests:
+    - unique
+    - not_null
+  - name: person_id
+    data_type: integer
+    description: Person ID (dim_person) | מזהה אדם
+    data_tests:
+    - relationships:
+        arguments:
+          to: ref('dim_person')
+          field: person_id
+        config: &id001
+          severity: '{{ ''warn'' if target.name == ''sample'' else ''error'' }}'
+  - name: faction_id
+    data_type: integer
+    description: Faction ID (dim_faction) | מזהה סיעה
+    data_tests:
+    - relationships:
+        arguments:
+          to: ref('dim_faction')
+          field: faction_id
+        config: &id002
+          severity: warn
+  - name: knesset_num
+    data_type: integer
+    description: Knesset of the faction | הכנסת של הסיעה
+  - name: start_at
+    data_type: timestamp
+    description: Start, Israel local time | מועד התחלה, שעון ישראל
+  - name: finish_at
+    data_type: timestamp
+    description: End, Israel local time; null if ongoing | מועד סיום, שעון ישראל; ריק אם פעיל
+  - name: start_date
+    data_type: date
+    description: Membership start date | תאריך תחילת החברות
+  - name: finish_date
+    data_type: date
+    description: Membership end date; null if still a member | תאריך סיום החברות
+  - name: is_current
+    data_type: boolean
+    description: True if still a member | האם עדיין חבר
+- name: fct_coalition_period
+  description: 'When each faction was in the coalition, derived from government posts with known exceptions from the coalition_overrides seed; a faction outside every period was in opposition. Grain: one
+    row per faction, government and continuous coalition period | מתי כל סיעה הייתה בקואליציה'
+  config:
+    contract:
+      enforced: true
+  columns:
+  - name: coalition_period_id
+    data_type: varchar
+    description: Coalition period key | מפתח
+    data_tests:
+    - unique
+    - not_null
+  - name: faction_id
+    data_type: integer
+    description: Faction ID (dim_faction) | מזהה סיעה
+    data_tests:
+    - relationships:
+        arguments:
+          to: ref('dim_faction')
+          field: faction_id
+        config: *id001
+  - name: faction_name
+    data_type: varchar
+    description: Faction name (Hebrew) | שם הסיעה
+  - name: knesset_num
+    data_type: integer
+    description: Knesset of the faction | הכנסת של הסיעה
+  - name: government_num
+    data_type: integer
+    description: Government number (34 = Netanyahu 2015, 36 = Bennett-Lapid, 37 = Netanyahu 2022...) | מספר הממשלה
+  - name: start_date
+    data_type: date
+    description: Start of the coalition period | תחילת התקופה
+  - name: finish_date
+    data_type: date
+    description: End of the coalition period; null if ongoing | סוף התקופה
+  - name: source
+    data_type: varchar
+    description: government_posts (a faction MK held a government post) or override (coalition_overrides seed) | מקור
+    data_tests:
+    - accepted_values:
+        arguments:
+          values:
+          - government_posts
+          - override
+- name: fct_person_role
+  description: 'Who held which role, when: committee chairs and members, ministers, Speaker, opposition leader. Grain: one row per person, role, committee or ministry, government, Knesset and continuous
+    period | מי מילא איזה תפקיד ומתי'
+  config:
+    contract:
+      enforced: true
+  columns:
+  - name: person_role_id
+    data_type: varchar
+    description: Role period key | מפתח
+    data_tests:
+    - unique
+    - not_null
+  - name: person_id
+    data_type: integer
+    description: Person ID (dim_person) | מזהה אדם
+    data_tests:
+    - relationships:
+        arguments:
+          to: ref('dim_person')
+          field: person_id
+        config: *id001
+  - name: role
+    data_type: varchar
+    description: committee_chair, committee_member, committee_substitute, minister, deputy_minister, prime_minister, speaker, deputy_speaker, opposition_leader, coalition_chair, faction_chair... | תפקיד
+  - name: role_group
+    data_type: varchar
+    description: committee / government / knesset / faction | קבוצת תפקיד
+  - name: knesset_num
+    data_type: integer
+    description: Knesset number (dim_knesset) | מספר הכנסת
+  - name: committee_id
+    data_type: integer
+    description: Committee, for committee roles | הוועדה
+    data_tests:
+    - relationships:
+        arguments:
+          to: ref('dim_committee')
+          field: committee_id
+        config: *id002
+  - name: committee_name
+    data_type: varchar
+    description: Committee name (Hebrew) | שם הוועדה
+  - name: ministry_id
+    data_type: integer
+    description: Ministry, for government roles | המשרד
+    data_tests:
+    - relationships:
+        arguments:
+          to: ref('dim_ministry')
+          field: ministry_id
+        config: *id001
+  - name: ministry_name
+    data_type: varchar
+    description: Ministry name (Hebrew) | שם המשרד
+  - name: government_num
+    data_type: integer
+    description: Government number, for government roles | מספר הממשלה
+  - name: start_date
+    data_type: date
+    description: Start of the role | תחילת התפקיד
+  - name: finish_date
+    data_type: date
+    description: End of the role; null if ongoing. Some 25th-Knesset end dates were rewritten by the source to 2026-11-10 | סיום התפקיד
+  - name: days_in_role
+    data_type: integer
+    description: Days in the role, to today if ongoing | ימים בתפקיד
+  - name: is_current
+    data_type: boolean
+    description: True if the role is ongoing | האם בתפקיד כעת

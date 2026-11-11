@@ -15,7 +15,7 @@ renamed AS (
         CAST(category_desc AS VARCHAR)                     AS category_name,
         CAST(committee_type_id AS INTEGER)                 AS committee_type_id,
         CAST(committee_type_desc AS VARCHAR)               AS committee_type,
-        CAST(additional_type_id AS INTEGER)                AS additional_type_id,
+        CAST(NULLIF(additional_type_id, -1) AS INTEGER)    AS additional_type_id,
         CAST(additional_type_desc AS VARCHAR)              AS additional_type,
         CAST(parent_committee_id AS INTEGER)               AS parent_committee_id,
         CAST(committee_parent_name AS VARCHAR)             AS parent_committee_name,

@@ -1,5 +1,6 @@
--- An MK should not be in two factions at the same time. Overlaps would make the faction
--- of a vote ambiguous (int_vote_results_joined_to_factions then keeps the newest membership).
+-- Flags MKs in two factions at the same time. Known, real cases: factions that formally split
+-- (e.g. Agudat Yisrael within United Torah Judaism) and the week-long handover after the 2026
+-- election. int_vote_results_joined_to_factions keeps the newest membership for such votes.
 {{ config(severity='warn') }}
 
 SELECT

@@ -31,3 +31,7 @@ models:
 seeds:
   knesset:
     +schema: silver
+    +full_refresh: true  # seeds are tiny: always recreate, so adding a column just works
+
+vars:
+  from_knesset: 20  # first Knesset in scope; keep in step with ingestion/.dlt/config.toml

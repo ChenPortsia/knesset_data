@@ -1,0 +1,114 @@
+version: 2
+models:
+- name: fct_query
+  description: 'Parliamentary queries from MKs to ministers. Grain: one row per query, 20th Knesset onward | שאילתות של ח"כים לשרים'
+  config:
+    contract:
+      enforced: true
+  columns:
+  - name: query_id
+    data_type: integer
+    description: Query ID | מזהה שאילתה
+    data_tests:
+    - unique
+    - not_null
+  - name: knesset_num
+    data_type: integer
+    description: Knesset number (dim_knesset) | מספר הכנסת
+  - name: query_name
+    data_type: varchar
+    description: Query title (Hebrew) | כותרת השאילתה
+  - name: query_type
+    data_type: varchar
+    description: regular / direct / urgent (Hebrew) | סוג שאילתה
+  - name: status
+    data_type: varchar
+    description: Status (Hebrew) | סטטוס
+  - name: person_id
+    data_type: integer
+    description: MK who asked | הח"כ השואל
+    data_tests:
+    - relationships:
+        arguments:
+          to: ref('dim_person')
+          field: person_id
+        config: &id001
+          severity: '{{ ''warn'' if target.name == ''sample'' else ''error'' }}'
+  - name: ministry_id
+    data_type: integer
+    description: Ministry asked | המשרד הנשאל
+    data_tests:
+    - relationships:
+        arguments:
+          to: ref('dim_ministry')
+          field: ministry_id
+        config: *id001
+  - name: submitted_date
+    data_type: date
+    description: Date submitted | תאריך הגשה
+  - name: replied_date
+    data_type: date
+    description: Date the minister replied; null if not yet | תאריך תשובה
+  - name: reply_days
+    data_type: integer
+    description: Days from submission to reply | ימים עד תשובה
+  - name: is_replied
+    data_type: boolean
+    description: True if the minister replied | האם נענתה
+  - name: asker_camp
+    data_type: varchar
+    description: 'coalition / opposition: the asking MK''s camp when the query was submitted; null if unknown | מחנה הח"כ השואל'
+    data_tests:
+    - accepted_values:
+        arguments:
+          values:
+          - coalition
+          - opposition
+- name: fct_agenda
+  description: 'Motions for the agenda. Grain: one row per motion, 20th Knesset onward | הצעות לסדר היום'
+  config:
+    contract:
+      enforced: true
+  columns:
+  - name: agenda_id
+    data_type: integer
+    description: Motion ID | מזהה הצעה
+    data_tests:
+    - unique
+    - not_null
+  - name: knesset_num
+    data_type: integer
+    description: Knesset number (dim_knesset) | מספר הכנסת
+  - name: agenda_name
+    data_type: varchar
+    description: Motion title (Hebrew) | כותרת ההצעה
+  - name: classification
+    data_type: varchar
+    description: regular / urgent... (Hebrew) | סיווג
+  - name: sub_type
+    data_type: varchar
+    description: Sub-type (Hebrew) | תת-סוג
+  - name: status
+    data_type: varchar
+    description: Status (Hebrew) | סטטוס
+  - name: initiator_person_id
+    data_type: integer
+    description: MK who proposed the motion (dim_person) | הח"כ המציע
+    data_tests:
+    - relationships:
+        arguments:
+          to: ref('dim_person')
+          field: person_id
+        config: *id001
+  - name: minister_person_id
+    data_type: integer
+    description: Minister who replied (dim_person) | השר המשיב
+  - name: committee_id
+    data_type: integer
+    description: Committee the motion was sent to | הוועדה שאליה הועברה
+  - name: gov_recommendation
+    data_type: varchar
+    description: Government position (Hebrew) | עמדת הממשלה
+  - name: decision_date
+    data_type: date
+    description: Speaker's decision date | תאריך החלטת היו"ר

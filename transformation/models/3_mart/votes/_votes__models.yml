@@ -1,0 +1,247 @@
+version: 2
+models:
+- name: fct_plenum_vote
+  description: 'Plenum votes with their totals. Grain: one row per vote | הצבעות במליאה עם סיכומים'
+  config:
+    contract:
+      enforced: true
+  columns:
+  - name: vote_id
+    data_type: integer
+    description: Vote ID | מזהה הצבעה
+    data_tests:
+    - unique
+    - not_null
+  - name: plenum_session_id
+    data_type: integer
+    description: Plenum session ID (fct_plenum_session) | מזהה ישיבת מליאה
+    data_tests:
+    - relationships:
+        arguments:
+          to: ref('fct_plenum_session')
+          field: plenum_session_id
+        config: &id001
+          severity: warn
+  - name: knesset_num
+    data_type: integer
+    description: Knesset of the vote | הכנסת של ההצבעה
+  - name: vote_date
+    data_type: date
+    description: Vote date (dim_date) | תאריך ההצבעה
+    data_tests:
+    - relationships:
+        arguments:
+          to: ref('dim_date')
+          field: date_day
+        config: &id002
+          severity: '{{ ''warn'' if target.name == ''sample'' else ''error'' }}'
+  - name: voted_at
+    data_type: timestamp
+    description: Vote time, Israel local time | מועד ההצבעה
+  - name: vote_title
+    data_type: varchar
+    description: Vote title, usually the bill or motion (Hebrew) | כותרת ההצבעה
+  - name: vote_subject
+    data_type: varchar
+    description: What was voted on, e.g. first reading (Hebrew) | נושא ההצבעה
+  - name: vote_method
+    data_type: varchar
+    description: Voting method (Hebrew) | שיטת הצבעה
+  - name: is_no_confidence
+    data_type: boolean
+    description: True for a no-confidence vote | האם אי-אמון
+  - name: item_type
+    data_type: varchar
+    description: Type of item voted on (Hebrew); null if not on the session agenda | סוג הפריט
+  - name: bill_id
+    data_type: integer
+    description: Bill voted on, if the item is a bill (dim_bill; may be from before the 20th Knesset) | הצעת החוק שעליה הצביעו
+    data_tests:
+    - relationships:
+        arguments:
+          to: ref('dim_bill')
+          field: bill_id
+        config: *id001
+  - name: votes_for
+    data_type: integer
+    description: MKs who voted for | בעד
+  - name: votes_against
+    data_type: integer
+    description: MKs who voted against | נגד
+  - name: votes_abstain
+    data_type: integer
+    description: MKs who abstained | נמנעים
+  - name: mks_took_part
+    data_type: integer
+    description: MKs who voted for, against or abstained | מספר המשתתפים
+  - name: is_accepted
+    data_type: boolean
+    description: True if more MKs voted for than against | האם התקבלה
+  - name: coalition_for
+    data_type: integer
+    description: Coalition MKs who voted for | חברי קואליציה בעד
+  - name: coalition_against
+    data_type: integer
+    description: Coalition MKs who voted against | חברי קואליציה נגד
+  - name: opposition_for
+    data_type: integer
+    description: Opposition MKs who voted for | חברי אופוזיציה בעד
+  - name: opposition_against
+    data_type: integer
+    description: Opposition MKs who voted against | חברי אופוזיציה נגד
+  - name: is_coalition_split
+    data_type: boolean
+    description: True if coalition MKs voted both for and against | האם הקואליציה התפצלה
+- name: fct_vote_result
+  description: 'How each MK voted in each plenum vote, with their faction. Grain: one row per vote and MK | איך הצביע כל ח"כ בכל הצבעה, עם סיעתו'
+  config:
+    contract:
+      enforced: true
+  columns:
+  - name: vote_result_id
+    data_type: integer
+    description: Vote result ID | מזהה תוצאת הצבעה
+    data_tests:
+    - unique
+    - not_null
+  - name: vote_id
+    data_type: integer
+    description: Plenum vote ID (fct_plenum_vote) | מזהה הצבעה
+    data_tests:
+    - relationships:
+        arguments:
+          to: ref('fct_plenum_vote')
+          field: vote_id
+        config: *id001
+  - name: person_id
+    data_type: integer
+    description: Person ID (dim_person) | מזהה אדם
+  - name: faction_id
+    data_type: integer
+    description: MK's faction at the time of the vote (see faction_match) | סיעת הח"כ בעת ההצבעה
+    data_tests:
+    - relationships:
+        arguments:
+          to: ref('dim_faction')
+          field: faction_id
+        config: *id001
+  - name: faction_match
+    data_type: varchar
+    description: dated (membership covers the vote date) / knesset (the MK's only faction in that Knesset) / none | איך נמצאה הסיעה
+    data_tests:
+    - accepted_values:
+        arguments:
+          values:
+          - dated
+          - knesset
+          - none
+  - name: camp
+    data_type: varchar
+    description: 'coalition / opposition: the MK''s faction''s camp on the day of the vote (fct_coalition_period); null if the faction is unknown | מחנה: קואליציה / אופוזיציה'
+    data_tests:
+    - accepted_values:
+        arguments:
+          values:
+          - coalition
+          - opposition
+  - name: knesset_num
+    data_type: integer
+    description: Knesset number (dim_knesset) | מספר הכנסת
+  - name: vote_date
+    data_type: date
+    description: Vote date (dim_date) | תאריך ההצבעה
+    data_tests:
+    - relationships:
+        arguments:
+          to: ref('dim_date')
+          field: date_day
+        config: *id002
+  - name: voted_at
+    data_type: timestamp
+    description: Vote time, Israel local time | מועד ההצבעה
+  - name: result
+    data_type: varchar
+    description: for / against / abstain / absent / voted (secret ballot) | תוצאה
+    data_tests:
+    - accepted_values:
+        arguments:
+          values:
+          - for
+          - against
+          - abstain
+          - absent
+          - voted
+  - name: took_part
+    data_type: boolean
+    description: True if the MK voted for, against or abstained | האם השתתף
+  - name: faction_majority_result
+    data_type: varchar
+    description: Most common result in the MK's faction; null on a tie | תוצאת הרוב בסיעה
+  - name: voted_with_faction
+    data_type: boolean
+    description: True if the MK voted like the faction majority; null if not comparable | האם הצביע כרוב סיעתו
+- name: agg_faction_pair_agreement_month
+  description: 'How often each pair of factions voted the same way, per month: their majorities matched. Grain: one row per month, pair of factions (faction_a_id < faction_b_id) and camp pair | באיזו תדירות
+    הצביעו שתי סיעות באותו אופן, לפי חודש'
+  config:
+    contract:
+      enforced: true
+  columns:
+  - name: pair_month_id
+    data_type: varchar
+    description: 'Key: hash of month and faction pair | מפתח'
+    data_tests:
+    - unique
+    - not_null
+  - name: month_start
+    data_type: date
+    description: First day of the month | תחילת החודש
+  - name: year_month
+    data_type: varchar
+    description: Year and month, e.g. 2024-11 | שנה וחודש
+  - name: knesset_num
+    data_type: integer
+    description: Knesset of the factions | הכנסת
+  - name: faction_a_id
+    data_type: integer
+    description: First faction (dim_faction) | סיעה א
+    data_tests:
+    - relationships:
+        arguments:
+          to: ref('dim_faction')
+          field: faction_id
+        config: *id002
+  - name: faction_a_name
+    data_type: varchar
+    description: First faction name (Hebrew) | שם סיעה א
+  - name: faction_b_id
+    data_type: integer
+    description: Second faction (dim_faction) | סיעה ב
+    data_tests:
+    - relationships:
+        arguments:
+          to: ref('dim_faction')
+          field: faction_id
+        config: *id002
+  - name: faction_b_name
+    data_type: varchar
+    description: Second faction name (Hebrew) | שם סיעה ב
+  - name: camp_pair
+    data_type: varchar
+    description: 'The factions'' camps at the time: coalition-coalition / coalition-opposition / opposition-opposition | צירוף המחנות'
+    data_tests:
+    - accepted_values:
+        arguments:
+          values:
+          - coalition-coalition
+          - coalition-opposition
+          - opposition-opposition
+  - name: votes
+    data_type: integer
+    description: Votes where both factions had a majority | הצבעות משותפות
+  - name: agreed
+    data_type: integer
+    description: Votes where both majorities were the same | הצבעות בהסכמה
+  - name: agreement_percent
+    data_type: double
+    description: agreed / votes, in percent | אחוז הסכמה

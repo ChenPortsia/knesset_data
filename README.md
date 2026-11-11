@@ -20,7 +20,7 @@ data/raw/raw.duckdb              written only by ingestion
 data/warehouse/warehouse.duckdb  written only by dbt
   silver.stg_*                   staging: current rows, clean names, local times, codes   ← done
   silver.int_*                   intermediate: faction periods, votes, bill stages         ← done
-  gold.dim_* / fct_*             marts: the star schema the agent queries                  ← next
+  gold.dim_* / fct_*             marts: the star schema the agent queries                  ← done
 ```
 
 Test loads use `data/raw/raw_sample.duckdb` and `data/warehouse/warehouse_sample.duckdb`.
@@ -68,6 +68,7 @@ make dbt TARGET=sample   # build and test the dbt models on the test load
 make ingest              # ingestion: first run loads everything (~40 min), later runs only changes
 make dbt                 # build and test on the full load
 make ingest-weekly       # ingestion + check for rows deleted in the API (run weekly)
+make answers             # answer the milestone 1 questions from gold
 make docs TARGET=sample  # browse model and column docs
 make test lint           # unit tests and lint
 make clean               # delete all loaded data, pipeline state and logs

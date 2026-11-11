@@ -1,0 +1,211 @@
+version: 2
+models:
+- name: dim_bill
+  description: 'Bills, with stage, outcome, initiators and activity. Grain: one row per bill, 20th Knesset onward | הצעות חוק עם שלב, תוצאה, יוזמים ופעילות'
+  config:
+    contract:
+      enforced: true
+  columns:
+  - name: bill_id
+    data_type: integer
+    description: Bill ID | מזהה הצעת חוק
+    data_tests:
+    - unique
+    - not_null
+  - name: bill_name
+    data_type: varchar
+    description: Bill title (Hebrew) | שם הצעת החוק
+  - name: knesset_num
+    data_type: integer
+    description: Knesset number (dim_knesset) | מספר הכנסת
+  - name: origin
+    data_type: varchar
+    description: government / private / committee | מקור ההצעה
+    data_tests:
+    - accepted_values:
+        arguments:
+          values:
+          - government
+          - private
+          - committee
+  - name: status_id
+    data_type: integer
+    description: Current status ID | מזהה הסטטוס
+  - name: status_he
+    data_type: varchar
+    description: Current status (Hebrew) | הסטטוס הנוכחי
+  - name: status_en
+    data_type: varchar
+    description: Current status (English) | הסטטוס באנגלית
+  - name: stage
+    data_type: varchar
+    description: preliminary, committee_assignment, first_reading, second_third_reading, passed, continuity, split_or_merge, stopped, merged, converted | שלב החקיקה
+  - name: stage_order
+    data_type: integer
+    description: 1 preliminary ... 5 passed; 0 side processes; 9 ended without passing | סדר השלב
+  - name: outcome
+    data_type: varchar
+    description: active / passed / stopped / merged / converted | תוצאה
+    data_tests:
+    - accepted_values:
+        arguments:
+          values:
+          - active
+          - passed
+          - stopped
+          - merged
+          - converted
+  - name: is_passed
+    data_type: boolean
+    description: True if passed third reading and became law | האם התקבלה כחוק
+  - name: committee_id
+    data_type: integer
+    description: Committee that prepared the bill | הוועדה המכינה
+    data_tests:
+    - relationships:
+        arguments:
+          to: ref('dim_committee')
+          field: committee_id
+        config:
+          severity: warn
+  - name: committee_name
+    data_type: varchar
+    description: Committee name (Hebrew) | שם הוועדה
+  - name: first_initiator_person_id
+    data_type: integer
+    description: First-named initiator | היוזם הראשון
+    data_tests:
+    - relationships:
+        arguments:
+          to: ref('dim_person')
+          field: person_id
+        config: &id001
+          severity: '{{ ''warn'' if target.name == ''sample'' else ''error'' }}'
+  - name: initiators
+    data_type: integer
+    description: MKs who initiated the bill | מספר היוזמים
+  - name: joiners
+    data_type: integer
+    description: MKs who joined the bill later | מספר המצטרפים
+  - name: committee_sessions
+    data_type: integer
+    description: Committee sessions that discussed the bill | מספר ישיבות ועדה שדנו בהצעה
+  - name: first_committee_session_at
+    data_type: timestamp
+    description: First committee discussion | הדיון הראשון בוועדה
+  - name: plenum_votes
+    data_type: integer
+    description: Plenum votes on the bill | מספר הצבעות במליאה
+  - name: last_voted_at
+    data_type: timestamp
+    description: Latest plenum vote on the bill | ההצבעה האחרונה במליאה
+  - name: tabled_date
+    data_type: date
+    description: First tabled in the plenum | הונחה לראשונה על שולחן הכנסת
+  - name: preliminary_reading_date
+    data_type: date
+    description: Preliminary reading held (private bills) | קריאה טרומית
+  - name: first_reading_date
+    data_type: date
+    description: First reading held | קריאה ראשונה
+  - name: final_reading_date
+    data_type: date
+    description: Second and third readings held | קריאה שנייה ושלישית
+  - name: days_first_to_final_reading
+    data_type: integer
+    description: Days from first to final reading, for passed bills | ימים מקריאה ראשונה לשלישית
+  - name: published_at
+    data_type: timestamp
+    description: Publication in Reshumot | פרסום ברשומות
+  - name: is_continuation_bill
+    data_type: boolean
+    description: True if continued from a previous Knesset | האם בדין רציפות
+- name: fct_bill_initiator
+  description: 'Who initiated or joined each bill. Grain: one row per bill and person | מי יזם או הצטרף לכל הצעת חוק'
+  config:
+    contract:
+      enforced: true
+  columns:
+  - name: bill_initiator_id
+    data_type: integer
+    description: Row ID | מזהה שורה
+    data_tests:
+    - unique
+    - not_null
+  - name: bill_id
+    data_type: integer
+    description: Bill ID (dim_bill) | מזהה הצעת חוק
+    data_tests:
+    - relationships:
+        arguments:
+          to: ref('dim_bill')
+          field: bill_id
+        config: *id001
+  - name: person_id
+    data_type: integer
+    description: Person ID (dim_person) | מזהה אדם
+    data_tests:
+    - relationships:
+        arguments:
+          to: ref('dim_person')
+          field: person_id
+        config: *id001
+  - name: knesset_num
+    data_type: integer
+    description: Knesset of the bill | הכנסת של ההצעה
+  - name: is_initiator
+    data_type: boolean
+    description: True for an initiator, false for a joiner | יוזם או מצטרף
+  - name: is_first_initiator
+    data_type: boolean
+    description: True for the first-named initiator | האם היוזם הראשון
+  - name: ordinal
+    data_type: integer
+    description: Order among the initiators | מספר סידורי
+- name: fct_bill_reading
+  description: 'When each bill reached each plenum reading, from the bill''s status on the plenum agenda. Grain: one row per bill and reading | מתי הגיעה כל הצעת חוק לכל קריאה במליאה'
+  config:
+    contract:
+      enforced: true
+  columns:
+  - name: bill_reading_id
+    data_type: varchar
+    description: 'Key: hash of bill and reading | מפתח'
+    data_tests:
+    - unique
+    - not_null
+  - name: bill_id
+    data_type: integer
+    description: Bill ID (dim_bill) | מזהה הצעת חוק
+    data_tests:
+    - relationships:
+        arguments:
+          to: ref('dim_bill')
+          field: bill_id
+        config: *id001
+  - name: knesset_num
+    data_type: integer
+    description: Knesset number (dim_knesset) | מספר הכנסת
+  - name: reading
+    data_type: varchar
+    description: tabled / preliminary / first / second_third. Held, not necessarily passed | הקריאה
+    data_tests:
+    - accepted_values:
+        arguments:
+          values:
+          - tabled
+          - preliminary
+          - first
+          - second_third
+  - name: reading_order
+    data_type: integer
+    description: 0 tabled, 1 preliminary, 2 first, 3 second_third | סדר
+  - name: reading_date
+    data_type: date
+    description: First plenum session with the bill on the agenda for this reading | תאריך הקריאה
+  - name: last_agenda_date
+    data_type: date
+    description: Last plenum session with the bill on the agenda for this reading | הופעה אחרונה בסדר היום
+  - name: agenda_items
+    data_type: integer
+    description: Times on the agenda for this reading | מספר הופעות

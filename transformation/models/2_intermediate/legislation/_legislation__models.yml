@@ -64,3 +64,26 @@ models:
         description: "Order among the initiators | מספר סידורי בין היוזמים"
       - name: is_first_initiator
         description: "True for the first-named initiator | האם היוזם הראשון"
+
+  - name: int_bill_plenum_readings
+    description: "When each bill reached each plenum reading, from the bill's status on the plenum agenda. Grain: one row per bill and reading | מתי הגיעה כל הצעת חוק לכל קריאה במליאה"
+    columns:
+      - name: bill_reading_id
+        description: "Key: hash of bill and reading | מפתח"
+        data_tests: [unique, not_null]
+      - name: bill_id
+        description: "Bill ID | מזהה הצעת חוק"
+      - name: reading
+        description: "tabled / preliminary / first / second_third. On the agenda for a reading means the reading was held, not that it passed | הקריאה"
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [tabled, preliminary, first, second_third]
+      - name: reading_order
+        description: "0 tabled, 1 preliminary, 2 first, 3 second_third | סדר הקריאה"
+      - name: first_at
+        description: "First plenum session with the bill on the agenda for this reading | הישיבה הראשונה"
+      - name: last_at
+        description: "Last plenum session with the bill on the agenda for this reading | הישיבה האחרונה"
+      - name: agenda_items
+        description: "Times on the agenda for this reading | מספר הופעות בסדר היום"

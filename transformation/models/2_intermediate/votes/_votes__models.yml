@@ -43,9 +43,17 @@ models:
       - name: person_id
         description: "MK who voted | חבר הכנסת המצביע"
       - name: faction_id
-        description: "MK's faction on the day of the vote; null if no membership covers that day | סיעת הח\"כ ביום ההצבעה"
+        description: "MK's faction at the time of the vote (see faction_match); null if unknown | סיעת הח\"כ בעת ההצבעה"
       - name: faction_name
         description: "Faction name (Hebrew) | שם הסיעה"
+      - name: faction_match
+        description: "How the faction was found: dated (a membership covers the vote date), knesset (the MK's only faction in that Knesset; the source lost most 25th-Knesset dates), none | איך נמצאה הסיעה"
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [dated, knesset, none]
+      - name: knesset_num
+        description: "Knesset of the vote's plenum session | הכנסת של ישיבת המליאה"
       - name: plenum_session_id
         description: "Plenum session ID | מזהה ישיבת מליאה"
       - name: voted_at
@@ -56,3 +64,62 @@ models:
         description: "Result: for / against / abstain / absent / voted | תוצאה"
       - name: took_part
         description: "True if the MK voted for, against or abstained | האם הח\"כ השתתף בהצבעה"
+
+  - name: int_vote_results_compared_to_faction_majority
+    description: "Each MK's vote compared with the majority of their faction in the same vote. Grain: one row per vote and MK | השוואת הצבעת כל ח\"כ לרוב סיעתו"
+    columns:
+      - name: vote_result_id
+        description: "Vote result ID | מזהה תוצאת הצבעה"
+        data_tests: [unique, not_null]
+      - name: faction_majority_result
+        description: "Most common result among the faction's MKs who took part: for / against / abstain; null on a tie or without a faction | תוצאת הרוב בסיעה"
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [for, against, abstain]
+      - name: faction_mks_took_part
+        description: "How many of the faction's MKs took part in the vote | כמה מחברי הסיעה השתתפו"
+      - name: voted_with_faction
+        description: "True if the MK voted like the faction majority; null if the MK did not take part or there is no majority | האם הצביע כמו רוב סיעתו"
+
+  - name: int_faction_vote_majorities
+    description: "How most of each faction voted in each vote. Grain: one row per vote and faction | איך הצביע רוב כל סיעה בכל הצבעה"
+    columns:
+      - name: vote_faction_id
+        description: "Key: hash of vote and faction | מפתח"
+        data_tests: [unique, not_null]
+      - name: vote_id
+        description: "Vote ID | מזהה הצבעה"
+      - name: faction_id
+        description: "Faction ID | מזהה סיעה"
+      - name: majority_result
+        description: "Most common result among the faction's MKs who took part; null on a tie | תוצאת הרוב בסיעה"
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [for, against, abstain]
+      - name: mks_took_part
+        description: "Faction MKs who took part | חברי הסיעה שהשתתפו"
+      - name: mks_with_majority
+        description: "Faction MKs who voted with the majority | חברי הסיעה שהצביעו כרוב"
+      - name: is_split
+        description: "True if any faction MK voted differently from the majority | האם הסיעה התפצלה"
+      - name: camp
+        description: "The faction's camp on the day of the vote: coalition / opposition | מחנה הסיעה ביום ההצבעה"
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [coalition, opposition]
+
+  - name: int_vote_results_joined_to_camps
+    description: "Each MK's vote with their camp, coalition or opposition, on the day of the vote. Grain: one row per vote and MK | הצבעת כל ח\"כ עם המחנה שלו"
+    columns:
+      - name: vote_result_id
+        description: "Vote result ID | מזהה תוצאת הצבעה"
+        data_tests: [unique, not_null]
+      - name: camp
+        description: "coalition / opposition on the day of the vote; null if the MK's faction is unknown | קואליציה / אופוזיציה"
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [coalition, opposition]

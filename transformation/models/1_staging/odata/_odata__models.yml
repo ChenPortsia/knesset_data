@@ -177,7 +177,7 @@ models:
   - name: committee_type
     description: 'Committee type: main, sub, joint... (Hebrew) | סוג ועדה: ראשית, משנה, משותפת...'
   - name: additional_type_id
-    description: Additional type ID | מזהה סוג נוסף
+    description: Additional type ID; null if none (the source uses -1) | מזהה סוג נוסף
   - name: additional_type
     description: 'Additional type: permanent, special... (Hebrew) | סוג נוסף: קבועה, מיוחדת...'
   - name: parent_committee_id
@@ -333,7 +333,7 @@ models:
   - name: bill_number
     description: Bill number | מספר הצעת החוק
   - name: committee_id
-    description: Committee that prepared the bill | הוועדה שהכינה את ההצעה
+    description: Committee that prepared the bill; null if none (the source uses -1) | הוועדה שהכינה את ההצעה
   - name: status_id
     description: Current stage of the bill (see stg_odata__status) | השלב הנוכחי של ההצעה
   - name: postponement_reason_id
