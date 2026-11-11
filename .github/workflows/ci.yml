@@ -19,7 +19,7 @@ jobs:
       - run: docker compose build
       - name: Both services start and answer /health
         run: |
-          mkdir -p data logs
+          mkdir -p data/raw data/warehouse logs
           docker compose up -d
           for port in 8001 8002; do
             for i in $(seq 1 30); do curl -sf localhost:$port/health && break; sleep 2; done

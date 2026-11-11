@@ -16,3 +16,22 @@ seeds:
         description: "English label | תווית באנגלית"
       - name: label_he
         description: "Hebrew label, as in the source | תווית בעברית, כמו במקור"
+
+  - name: bill_status_stages
+    description: "Bill status -> legislative stage and outcome, with English names. Hand-made: review when the API adds statuses | מיפוי סטטוס הצעת חוק לשלב חקיקה ולתוצאה"
+    config:
+      column_types: {status_id: integer, status_he: varchar, status_en: varchar, stage: varchar, stage_order: integer, outcome: varchar}
+    columns:
+      - name: status_id
+        description: "Status ID (KNS_Status, type bill) | מזהה סטטוס"
+        data_tests: [unique, not_null]
+      - name: status_he
+        description: "Status name as in the source | שם הסטטוס במקור"
+      - name: status_en
+        description: "English translation | תרגום לאנגלית"
+      - name: stage
+        description: "Legislative stage | שלב חקיקה"
+      - name: stage_order
+        description: "1 preliminary ... 5 passed; 0 side processes; 9 ended without passing | סדר השלב"
+      - name: outcome
+        description: "active / passed / stopped / merged / converted | תוצאה"

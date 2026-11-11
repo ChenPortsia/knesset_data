@@ -1,7 +1,7 @@
 """HTTP API to trigger and watch dbt builds. Run: uvicorn transformation.api:app
 
 Each build is `dbt build` in a background process, one at a time. dbt reads
-data/raw.duckdb read-only and writes data/warehouse.duckdb, so start a build after
+data/raw/raw.duckdb read-only and writes data/warehouse/warehouse.duckdb, so start a build after
 an ingestion run has finished. Interactive docs at /docs.
 """
 
@@ -37,7 +37,8 @@ def summarize(job: Job) -> dict[str, Any] | None:
 
 
 app = FastAPI(
-    title="Knesset transformation", description="Build the dbt models into data/warehouse.duckdb"
+    title="Knesset transformation",
+    description="Build the dbt models into data/warehouse/warehouse.duckdb",
 )
 runner = Runner(LOG_DIR, cwd=PROJECT_DIR, on_finish=summarize)
 
@@ -56,6 +57,7 @@ def health() -> dict[str, Any]:
 def start_build(request: BuildRequest) -> Job:
     """Start `dbt build`. 409 if a build is already running."""
     build_id = now().strftime("%Y%m%dT%H%M%SZ")
+    (PROJECT_DIR.parent / "data" / "warehouse").mkdir(parents=True, exist_ok=True)
     command = [DBT, "build", "--profiles-dir", ".", "--target", request.target]
     job = runner.start(build_id, command + (["--select", request.select] if request.select else []))
     if job is None:

@@ -5,6 +5,12 @@
 log_level = "WARNING"     # dlt's own log level; our run log is separate
 dlthub_telemetry = false
 
+[load]
+# dlt stages each batch in bronze_staging before merging it into bronze. Empty it after
+# each load, or it keeps a copy of the last batch of every table (all 1.35M votes after
+# a full load).
+truncate_staging_dataset = true
+
 [sources.knesset_odata]
 base_url = "https://knesset.gov.il/OdataV4/ParliamentInfo/"
 # Scope: the 20th Knesset onward, which covers the committee protocols (Nov 2018+)

@@ -1,4 +1,4 @@
-"""Ingestion: Knesset OData API -> data/raw.duckdb, as a dlt project.
+"""Ingestion: Knesset OData API -> data/raw/raw.duckdb, as a dlt project.
 
 dlt reads its settings from ingestion/.dlt/ (config.toml, secrets.toml).
 """

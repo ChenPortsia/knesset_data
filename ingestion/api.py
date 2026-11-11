@@ -17,10 +17,14 @@ from common.jobs import Job, Runner, tail
 from ingestion.odata import TABLES, load_settings, scope
 from ingestion.runlog import LOG_DIR, new_run_id
 
-DBS = {"daily": "data/raw.duckdb", "weekly": "data/raw.duckdb", "sample": "data/raw_sample.duckdb"}
+DBS = {
+    "daily": "data/raw/raw.duckdb",
+    "weekly": "data/raw/raw.duckdb",
+    "sample": "data/raw/raw_sample.duckdb",
+}
 
 app = FastAPI(
-    title="Knesset ingestion", description="Load Knesset OData tables into data/raw.duckdb"
+    title="Knesset ingestion", description="Load Knesset OData tables into data/raw/raw.duckdb"
 )
 runner = Runner(LOG_DIR)
 

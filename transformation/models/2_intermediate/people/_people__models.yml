@@ -1,0 +1,26 @@
+version: 2
+
+models:
+  - name: int_faction_memberships_collapsed
+    description: "MK faction memberships over time, overlapping source periods merged. Grain: one row per person, faction and continuous period | חברות ח\"כים בסיעות לאורך זמן, תקופות חופפות מאוחדות"
+    columns:
+      - name: membership_id
+        description: "Membership period key: hash of person, faction and start | מפתח תקופת חברות"
+        data_tests: [unique, not_null]
+      - name: person_id
+        description: "Person ID | מזהה אדם"
+        data_tests: [not_null]
+      - name: faction_id
+        description: "Faction ID | מזהה סיעה"
+        data_tests: [not_null]
+      - name: faction_name
+        description: "Faction name (Hebrew) | שם הסיעה"
+      - name: knesset_num
+        description: "Knesset the faction belongs to | הכנסת שאליה שייכת הסיעה"
+      - name: start_at
+        description: "Membership start, Israel local time | תחילת החברות"
+        data_tests: [not_null]
+      - name: finish_at
+        description: "Membership end, Israel local time; null if still a member | סיום החברות; ריק אם עדיין חבר"
+      - name: is_current
+        description: "True if still a member | האם עדיין חבר בסיעה"
