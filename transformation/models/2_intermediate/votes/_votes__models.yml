@@ -64,3 +64,20 @@ models:
         description: "Result: for / against / abstain / absent / voted | תוצאה"
       - name: took_part
         description: "True if the MK voted for, against or abstained | האם הח\"כ השתתף בהצבעה"
+
+  - name: int_vote_results_compared_to_faction_majority
+    description: "Each MK's vote compared with the majority of their faction in the same vote. Grain: one row per vote and MK | השוואת הצבעת כל ח\"כ לרוב סיעתו"
+    columns:
+      - name: vote_result_id
+        description: "Vote result ID | מזהה תוצאת הצבעה"
+        data_tests: [unique, not_null]
+      - name: faction_majority_result
+        description: "Most common result among the faction's MKs who took part: for / against / abstain; null on a tie or without a faction | תוצאת הרוב בסיעה"
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [for, against, abstain]
+      - name: faction_mks_took_part
+        description: "How many of the faction's MKs took part in the vote | כמה מחברי הסיעה השתתפו"
+      - name: voted_with_faction
+        description: "True if the MK voted like the faction majority; null if the MK did not take part or there is no majority | האם הצביע כמו רוב סיעתו"

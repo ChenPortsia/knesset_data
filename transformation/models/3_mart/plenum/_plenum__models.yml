@@ -1,0 +1,38 @@
+version: 2
+models:
+- name: fct_plenum_session
+  description: 'Plenum sessions. Grain: one row per plenum session, 20th Knesset onward | ישיבות מליאה'
+  config:
+    contract:
+      enforced: true
+  columns:
+  - name: plenum_session_id
+    data_type: integer
+    description: Plenum session ID (fct_plenum_session) | מזהה ישיבת מליאה
+    data_tests:
+    - unique
+    - not_null
+  - name: knesset_num
+    data_type: integer
+    description: Knesset number (dim_knesset) | מספר הכנסת
+  - name: session_date
+    data_type: date
+    description: Session date (dim_date) | תאריך הישיבה
+  - name: start_at
+    data_type: timestamp
+    description: Start, Israel local time | מועד התחלה, שעון ישראל
+  - name: finish_at
+    data_type: timestamp
+    description: End, Israel local time; null if ongoing | מועד סיום, שעון ישראל; ריק אם פעיל
+  - name: session_number
+    data_type: integer
+    description: Session number | מספר הישיבה
+  - name: session_name
+    data_type: varchar
+    description: Session title (Hebrew) | כותרת הישיבה
+  - name: is_special_meeting
+    data_type: boolean
+    description: True for a special session | האם ישיבה מיוחדת
+  - name: votes
+    data_type: integer
+    description: Votes held in the session | מספר הצבעות

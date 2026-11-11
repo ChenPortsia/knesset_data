@@ -1,0 +1,97 @@
+version: 2
+models:
+- name: fct_committee_session
+  description: 'Committee sessions (meetings). Grain: one row per committee session, 20th Knesset onward | ישיבות ועדה'
+  config:
+    contract:
+      enforced: true
+  columns:
+  - name: committee_session_id
+    data_type: integer
+    description: Committee session ID (fct_committee_session) | מזהה ישיבת ועדה
+    data_tests:
+    - unique
+    - not_null
+  - name: committee_id
+    data_type: integer
+    description: Committee ID (dim_committee) | מזהה ועדה
+    data_tests:
+    - relationships:
+        arguments:
+          to: ref('dim_committee')
+          field: committee_id
+        config: &id001
+          severity: warn
+  - name: knesset_num
+    data_type: integer
+    description: Knesset number (dim_knesset) | מספר הכנסת
+  - name: session_date
+    data_type: date
+    description: Session date (dim_date) | תאריך הישיבה
+  - name: start_at
+    data_type: timestamp
+    description: Start, Israel local time | מועד התחלה, שעון ישראל
+  - name: finish_at
+    data_type: timestamp
+    description: End, Israel local time; null if ongoing | מועד סיום, שעון ישראל; ריק אם פעיל
+  - name: duration_minutes
+    data_type: integer
+    description: Length in minutes; null without an end time | משך בדקות
+  - name: session_number
+    data_type: integer
+    description: Session number | מספר הישיבה
+  - name: session_type
+    data_type: varchar
+    description: open / closed (Hebrew) | פתוחה / חסויה
+  - name: status
+    data_type: varchar
+    description: Status (Hebrew) | סטטוס
+  - name: bills_discussed
+    data_type: integer
+    description: Bills on the session agenda | מספר הצעות חוק בסדר היום
+  - name: session_url
+    data_type: varchar
+    description: Session page on the Knesset site | קישור לישיבה
+- name: fct_committee_session_bill
+  description: 'Bills discussed in committee sessions. Grain: one row per committee session and bill | הצעות חוק שנדונו בישיבות ועדה'
+  config:
+    contract:
+      enforced: true
+  columns:
+  - name: session_bill_id
+    data_type: varchar
+    description: 'Key: hash of session and bill | מפתח'
+    data_tests:
+    - unique
+    - not_null
+  - name: committee_session_id
+    data_type: integer
+    description: Committee session ID (fct_committee_session) | מזהה ישיבת ועדה
+    data_tests:
+    - relationships:
+        arguments:
+          to: ref('fct_committee_session')
+          field: committee_session_id
+        config:
+          severity: '{{ ''warn'' if target.name == ''sample'' else ''error'' }}'
+  - name: bill_id
+    data_type: integer
+    description: Bill discussed (dim_bill; may be from before the 20th Knesset) | הצעת החוק שנדונה
+    data_tests:
+    - relationships:
+        arguments:
+          to: ref('dim_bill')
+          field: bill_id
+        config: *id001
+  - name: committee_id
+    data_type: integer
+    description: Committee ID (dim_committee) | מזהה ועדה
+  - name: knesset_num
+    data_type: integer
+    description: Knesset number (dim_knesset) | מספר הכנסת
+  - name: session_date
+    data_type: date
+    description: Session date (dim_date) | תאריך הישיבה
+  - name: agenda_items
+    data_type: integer
+    description: Times the bill appears on the session agenda | מספר הופעות בסדר היום

@@ -57,16 +57,18 @@ Later they become the agent's question bank (`knesset-agent/evals/question_bank.
 ## Milestone 1: ten questions to answer by hand in SQL
 
 The "done when" check for the structured warehouse. Each must be answerable from `gold` only.
+**Answered:** the SQL is in `transformation/analyses/milestone_1/`; `make answers` runs it
+against `warehouse.duckdb` with the raw database not attached, so it proves gold is enough.
 
 | # | Question | Main models |
 | --- | --- | --- |
-| 1 | How many bills were proposed in the 25th Knesset, by type, and how many passed? | `fct_bill_stage`, `dim_bill` |
-| 2 | Top 10 MKs by private bills initiated in the 24th Knesset, with how many passed | `dim_bill`, `dim_person` (bill initiators) |
+| 1 | How many bills were proposed in the 25th Knesset, by type, and how many passed? | `dim_bill` |
+| 2 | Top 10 MKs by private bills initiated in the 24th Knesset, with how many passed | `fct_bill_initiator`, `dim_bill`, `dim_person` |
 | 3 | Which committee held the most sessions in 2024? | `fct_committee_session`, `dim_committee` |
 | 4 | Monthly committee sessions over the last 3 years | `fct_committee_session`, `dim_date` |
-| 5 | How did each faction vote on a given vote? | `fct_vote_result`, `dim_faction` |
-| 6 | Each MK's rate of voting with their faction's majority in the 25th Knesset | `fct_vote_result`, `dim_person`, `dim_faction` |
-| 7 | Which ministry received the most queries in the 24th Knesset, and its average reply time? | `fct_query` |
-| 8 | Which MKs changed faction during a Knesset? | `dim_person`, positions |
-| 9 | Share of women MKs in each Knesset since the 20th | `dim_person`, `dim_knesset` |
-| 10 | Which bills were discussed most often in committee sessions? | `fct_session_item`, `dim_bill` |
+| 5 | How did each faction vote on a given vote? | `fct_vote_result`, `fct_plenum_vote`, `dim_faction` |
+| 6 | Each MK's rate of voting with their faction's majority in the 25th Knesset | `fct_vote_result` (`voted_with_faction`), `dim_person` |
+| 7 | Which ministry received the most queries in the 24th Knesset, and its average reply time? | `fct_query`, `dim_ministry` |
+| 8 | Which MKs changed faction during a Knesset? | `fct_faction_membership`, `dim_faction`, `dim_person` |
+| 9 | Share of women MKs in each Knesset since the 20th | `fct_faction_membership`, `dim_person` |
+| 10 | Which bills were discussed most often in committee sessions? | `dim_bill` (`committee_sessions`), `fct_committee_session_bill` |

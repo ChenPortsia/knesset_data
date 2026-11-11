@@ -4,7 +4,7 @@
 # Run them directly (make ingest, make dbt) or as Docker services with HTTP APIs (make up).
 TARGET ?= dev
 
-.PHONY: up down sample ingest ingest-weekly dbt staging-models docs test lint clean
+.PHONY: up down sample ingest ingest-weekly dbt answers staging-models docs test lint clean
 
 up:  ## Start both services in Docker: ingestion on :8001, transformation on :8002
 	mkdir -p data/raw data/warehouse logs
@@ -25,6 +25,9 @@ ingest-weekly:  ## Ingestion weekly run: daily + check for rows deleted in the A
 dbt:  ## Transformation: build and test all models (TARGET=sample to use the test load)
 	mkdir -p data/warehouse
 	cd transformation && uv run dbt build --profiles-dir . --target $(TARGET)
+
+answers:  ## Answer the milestone 1 questions from gold (TARGET=sample for the test load)
+	uv run python transformation/scripts/run_analyses.py --target $(TARGET)
 
 staging-models:  ## Regenerate the dbt staging models (SQL + YAML) from the spec and the API's $metadata
 	uv run python transformation/scripts/generate_staging.py

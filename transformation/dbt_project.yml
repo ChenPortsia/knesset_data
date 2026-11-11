@@ -31,3 +31,6 @@ models:
 seeds:
   knesset:
     +schema: silver
+
+vars:
+  from_knesset: 20  # first Knesset in scope; keep in step with ingestion/.dlt/config.toml

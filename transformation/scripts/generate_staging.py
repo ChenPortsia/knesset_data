@@ -121,7 +121,7 @@ MODELS = {
         ("category_name", "category_desc", "Committee category (Hebrew)", "קטגוריית הוועדה"),
         ("committee_type_id", "committee_type_id", "Committee type ID", "מזהה סוג ועדה"),
         ("committee_type", "committee_type_desc", "Committee type: main, sub, joint... (Hebrew)", "סוג ועדה: ראשית, משנה, משותפת..."),
-        ("additional_type_id", "additional_type_id", "Additional type ID", "מזהה סוג נוסף"),
+        ("additional_type_id", "NULLIF(additional_type_id, -1)", "Additional type ID; null if none (the source uses -1)", "מזהה סוג נוסף"),
         ("additional_type", "additional_type_desc", "Additional type: permanent, special... (Hebrew)", "סוג נוסף: קבועה, מיוחדת..."),
         ("parent_committee_id", "parent_committee_id", "Parent committee for subcommittees", "ועדת אם (לוועדות משנה)"),
         ("parent_committee_name", "committee_parent_name", "Parent committee name (Hebrew)", "שם ועדת האם"),
@@ -189,7 +189,7 @@ MODELS = {
         ("origin_he", "sub_type_desc", "Origin in Hebrew", "מקור ההצעה בעברית"),
         ("private_number", "private_number", "Number of a private bill", "מספר הצעת חוק פרטית"),
         ("bill_number", "number", "Bill number", "מספר הצעת החוק"),
-        ("committee_id", "committee_id", "Committee that prepared the bill", "הוועדה שהכינה את ההצעה"),
+        ("committee_id", "NULLIF(committee_id, -1)", "Committee that prepared the bill; null if none (the source uses -1)", "הוועדה שהכינה את ההצעה"),
         ("status_id", "status_id", "Current stage of the bill (see stg_odata__status)", "השלב הנוכחי של ההצעה"),
         ("postponement_reason_id", "postponement_reason_id", "Why the bill was stopped", "מזהה סיבת עצירה"),
         ("postponement_reason", "postponement_reason_desc", "Why the bill was stopped (Hebrew)", "סיבת עצירה"),
@@ -376,6 +376,8 @@ def cast(
         return src, "TIMESTAMP"  # Israel local time
     if match := re.fullmatch(r"trim\((\w+)\)", src):
         return f"TRIM({match[1]})", "VARCHAR"
+    if match := re.fullmatch(r"NULLIF\((\w+), -1\)", src):  # the source's "none" code
+        return src, types[table][match[1]]
     if src.startswith("_dlt_valid"):
         return src, "TIMESTAMPTZ"
     column = src.strip('"')

@@ -1,0 +1,228 @@
+version: 2
+models:
+- name: dim_date
+  description: 'Calendar, with the Knesset sitting on each day. Grain: one row per day, 2015-2030 | לוח שנה, עם הכנסת המכהנת בכל יום'
+  config:
+    contract:
+      enforced: true
+  columns:
+  - name: date_day
+    data_type: date
+    description: The day | היום
+    data_tests:
+    - unique
+    - not_null
+  - name: year
+    data_type: integer
+    description: Year | שנה
+  - name: quarter
+    data_type: integer
+    description: Quarter 1-4 | רבעון
+  - name: month
+    data_type: integer
+    description: Month 1-12 | חודש
+  - name: year_month
+    data_type: varchar
+    description: Year and month, e.g. 2024-11 | שנה וחודש
+  - name: month_name
+    data_type: varchar
+    description: Month name (English) | שם החודש
+  - name: week_start
+    data_type: date
+    description: Monday of the week | יום שני של השבוע
+  - name: day_of_week
+    data_type: integer
+    description: 'ISO day of week: 1 Monday ... 7 Sunday | יום בשבוע'
+  - name: day_name
+    data_type: varchar
+    description: Day name (English) | שם היום
+  - name: is_weekend
+    data_type: boolean
+    description: True on Friday and Saturday | האם סוף שבוע (שישי-שבת)
+  - name: knesset_num
+    data_type: integer
+    description: Knesset serving on that day; null between Knessets or outside the data | הכנסת המכהנת באותו יום
+- name: dim_knesset
+  description: 'Knesset terms. Grain: one row per Knesset | כנסות'
+  config:
+    contract:
+      enforced: true
+  columns:
+  - name: knesset_num
+    data_type: integer
+    description: Knesset number (dim_knesset) | מספר הכנסת
+    data_tests:
+    - unique
+    - not_null
+  - name: knesset_name
+    data_type: varchar
+    description: Knesset name (Hebrew) | שם הכנסת
+  - name: start_at
+    data_type: timestamp
+    description: First sitting | תחילת הכהונה
+  - name: finish_at
+    data_type: timestamp
+    description: End of term; null for the current Knesset | סוף הכהונה
+  - name: is_current
+    data_type: boolean
+    description: True if current today | האם בתוקף היום
+  - name: is_in_scope
+    data_type: boolean
+    description: True from the 20th Knesset, the scope of the detailed data | האם בטווח הנתונים המפורטים
+- name: dim_person
+  description: 'People: MKs, ministers and other office holders. Grain: one row per person | אנשים: חברי כנסת, שרים ונושאי תפקידים'
+  config:
+    contract:
+      enforced: true
+  columns:
+  - name: person_id
+    data_type: integer
+    description: Person ID | מזהה אדם
+    data_tests:
+    - unique
+    - not_null
+  - name: full_name
+    data_type: varchar
+    description: First and last name (Hebrew) | שם מלא
+  - name: first_name
+    data_type: varchar
+    description: First name (Hebrew) | שם פרטי
+  - name: last_name
+    data_type: varchar
+    description: Last name (Hebrew) | שם משפחה
+  - name: gender
+    data_type: varchar
+    description: female / male | מגדר
+  - name: email
+    data_type: varchar
+    description: Knesset email address | דוא"ל בכנסת
+  - name: is_current_mk
+    data_type: boolean
+    description: True if serving in the current Knesset | האם מכהן כעת
+  - name: was_mk_in_scope
+    data_type: boolean
+    description: True if an MK in any Knesset from the 20th | האם כיהן כח"כ מהכנסת ה-20
+  - name: first_knesset_num
+    data_type: integer
+    description: First Knesset as MK, from the 20th | הכנסת הראשונה כח"כ
+  - name: last_knesset_num
+    data_type: integer
+    description: Last Knesset as MK | הכנסת האחרונה כח"כ
+  - name: knessets_served
+    data_type: integer
+    description: Number of Knessets as MK, from the 20th | מספר כנסות כח"כ
+  - name: latest_faction_id
+    data_type: integer
+    description: Most recent faction | הסיעה האחרונה
+  - name: latest_faction_name
+    data_type: varchar
+    description: Most recent faction name (Hebrew) | שם הסיעה האחרונה
+- name: dim_faction
+  description: 'Factions (parliamentary groups) per Knesset. Grain: one row per faction | סיעות בכל כנסת'
+  config:
+    contract:
+      enforced: true
+  columns:
+  - name: faction_id
+    data_type: integer
+    description: Faction ID | מזהה סיעה
+    data_tests:
+    - unique
+    - not_null
+  - name: faction_name
+    data_type: varchar
+    description: Faction name (Hebrew) | שם הסיעה
+  - name: knesset_num
+    data_type: integer
+    description: Knesset number (dim_knesset) | מספר הכנסת
+    data_tests:
+    - relationships:
+        arguments:
+          to: ref('dim_knesset')
+          field: knesset_num
+        config: &id001
+          severity: '{{ ''warn'' if target.name == ''sample'' else ''error'' }}'
+  - name: start_at
+    data_type: timestamp
+    description: Start, Israel local time | מועד התחלה, שעון ישראל
+  - name: finish_at
+    data_type: timestamp
+    description: End, Israel local time; null if ongoing | מועד סיום, שעון ישראל; ריק אם פעיל
+  - name: is_current
+    data_type: boolean
+    description: True if current today | האם בתוקף היום
+  - name: members
+    data_type: integer
+    description: MKs who were members at any time | מספר החברים לאורך הכהונה
+- name: dim_committee
+  description: 'Knesset committees per Knesset. Grain: one row per committee | ועדות הכנסת בכל כנסת'
+  config:
+    contract:
+      enforced: true
+  columns:
+  - name: committee_id
+    data_type: integer
+    description: Committee ID | מזהה ועדה
+    data_tests:
+    - unique
+    - not_null
+  - name: committee_name
+    data_type: varchar
+    description: Committee name (Hebrew) | שם הוועדה
+  - name: knesset_num
+    data_type: integer
+    description: Knesset number (dim_knesset) | מספר הכנסת
+    data_tests:
+    - relationships:
+        arguments:
+          to: ref('dim_knesset')
+          field: knesset_num
+        config: *id001
+  - name: category_id
+    data_type: integer
+    description: 'Category ID: the same committee across Knessets | מזהה קטגוריה: אותה ועדה לאורך כנסות'
+  - name: category_name
+    data_type: varchar
+    description: Category (Hebrew) | קטגוריה
+  - name: committee_type
+    data_type: varchar
+    description: Main, sub, joint... (Hebrew) | סוג ועדה
+  - name: additional_type
+    data_type: varchar
+    description: Permanent, special... (Hebrew) | סוג נוסף
+  - name: parent_committee_id
+    data_type: integer
+    description: Parent committee, for subcommittees | ועדת אם
+  - name: parent_committee_name
+    data_type: varchar
+    description: Parent committee name (Hebrew) | שם ועדת האם
+  - name: start_at
+    data_type: timestamp
+    description: Start, Israel local time | מועד התחלה, שעון ישראל
+  - name: finish_at
+    data_type: timestamp
+    description: End, Israel local time; null if ongoing | מועד סיום, שעון ישראל; ריק אם פעיל
+  - name: is_current
+    data_type: boolean
+    description: True if current today | האם בתוקף היום
+- name: dim_ministry
+  description: 'Government ministries. Grain: one row per ministry | משרדי ממשלה'
+  config:
+    contract:
+      enforced: true
+  columns:
+  - name: ministry_id
+    data_type: integer
+    description: Ministry ID | מזהה משרד
+    data_tests:
+    - unique
+    - not_null
+  - name: ministry_name
+    data_type: varchar
+    description: Ministry name (Hebrew) | שם המשרד
+  - name: category_name
+    data_type: varchar
+    description: Ministry category (Hebrew) | קטגוריה
+  - name: is_active
+    data_type: boolean
+    description: True if the ministry exists today | האם פעיל

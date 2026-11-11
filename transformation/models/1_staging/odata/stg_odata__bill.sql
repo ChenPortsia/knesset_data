@@ -17,7 +17,7 @@ renamed AS (
         CAST(sub_type_desc AS VARCHAR)                          AS origin_he,
         CAST(private_number AS INTEGER)                         AS private_number,
         CAST(number AS INTEGER)                                 AS bill_number,
-        CAST(committee_id AS INTEGER)                           AS committee_id,
+        CAST(NULLIF(committee_id, -1) AS INTEGER)               AS committee_id,
         CAST(status_id AS INTEGER)                              AS status_id,
         CAST(postponement_reason_id AS INTEGER)                 AS postponement_reason_id,
         CAST(postponement_reason_desc AS VARCHAR)               AS postponement_reason,
