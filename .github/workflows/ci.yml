@@ -11,6 +11,7 @@ jobs:
       - run: make lint
       - run: make test
       - run: cd transformation && uv run dbt parse --profiles-dir .
+      - run: uv run python -m context check
 
   docker:
     runs-on: ubuntu-latest

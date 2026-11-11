@@ -1,0 +1,49 @@
+# yaml-language-server: $schema=../schemas/glossary.json
+# Knesset committees.
+
+- id: glossary.committee
+  term_he: ועדה
+  term_en: Knesset committee
+  synonyms: [ועדת הכנסת, committee]
+  definition: >
+    Where bills are prepared and the government is overseen. Each Knesset has new committee
+    ids; dim_committee.category_id is the same committee across Knessets.
+  maps_to:
+    - column: dim_committee.committee_id
+    - column: dim_committee.category_id
+
+- id: glossary.main_committee
+  term_he: ועדה ראשית
+  term_en: main (standing) committee
+  synonyms: [ועדה קבועה, standing committee]
+  definition: One of the permanent committees set by the Knesset's rules, such as Finance or Foreign Affairs and Defense; as opposed to subcommittees, joint and special committees.
+  maps_to:
+    - column: dim_committee.committee_type
+      value: ועדה ראשית
+
+- id: glossary.subcommittee
+  term_he: ועדת משנה
+  term_en: subcommittee
+  definition: A smaller committee under a main committee, with parent_committee_id pointing to it.
+  maps_to:
+    - column: dim_committee.committee_type
+      value: ועדת משנה
+    - column: dim_committee.parent_committee_id
+
+- id: glossary.committee_chair
+  term_he: יו"ר ועדה
+  term_en: committee chair
+  synonyms: [יושב ראש ועדה, chairman]
+  definition: The MK who runs a committee's sessions and agenda.
+  maps_to:
+    - column: fct_person_role.role
+      value: committee_chair
+
+- id: glossary.closed_session
+  term_he: ישיבה חסויה
+  term_en: closed (classified) session
+  synonyms: [חסויה, ישיבה סגורה, classified]
+  definition: A committee session not open to the public, mostly on security. About 2% of sessions.
+  maps_to:
+    - column: fct_committee_session.session_type
+      value: חסויה

@@ -6,7 +6,7 @@ Personal project: a data platform (`knesset-data`) and a LangGraph multi-agent s
 
 - Keep code simple, short and clean. Prefer small, typed functions over frameworks and abstractions.
 - Build one milestone at a time (see "Milestones" in `ARCHITECTURE.md`). Don't start the next one until the current one meets its "Done when".
-- Current milestone: **1 — Structured warehouse** (dlt OData → DuckDB → dbt star schema).
+- Current milestone: **2 — Context layer v1** (glossary, aliases, rules, verified queries and metrics in `knesset_data/context/`; `get_context`). Milestone 1 is done.
 
 ## Stack
 

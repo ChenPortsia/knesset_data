@@ -1,0 +1,70 @@
+# yaml-language-server: $schema=../schemas/rules.json
+# How to use the gold tables correctly, and their known gaps.
+
+- id: rule.gold_only
+  title: Query gold only
+  rule: >
+    The agent's database has only the gold schema (dim_*, fct_*, agg_*). Silver and bronze are
+    not available. Every gold table has a fixed contract: its columns and types don't change
+    without notice.
+  applies_to: [dim_bill, fct_vote_result]
+
+- id: rule.prefer_metrics
+  title: Use a metric when one exists
+  rule: >
+    For a named measure (bill pass rate, faction loyalty, attendance, query reply rate, committee
+    sessions or hours, coalition split rate) use the MetricFlow metric (metric.* items) rather
+    than writing SQL: it computes the same way every time. Group-by names are
+    <entity>__<dimension>, e.g. bill__knesset_num, vote_result__knesset_num, vote__knesset_num,
+    person__full_name, ministry__ministry_name; time is metric_time__month or metric_time__year.
+  applies_to: [dim_bill, fct_vote_result, fct_plenum_vote, fct_query, fct_committee_session]
+
+- id: rule.camp_at_the_time
+  title: Coalition or opposition at the time, not overall
+  rule: >
+    Factions join and leave the coalition. For votes use fct_vote_result.camp, for queries
+    fct_query.asker_camp, otherwise join fct_coalition_period on the date. Never use
+    dim_faction.was_in_coalition for a date: it is true if the faction was ever in a coalition.
+    The coalition is derived from government posts with documented exceptions (Ra'am, Yamina,
+    Shas), so state that when it matters.
+  applies_to: [fct_vote_result.camp, fct_query.asker_camp, fct_coalition_period, dim_faction.was_in_coalition]
+
+- id: rule.faction_match
+  title: Say how many votes had no known faction
+  rule: >
+    fct_vote_result.faction_match is 'dated' (72.7%), 'knesset' (23.6%: the source lost most
+    25th-Knesset membership dates, so the MK's only faction in that Knesset is used) or 'none'
+    (3.7%: excluded from faction statistics). When a faction statistic is close or the 25th
+    Knesset is involved, mention the share of 'none'.
+  applies_to: [fct_vote_result.faction_match, fct_vote_result.faction_id]
+
+- id: rule.passed_means_third_reading
+  title: '"Passed" means passed the third reading'
+  rule: >
+    A bill passed (became law) only if dim_bill.is_passed is true. Reaching a reading
+    (fct_bill_reading) means the reading was held, not that it passed. Laws already in force
+    before the 20th Knesset are not in dim_bill.
+  applies_to: [dim_bill.is_passed, fct_bill_reading.reading]
+
+- id: rule.local_time_and_dates
+  title: Times are Israel local time; group days by *_date
+  rule: >
+    Timestamps (*_at) are Israel local time, so a vote at 01:30 is on the right day. Group by
+    the *_date columns, and join dim_date to include days or months with no activity.
+  applies_to: [dim_date.date_day, fct_plenum_vote.vote_date, fct_committee_session.session_date]
+
+- id: rule.date_only_votes
+  title: Some votes have a date but no time
+  rule: >
+    655 of the votes since 2015 carry only a date, stored as exactly 00:00. Leave them out of
+    any time-of-day analysis (e.g. "votes after midnight").
+  applies_to: [fct_plenum_vote.voted_at]
+
+- id: rule.known_gaps
+  title: Known gaps in the source
+  rule: >
+    Two votes are missing from the Knesset API, though their 95 MK results exist. Most
+    25th-Knesset role and membership dates were rewritten by the source on 2026-11-04 (end
+    dates show 2026-11-10). Direct parliamentary queries and the government's position on
+    motions are not in the data. Mention these when an answer depends on them.
+  applies_to: [fct_vote_result.vote_id, fct_person_role.finish_date, fct_query.query_type, fct_agenda.gov_recommendation]

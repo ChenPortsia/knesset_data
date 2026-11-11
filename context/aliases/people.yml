@@ -1,0 +1,39 @@
+# yaml-language-server: $schema=../schemas/aliases.json
+# Common names and nicknames for MKs -> dim_person.person_id.
+
+- id: alias.person.netanyahu
+  names: [נתניהו, ביבי, בנימין נתניהו, Netanyahu, Bibi]
+  resolves_to: {column: dim_person.person_id, values: [965]}
+- id: alias.person.lapid
+  names: [לפיד, יאיר לפיד, Lapid]
+  resolves_to: {column: dim_person.person_id, values: [23594]}
+- id: alias.person.bennett
+  names: [בנט, נפתלי בנט, Bennett]
+  resolves_to: {column: dim_person.person_id, values: [23511]}
+- id: alias.person.gantz
+  names: [גנץ, בני גנץ, בנימין גנץ, Gantz]
+  resolves_to: {column: dim_person.person_id, values: [30657]}
+- id: alias.person.ben_gvir
+  names: [בן גביר, איתמר בן גביר, Ben Gvir, Ben-Gvir]
+  resolves_to: {column: dim_person.person_id, values: [30811]}
+- id: alias.person.smotrich
+  names: [סמוטריץ', סמוטריץ, בצלאל סמוטריץ', Smotrich]
+  resolves_to: {column: dim_person.person_id, values: [30055]}
+- id: alias.person.deri
+  names: [דרעי, אריה דרעי, Deri]
+  resolves_to: {column: dim_person.person_id, values: [2291]}
+- id: alias.person.liberman
+  names: [ליברמן, איווט, אביגדור ליברמן, Liberman, Lieberman]
+  resolves_to: {column: dim_person.person_id, values: [427]}
+- id: alias.person.abbas
+  names: [מנסור עבאס, Mansour Abbas]
+  resolves_to: {column: dim_person.person_id, values: [30713]}
+- id: alias.person.edelstein
+  names: [אדלשטיין, יולי אדלשטיין, Edelstein]
+  resolves_to: {column: dim_person.person_id, values: [532]}
+- id: alias.person.saar
+  names: [סער, גדעון סער, Sa'ar, Saar]
+  resolves_to: {column: dim_person.person_id, values: [1027]}
+- id: alias.person.michaeli
+  names: [מיכאלי, מרב מיכאלי, מירב מיכאלי, Michaeli]
+  resolves_to: {column: dim_person.person_id, values: [23565]}

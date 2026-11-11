@@ -1,0 +1,45 @@
+{
+  "type": "array",
+  "items": {
+    "additionalProperties": false,
+    "description": "How to interpret a question or use the data correctly.",
+    "properties": {
+      "id": {
+        "description": "rule.<snake_case_name>",
+        "pattern": "^rule\\.[a-z0-9_]+$",
+        "title": "Id",
+        "type": "string"
+      },
+      "title": {
+        "description": "The rule in a few words",
+        "title": "Title",
+        "type": "string"
+      },
+      "rule": {
+        "description": "The rule itself: what to do, and why",
+        "title": "Rule",
+        "type": "string"
+      },
+      "applies_to": {
+        "default": [],
+        "description": "Gold models or model.columns the rule is about",
+        "items": {
+          "examples": [
+            "fct_vote_result"
+          ],
+          "pattern": "^[a-z_0-9]+(\\.[a-z_0-9]+)?$",
+          "type": "string"
+        },
+        "title": "Applies To",
+        "type": "array"
+      }
+    },
+    "required": [
+      "id",
+      "title",
+      "rule"
+    ],
+    "title": "Rule",
+    "type": "object"
+  }
+}

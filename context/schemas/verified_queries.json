@@ -1,0 +1,63 @@
+{
+  "type": "array",
+  "items": {
+    "additionalProperties": false,
+    "description": "A question with SQL that is known to answer it correctly.",
+    "properties": {
+      "id": {
+        "description": "vq.<snake_case_name>",
+        "pattern": "^vq\\.[a-z0-9_]+$",
+        "title": "Id",
+        "type": "string"
+      },
+      "question_en": {
+        "description": "The question in English",
+        "title": "Question En",
+        "type": "string"
+      },
+      "question_he": {
+        "description": "The question in Hebrew, as a user would ask it",
+        "title": "Question He",
+        "type": "string"
+      },
+      "sql_file": {
+        "description": "The dbt analysis with the SQL, relative to transformation/analyses/",
+        "title": "Sql File",
+        "type": "string"
+      },
+      "stable": {
+        "description": "True if the answer should not change as new data arrives (e.g. a past Knesset); its result is then compared exactly",
+        "title": "Stable",
+        "type": "boolean"
+      },
+      "verified_by": {
+        "description": "Who checked that the SQL answers the question",
+        "title": "Verified By",
+        "type": "string"
+      },
+      "verified_at": {
+        "description": "When it was checked",
+        "format": "date",
+        "title": "Verified At",
+        "type": "string"
+      },
+      "onboarding": {
+        "default": false,
+        "description": "True to suggest this question to new users",
+        "title": "Onboarding",
+        "type": "boolean"
+      }
+    },
+    "required": [
+      "id",
+      "question_en",
+      "question_he",
+      "sql_file",
+      "stable",
+      "verified_by",
+      "verified_at"
+    ],
+    "title": "VerifiedQuery",
+    "type": "object"
+  }
+}

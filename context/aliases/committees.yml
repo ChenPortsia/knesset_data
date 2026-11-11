@@ -1,0 +1,58 @@
+# yaml-language-server: $schema=../schemas/aliases.json
+# Committee names -> the committee across Knessets (dim_committee.category_id).
+# Each Knesset has new committee ids; the category is the same committee over time.
+
+- id: alias.committee.finance
+  names: [ועדת הכספים, ועדת כספים, הכספים, Finance Committee]
+  resolves_to: {column: dim_committee.category_id, values: [2]}
+
+- id: alias.committee.economy
+  names: [ועדת הכלכלה, ועדת כלכלה, Economic Affairs Committee, Economy Committee]
+  resolves_to: {column: dim_committee.category_id, values: [3]}
+
+- id: alias.committee.foreign_affairs_defense
+  names: [ועדת החוץ והביטחון, ועדת חוץ וביטחון, ועדת חוץ, ועדת החוץ, חוץ וביטחון, FADC, Foreign Affairs and Defense Committee]
+  resolves_to: {column: dim_committee.category_id, values: [4]}
+
+- id: alias.committee.interior
+  names: [ועדת הפנים והגנת הסביבה, ועדת הפנים, ועדת פנים, Interior Committee]
+  resolves_to: {column: dim_committee.category_id, values: [5]}
+
+- id: alias.committee.constitution
+  names: [ועדת החוקה, חוק ומשפט, ועדת החוקה חוק ומשפט, ועדת חוקה, Constitution Committee, Constitution Law and Justice Committee]
+  resolves_to: {column: dim_committee.category_id, values: [6]}
+
+- id: alias.committee.education
+  names: [ועדת החינוך, ועדת החינוך התרבות והספורט, ועדת חינוך, Education Committee]
+  resolves_to: {column: dim_committee.category_id, values: [8]}
+
+- id: alias.committee.state_control
+  names: [הוועדה לענייני ביקורת המדינה, ועדת ביקורת המדינה, ועדת הביקורת, State Control Committee]
+  resolves_to: {column: dim_committee.category_id, values: [10]}
+
+- id: alias.committee.status_of_women
+  names: [הוועדה לקידום מעמד האישה, ועדת מעמד האישה, הוועדה לקידום מעמד האישה ולשוויון מגדרי, Committee on the Status of Women]
+  resolves_to: {column: dim_committee.category_id, values: [11]}
+
+- id: alias.committee.labor_welfare
+  names: [ועדת העבודה והרווחה, ועדת העבודה, הרווחה והבריאות, ועדת הרווחה, Labor and Welfare Committee]
+  resolves_to: {column: dim_committee.category_id, values: [28]}
+  note: Until the 23rd Knesset it was the Labor, Welfare and Health Committee; health moved to its own committee in the 24th.
+
+- id: alias.committee.health
+  names: [ועדת הבריאות, Health Committee]
+  resolves_to: {column: dim_committee.category_id, values: [752]}
+  note: Its own committee from the 24th Knesset; before that, health was in alias.committee.labor_welfare.
+
+- id: alias.committee.house
+  names: [ועדת הכנסת, House Committee, Knesset Committee]
+  resolves_to: {column: dim_committee.category_id, values: [1]}
+
+- id: alias.committee.arrangements
+  names: [הוועדה המסדרת, Arrangements Committee]
+  resolves_to: {column: dim_committee.category_id, values: [689]}
+  note: Runs the Knesset's business at the start of a term, until the permanent committees are set up.
+
+- id: alias.committee.national_security
+  names: [הוועדה לביטחון לאומי, ועדת ביטחון לאומי, National Security Committee]
+  resolves_to: {column: dim_committee.category_id, values: [750]}

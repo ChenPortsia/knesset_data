@@ -1,0 +1,70 @@
+# yaml-language-server: $schema=../schemas/aliases.json
+# Party names -> the party's faction in each Knesset (dim_faction.faction_id).
+# A faction belongs to one Knesset; joint lists and splits are noted where left out.
+
+- id: alias.party.likud
+  names: [הליכוד, ליכוד, Likud]
+  resolves_to: {column: dim_faction.faction_id, values: [882, 931, 933, 942, 962, 1096, 1113]}
+
+- id: alias.party.yesh_atid
+  names: [יש עתיד, Yesh Atid]
+  resolves_to: {column: dim_faction.faction_id, values: [904, 950, 955, 967, 1102]}
+  note: In the 21st and 22nd Knessets Yesh Atid ran inside Blue and White (alias.party.blue_and_white).
+
+- id: alias.party.shas
+  names: [ש"ס, שס, Shas, התאחדות הספרדים שומרי תורה]
+  resolves_to: {column: dim_faction.faction_id, values: [910, 918, 932, 947, 971, 1095, 1116]}
+
+- id: alias.party.utj
+  names: [יהדות התורה, יהדות התורה והשבת, United Torah Judaism, UTJ]
+  resolves_to: {column: dim_faction.faction_id, values: [908, 928, 936, 944, 965, 1101, 1117]}
+  note: An alliance of Agudat Yisrael and Degel HaTorah; their separate factions after formal splits are not included.
+
+- id: alias.party.yisrael_beytenu
+  names: [ישראל ביתנו, Yisrael Beytenu, Yisrael Beiteinu]
+  resolves_to: {column: dim_faction.faction_id, values: [905, 929, 937, 945, 968, 1104, 1119]}
+
+- id: alias.party.labor
+  names: [העבודה, מפלגת העבודה, Labor, Labor Party, Avoda]
+  resolves_to: {column: dim_faction.faction_id, values: [914, 925, 934, 958, 963, 1100]}
+  note: The 22nd Knesset value is the joint Labor-Gesher list. The 23rd Knesset's joint lists with Meretz (949, 956) are left out.
+
+- id: alias.party.blue_and_white
+  names: [כחול לבן, Blue and White]
+  resolves_to: {column: dim_faction.faction_id, values: [917, 938, 946, 1079, 969]}
+
+- id: alias.party.national_unity
+  names: [המחנה הממלכתי, National Unity, National Unity Party]
+  resolves_to: {column: dim_faction.faction_id, values: [1085, 1098, 1110]}
+  note: Gantz's party from 2022 (Blue and White with New Hope in the 24th Knesset). 1110 is its name after New Hope left in 2024.
+
+- id: alias.party.religious_zionism
+  names: [הציונות הדתית, Religious Zionism, Religious Zionist Party]
+  resolves_to: {column: dim_faction.faction_id, values: [961, 1097, 1105, 1114]}
+
+- id: alias.party.otzma_yehudit
+  names: [עוצמה יהודית, Otzma Yehudit, Jewish Power]
+  resolves_to: {column: dim_faction.faction_id, values: [1081, 1106, 1121]}
+
+- id: alias.party.raam
+  names: [רע"ם, רעם, הרשימה הערבית המאוחדת, United Arab List, Ra'am]
+  resolves_to: {column: dim_faction.faction_id, values: [1059, 922, 973, 1099]}
+  note: In the 20th, 22nd and 23rd Knessets Ra'am ran inside the Joint List (alias.party.joint_list).
+
+- id: alias.party.joint_list
+  names: [הרשימה המשותפת, Joint List]
+  resolves_to: {column: dim_faction.faction_id, values: [903, 940, 943, 964, 1089]}
+  note: An alliance of Hadash, Ta'al, Balad and (until 2021) Ra'am.
+
+- id: alias.party.meretz
+  names: [מרצ, Meretz]
+  resolves_to: {column: dim_faction.faction_id, values: [909, 926, 959, 970]}
+
+- id: alias.party.yamina
+  names: [ימינה, Yamina]
+  resolves_to: {column: dim_faction.faction_id, values: [1077, 948, 966, 1091]}
+
+- id: alias.party.new_hope
+  names: [תקווה חדשה, New Hope, הימין הממלכתי, United Right]
+  resolves_to: {column: dim_faction.faction_id, values: [972, 1088, 1108]}
+  note: Sa'ar's party; in the 25th Knesset it split from National Unity as הימין הממלכתי.

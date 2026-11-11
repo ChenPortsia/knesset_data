@@ -1,12 +1,15 @@
 version: 2
 models:
 - name: dim_date
+  time_spine:  # MetricFlow's calendar
+    standard_granularity_column: date_day
   description: 'Calendar, with the Knesset sitting on each day. Grain: one row per day, 2015-2030 | לוח שנה, עם הכנסת המכהנת בכל יום'
   config:
     contract:
       enforced: true
   columns:
   - name: date_day
+    granularity: day
     data_type: date
     description: The day | היום
     data_tests:

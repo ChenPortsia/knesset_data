@@ -1,0 +1,85 @@
+{
+  "type": "array",
+  "items": {
+    "$defs": {
+      "AliasTarget": {
+        "additionalProperties": false,
+        "properties": {
+          "column": {
+            "description": "The key column the names resolve to, model.column",
+            "examples": [
+              "dim_bill.is_passed"
+            ],
+            "pattern": "^[a-z_0-9]+\\.[a-z_0-9]+$",
+            "title": "Column",
+            "type": "string"
+          },
+          "values": {
+            "description": "The key values: one entity, possibly several rows (e.g. a party's faction in each Knesset)",
+            "items": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            "minItems": 1,
+            "title": "Values",
+            "type": "array"
+          }
+        },
+        "required": [
+          "column",
+          "values"
+        ],
+        "title": "AliasTarget",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "description": "Names people use for one entity: a person, committee, party or ministry.",
+    "properties": {
+      "id": {
+        "description": "alias.<kind>.<name>",
+        "pattern": "^alias\\.[a-z0-9_.]+$",
+        "title": "Id",
+        "type": "string"
+      },
+      "names": {
+        "description": "Every name for the entity; each may appear in only one alias item",
+        "items": {
+          "type": "string"
+        },
+        "minItems": 1,
+        "title": "Names",
+        "type": "array"
+      },
+      "resolves_to": {
+        "$ref": "#/$defs/AliasTarget"
+      },
+      "note": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "description": "Anything a reader should know, e.g. why some values are left out",
+        "title": "Note"
+      }
+    },
+    "required": [
+      "id",
+      "names",
+      "resolves_to"
+    ],
+    "title": "Alias",
+    "type": "object"
+  }
+}
