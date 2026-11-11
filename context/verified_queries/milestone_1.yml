@@ -1,0 +1,87 @@
+# yaml-language-server: $schema=../schemas/verified_queries.json
+# The 10 questions that define milestone 1. SQL in transformation/analyses/milestone_1/.
+# stable: true only when the answer can't change with new data and its order is fully determined.
+
+- id: vq.bills_by_origin_25th_knesset
+  question_en: How many bills were proposed in the 25th Knesset, by origin, and how many passed?
+  question_he: כמה הצעות חוק הוגשו בכנסת ה-25 לפי סוג, וכמה מהן התקבלו?
+  sql_file: milestone_1/q01_bills_by_origin_25th_knesset.sql
+  stable: false
+  verified_by: claude
+  verified_at: 2026-11-11
+  onboarding: true
+
+- id: vq.top_private_bill_initiators_24th_knesset
+  question_en: Which 10 MKs initiated the most private bills in the 24th Knesset, and how many passed?
+  question_he: אילו 10 חברי כנסת יזמו הכי הרבה הצעות חוק פרטיות בכנסת ה-24, וכמה מהן עברו?
+  sql_file: milestone_1/q02_top_private_bill_initiators_24th_knesset.sql
+  stable: false
+  verified_by: claude
+  verified_at: 2026-11-11
+
+- id: vq.busiest_committee_2024
+  question_en: Which committee held the most sessions in 2024?
+  question_he: איזו ועדה קיימה הכי הרבה ישיבות ב-2024?
+  sql_file: milestone_1/q03_busiest_committee_2024.sql
+  stable: true
+  verified_by: claude
+  verified_at: 2026-11-11
+  onboarding: true
+
+- id: vq.monthly_committee_sessions
+  question_en: How many committee sessions were held each month over the last 3 years?
+  question_he: כמה ישיבות ועדה התקיימו בכל חודש בשלוש השנים האחרונות?
+  sql_file: milestone_1/q04_monthly_committee_sessions.sql
+  stable: false
+  verified_by: claude
+  verified_at: 2026-11-11
+
+- id: vq.faction_votes_on_a_vote
+  question_en: How did each faction vote on a given vote?
+  question_he: איך הצביעה כל סיעה בהצבעה מסוימת?
+  sql_file: milestone_1/q05_faction_votes_on_a_vote.sql
+  stable: false
+  verified_by: claude
+  verified_at: 2026-11-11
+
+- id: vq.faction_loyalty_25th_knesset
+  question_en: Which MKs voted least often with their faction's majority in the 25th Knesset?
+  question_he: אילו חברי כנסת הצביעו הכי פחות בהתאם לרוב הסיעה שלהם בכנסת ה-25?
+  sql_file: milestone_1/q06_faction_loyalty_25th_knesset.sql
+  stable: false
+  verified_by: claude
+  verified_at: 2026-11-11
+  onboarding: true
+
+- id: vq.queries_by_ministry_24th_knesset
+  question_en: Which ministries received the most parliamentary queries in the 24th Knesset, and how fast did they reply?
+  question_he: אילו משרדים קיבלו הכי הרבה שאילתות בכנסת ה-24, וכמה מהר הם ענו?
+  sql_file: milestone_1/q07_queries_by_ministry_24th_knesset.sql
+  stable: true
+  verified_by: claude
+  verified_at: 2026-11-11
+
+- id: vq.mks_who_changed_faction
+  question_en: Which MKs were members of more than one faction within the same Knesset?
+  question_he: אילו חברי כנסת היו חברים ביותר מסיעה אחת באותה כנסת?
+  sql_file: milestone_1/q08_mks_who_changed_faction.sql
+  stable: false
+  verified_by: claude
+  verified_at: 2026-11-11
+
+- id: vq.women_mks_per_knesset
+  question_en: What share of MKs were women in each Knesset since the 20th?
+  question_he: מה היה שיעור הנשים בקרב חברי הכנסת בכל כנסת מאז הכנסת ה-20?
+  sql_file: milestone_1/q09_women_mks_per_knesset.sql
+  stable: false
+  verified_by: claude
+  verified_at: 2026-11-11
+  onboarding: true
+
+- id: vq.most_discussed_bills_in_committee
+  question_en: Which bills were discussed in the most committee sessions?
+  question_he: אילו הצעות חוק נדונו בהכי הרבה ישיבות ועדה?
+  sql_file: milestone_1/q10_most_discussed_bills_in_committee.sql
+  stable: false
+  verified_by: claude
+  verified_at: 2026-11-11

@@ -1,0 +1,105 @@
+{
+  "type": "array",
+  "items": {
+    "$defs": {
+      "Mapping": {
+        "additionalProperties": false,
+        "properties": {
+          "column": {
+            "description": "Where the term shows up in gold: model.column",
+            "examples": [
+              "dim_bill.is_passed"
+            ],
+            "pattern": "^[a-z_0-9]+\\.[a-z_0-9]+$",
+            "title": "Column",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "The value that means the term, if it is one value of the column",
+            "title": "Value"
+          }
+        },
+        "required": [
+          "column"
+        ],
+        "title": "Mapping",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "description": "A parliamentary term and where it lives in the data.",
+    "properties": {
+      "id": {
+        "description": "glossary.<snake_case_name>",
+        "pattern": "^glossary\\.[a-z0-9_]+$",
+        "title": "Id",
+        "type": "string"
+      },
+      "term_he": {
+        "description": "The term in Hebrew, as people write it",
+        "title": "Term He",
+        "type": "string"
+      },
+      "term_en": {
+        "description": "The term in English",
+        "title": "Term En",
+        "type": "string"
+      },
+      "synonyms": {
+        "default": [],
+        "description": "Other ways to say it, in either language",
+        "items": {
+          "type": "string"
+        },
+        "title": "Synonyms",
+        "type": "array"
+      },
+      "definition": {
+        "description": "What it means, in plain English, in a sentence or two",
+        "title": "Definition",
+        "type": "string"
+      },
+      "maps_to": {
+        "default": [],
+        "description": "The columns (and values) it maps to",
+        "items": {
+          "$ref": "#/$defs/Mapping"
+        },
+        "title": "Maps To",
+        "type": "array"
+      },
+      "see_also": {
+        "default": [],
+        "description": "Ids of related context items",
+        "items": {
+          "type": "string"
+        },
+        "title": "See Also",
+        "type": "array"
+      }
+    },
+    "required": [
+      "id",
+      "term_he",
+      "term_en",
+      "definition"
+    ],
+    "title": "GlossaryTerm",
+    "type": "object"
+  }
+}

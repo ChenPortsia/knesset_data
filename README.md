@@ -21,6 +21,10 @@ data/warehouse/warehouse.duckdb  written only by dbt
   silver.stg_*                   staging: current rows, clean names, local times, codes   ← done
   silver.int_*                   intermediate: faction periods, votes, bill stages         ← done
   gold.dim_* / fct_*             marts: the star schema the agent queries                  ← done
+      │  3. context/  (YAML + dbt docs)                make context
+      ▼
+  context.items                  what the agent reads first: glossary, aliases, rules,
+                                 verified queries, tables, columns, metrics               ← started
 ```
 
 Test loads use `data/raw/raw_sample.duckdb` and `data/warehouse/warehouse_sample.duckdb`.
@@ -47,7 +51,9 @@ transformation/      # 2. Transformation: raw.duckdb → warehouse.duckdb (a dbt
   macros/            #    is_current(), local_time(), code_label()
   tests/, analyses/, snapshots/   # the rest of the standard dbt layout
   scripts/           #    generate_staging.py: writes the staging models (make staging-models)
-nlp/                 # 3. NLP batch (milestone 4+)
+context/             # 3. Context layer: glossary, aliases, rules, verified queries (YAML, in git)
+  README.md          #    how to add or change an item
+nlp/                 # 4. NLP batch (milestone 4+)
 common/jobs.py       # runs one background job at a time, used by both APIs
 compose.yaml         # both services, ports 8001 and 8002
 notebooks/           # discovery and profiling of the source
@@ -69,6 +75,9 @@ make ingest              # ingestion: first run loads everything (~40 min), late
 make dbt                 # build and test on the full load
 make ingest-weekly       # ingestion + check for rows deleted in the API (run weekly)
 make answers             # answer the milestone 1 questions from gold
+make context             # check the context against the data and load it (after make dbt)
+make context-check       # check the context files only (fast, no data)
+make metric M=bill_pass_rate BY=bill__knesset_num   # compute a named metric
 make docs TARGET=sample  # browse model and column docs
 make test lint           # unit tests and lint
 make clean               # delete all loaded data, pipeline state and logs

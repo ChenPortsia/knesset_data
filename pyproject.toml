@@ -8,7 +8,10 @@ dependencies = []
 # (e.g. `uv sync --only-group ingestion` in an ingestion container).
 [dependency-groups]
 ingestion = ["dlt[duckdb]"]
-transformation = ["dbt-duckdb"]
+transformation = [
+    "dbt-duckdb",
+    "dbt-metricflow[dbt-duckdb]>=0.15.0",
+]
 api = ["fastapi", "uvicorn"]  # the HTTP API each service's container runs
 dev = ["pytest", "pytest-timeout", "ruff", "httpx"]
 notebook = [
@@ -17,9 +20,13 @@ notebook = [
     "nbconvert>=7.17.2",
     "pandas>=3.1.1",
 ]
+context = [
+    "pydantic>=2.14.3",
+    "pyyaml>=6.0.3",
+]
 
 [tool.uv]
-default-groups = ["ingestion", "transformation", "api", "dev", "notebook"]  # locally: everything
+default-groups = ["ingestion", "transformation", "context", "api", "dev", "notebook"]  # locally: everything
 
 [tool.pytest.ini_options]
 pythonpath = ["."]

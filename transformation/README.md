@@ -19,6 +19,7 @@ seeds/              # small hand-made CSVs: code labels, status/position mapping
 macros/             # is_current(), local_time(), code_label(), generate_schema_name()
 tests/              # singular tests: anomalies across models
 analyses/           # SQL that is compiled but not built: milestone_1/, journalist/ questions
+_semantic_models.yml  # (in models/3_mart/) MetricFlow semantic models and metrics
 snapshots/          # unused: bronze already keeps every version of every row
 scripts/            # generate_staging.py, run_analyses.py (dev tools, not in the image)
 ```
@@ -201,6 +202,28 @@ differs. Consumers (the agent) can rely on gold's columns and types never changi
 Changing a gold column means changing its YAML in the same commit. To see a model's output
 types before writing the YAML, compile it (`dbt compile --select <model>`) and run
 `DESCRIBE (<compiled SQL>)` in DuckDB.
+
+## Semantic layer (MetricFlow)
+
+Named metrics are defined once in `models/3_mart/_semantic_models.yml` and computed by
+MetricFlow, so a metric gives the same number every time, however it's grouped.
+
+- **Semantic models** describe a gold table: its entity (key), dimensions (what you can group
+  by) and measures (what you can add up). Entities link them, so a metric on votes can be
+  grouped by a person's name.
+- **Metrics** are built from measures: `simple` (a count or sum), `ratio` (one metric divided
+  by another, e.g. `bill_pass_rate`), `derived` (a formula over metrics, e.g. `committee_hours`).
+- `dim_date` is MetricFlow's calendar (time spine); time is grouped with `metric_time__month`,
+  `metric_time__year`.
+
+```bash
+make metric M=bill_pass_rate BY=bill__knesset_num,bill__origin
+make metric M=faction_loyalty_rate BY=person__full_name
+```
+
+Group-by names are `<entity>__<dimension>`. A ratio needs its numerator and denominator to be
+metrics, not measures. Every metric is also a context item (`metric.<name>`), so the agent knows
+it exists. When a metric reproduces an analysis, check both give the same number.
 
 ## Analyses
 

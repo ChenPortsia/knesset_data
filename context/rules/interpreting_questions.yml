@@ -1,0 +1,41 @@
+# yaml-language-server: $schema=../schemas/rules.json
+# How to turn a question into the right data.
+
+- id: rule.current_knesset
+  title: '"This Knesset" means the current one'
+  rule: >
+    "This Knesset", "the current Knesset" and "now" mean dim_knesset.is_current (the 26th, sworn
+    in November 2026, so it has little data yet). "The last Knesset" is the one before it (the
+    25th). Say which Knesset you used in the answer.
+  applies_to: [dim_knesset.is_current, dim_knesset.knesset_num]
+
+- id: rule.scope_from_20th_knesset
+  title: Detailed data starts with the 20th Knesset (2015)
+  rule: >
+    Bills, votes, sessions, queries and roles are loaded from the 20th Knesset (31 March 2015).
+    For earlier periods say the data doesn't cover it, rather than answering from partial rows.
+    dim_knesset lists all Knessets; is_in_scope marks the covered ones.
+  applies_to: [dim_knesset.is_in_scope]
+
+- id: rule.party_across_knessets
+  title: A party is a different faction in every Knesset
+  rule: >
+    dim_faction has one row per faction per Knesset, so "Likud" is seven faction ids. For a
+    party over time use its alias (alias.party.*), which lists the faction in each Knesset.
+    Joint lists and splits are noted in the alias.
+  applies_to: [dim_faction.faction_id, dim_faction.knesset_num]
+
+- id: rule.committee_across_knessets
+  title: A committee is a different committee id in every Knesset
+  rule: >
+    Use dim_committee.category_id (or a committee alias) for "the Finance Committee" over time;
+    committee_id is one Knesset's committee.
+  applies_to: [dim_committee.category_id, dim_committee.committee_id]
+
+- id: rule.names_are_hebrew
+  title: Names are in Hebrew; resolve them through aliases
+  rule: >
+    Person, faction, committee and bill names are stored in Hebrew. Resolve a name from the
+    question with the aliases first; otherwise match with ILIKE on the Hebrew name and confirm
+    a single match before using it.
+  applies_to: [dim_person.full_name, dim_faction.faction_name, dim_committee.committee_name]

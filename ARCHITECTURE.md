@@ -101,6 +101,8 @@ The context layer is what the agents read before they touch data. It has a **cur
 
 All context items are embedded too, so `get_context(question)` returns only the few items relevant to each question instead of the whole catalog.
 
+**Implementation (milestone 2):** curated items are YAML files in `knesset_data/context/`, one folder per kind, validated by typed schemas (pydantic, exported as JSON Schema for editors). `make context-check` (CI) checks formats, unique ids and references to gold; `make context` checks values and verified-query results against the data, then loads every item, plus the catalog generated from dbt's manifest and the MetricFlow metrics, into `context.items`. Named metrics are computed by MetricFlow (dbt's semantic layer), so they are deterministic.
+
 ## Project 2 — AI system (knesset-agent)
 
 A LangGraph supervisor graph: every question goes through understand → plan → execute (subagents) → verify → answer → reflect.
@@ -246,7 +248,8 @@ Question-bank categories: lookups, aggregates, votes, oversight, text-only, hybr
 ```
 knesset_data/
   ingestion/        # dlt project: .dlt/config.toml, odata.py, protocols.py → bronze
-  transformation/   # dbt project: models/1_staging, 2_intermediate, 3_mart; seeds/ (codes, glossary, aliases) → silver, gold
+  transformation/   # dbt project: models/1_staging, 2_intermediate, 3_mart; seeds/; MetricFlow semantic models → silver, gold
+  context/          # context layer in git: glossary/, aliases/, rules/, verified_queries/ (YAML) → context schema
   nlp/              # chunk.py, embed.py, topics.py, sentiment.py → rag
   notebooks/        # discovery and profiling
   docs/             # questions the warehouse must answer

@@ -1,0 +1,31 @@
+# yaml-language-server: $schema=../schemas/glossary.json
+# How MKs question and pressure the government.
+
+- id: glossary.parliamentary_query
+  term_he: שאילתה
+  term_en: parliamentary query
+  synonyms: [שאילתות, question to a minister]
+  definition: >
+    A written question from an MK to a minister, who must reply. Regular queries get a
+    written answer; urgent ones are answered in the plenum. Direct queries exist in the
+    Knesset's rules but do not appear in this data since the 20th Knesset.
+  maps_to:
+    - column: fct_query.query_id
+    - column: fct_query.query_type
+      value: רגילה
+    - column: fct_query.query_type
+      value: דחופה
+    - column: fct_query.reply_days
+
+- id: glossary.motion_for_agenda
+  term_he: הצעה לסדר היום
+  term_en: motion for the agenda
+  synonyms: [הצעה לסדר, הצעה דחופה לסדר היום, דיון מהיר, motion]
+  definition: >
+    An MK's request for a plenum debate on a subject. Sub-types: quick debate (דיון מהיר),
+    urgent, regular, and during recess. The government's position on motions is empty in
+    this data.
+  maps_to:
+    - column: fct_agenda.agenda_id
+    - column: fct_agenda.sub_type
+      value: דיון מהיר

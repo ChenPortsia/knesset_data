@@ -1,0 +1,69 @@
+# yaml-language-server: $schema=../schemas/glossary.json
+# MKs, factions, Knessets, governments and roles.
+
+- id: glossary.mk
+  term_he: חבר כנסת
+  term_en: member of Knesset (MK)
+  synonyms: [ח"כ, חה"כ, חברת כנסת, MK, member of parliament]
+  definition: One of the 120 members of the Knesset. People who were MKs since the 20th Knesset have dim_person.was_mk_in_scope = true.
+  maps_to:
+    - column: dim_person.was_mk_in_scope
+      value: true
+    - column: dim_person.person_id
+
+- id: glossary.faction
+  term_he: סיעה
+  term_en: faction (parliamentary group)
+  synonyms: [מפלגה, רשימה, party, list]
+  definition: >
+    The group of MKs elected on one list, in one Knesset. Every Knesset has new faction ids,
+    even for the same party, and joint lists split into separate factions during a term.
+    For a party across Knessets, use its alias (e.g. alias.party.likud).
+  maps_to:
+    - column: dim_faction.faction_id
+    - column: fct_faction_membership.faction_id
+
+- id: glossary.knesset_term
+  term_he: כנסת
+  term_en: Knesset (term)
+  synonyms: [הכנסת ה-25, כנסת נוכחית, term]
+  definition: >
+    One elected Knesset, numbered (the 25th: 2022-2026). Detailed data starts with the 20th
+    (2015). The 21st and 22nd lasted only months before new elections.
+  maps_to:
+    - column: dim_knesset.knesset_num
+    - column: dim_knesset.is_current
+      value: true
+
+- id: glossary.government
+  term_he: ממשלה
+  term_en: government (cabinet)
+  synonyms: [הממשלה ה-37, קבינט]
+  definition: >
+    The cabinet, numbered (34 = Netanyahu 2015, 35 = Netanyahu-Gantz 2020, 36 = Bennett-Lapid
+    2021, 37 = Netanyahu 2022). A Knesset can have more than one government.
+  maps_to:
+    - column: fct_coalition_period.government_num
+    - column: fct_person_role.government_num
+
+- id: glossary.minister
+  term_he: שר
+  term_en: minister
+  synonyms: [שרה, סגן שר, deputy minister, ראש הממשלה, prime minister]
+  definition: A member of the government, heading a ministry. Deputy ministers and the prime minister are separate roles.
+  maps_to:
+    - column: fct_person_role.role
+      value: minister
+    - column: fct_person_role.role
+      value: deputy_minister
+    - column: fct_person_role.role
+      value: prime_minister
+
+- id: glossary.opposition_leader
+  term_he: ראש האופוזיציה
+  term_en: leader of the opposition
+  synonyms: [יו"ר האופוזיציה]
+  definition: The head of the largest opposition faction, a formal role.
+  maps_to:
+    - column: fct_person_role.role
+      value: opposition_leader

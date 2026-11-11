@@ -1,0 +1,124 @@
+# yaml-language-server: $schema=../schemas/glossary.json
+# Legislation terms: what a bill goes through and how to find each step in gold.
+
+- id: glossary.bill
+  term_he: הצעת חוק
+  term_en: bill
+  synonyms: [הצ"ח, הצעה, proposed law]
+  definition: >
+    A proposed law. Every bill since the 20th Knesset is one row in dim_bill, with its
+    origin, current stage and outcome.
+  maps_to:
+    - column: dim_bill.bill_id
+  see_also: [glossary.law, glossary.private_bill, glossary.government_bill]
+
+- id: glossary.law
+  term_he: חוק
+  term_en: law (a bill that passed)
+  synonyms: [עבר, התקבל, חוקק, נחקק, passed, enacted]
+  definition: >
+    A bill becomes a law when it passes its third reading. In this data that is
+    dim_bill.is_passed = true (outcome 'passed'). Laws already in force from before the 20th
+    Knesset are not bills here.
+  maps_to:
+    - column: dim_bill.is_passed
+      value: true
+    - column: dim_bill.outcome
+      value: passed
+  see_also: [glossary.second_third_reading]
+
+- id: glossary.private_bill
+  term_he: הצעת חוק פרטית
+  term_en: private member's bill
+  synonyms: [הצעה פרטית, private bill]
+  definition: >
+    A bill proposed by one or more MKs, not by the government. It must pass a preliminary
+    reading before going to committee. Most never pass: about 3% in the 25th Knesset.
+  maps_to:
+    - column: dim_bill.origin
+      value: private
+  see_also: [glossary.preliminary_reading, glossary.bill_initiator]
+
+- id: glossary.government_bill
+  term_he: הצעת חוק ממשלתית
+  term_en: government bill
+  synonyms: [הצעה ממשלתית]
+  definition: >
+    A bill proposed by the government. It skips the preliminary reading. Most pass: about
+    57% in the 25th Knesset.
+  maps_to:
+    - column: dim_bill.origin
+      value: government
+
+- id: glossary.committee_bill
+  term_he: הצעת חוק של ועדה
+  term_en: committee bill
+  synonyms: [הצעת ועדה]
+  definition: A bill proposed by a Knesset committee on a subject in its field. Rare.
+  maps_to:
+    - column: dim_bill.origin
+      value: committee
+
+- id: glossary.preliminary_reading
+  term_he: קריאה טרומית
+  term_en: preliminary reading
+  synonyms: [דיון מוקדם, טרומית]
+  definition: >
+    The first plenum vote on a private bill, deciding whether it goes to a committee to
+    prepare for first reading. Government bills skip it.
+  maps_to:
+    - column: fct_bill_reading.reading
+      value: preliminary
+    - column: dim_bill.preliminary_reading_date
+  see_also: [glossary.private_bill]
+
+- id: glossary.first_reading
+  term_he: קריאה ראשונה
+  term_en: first reading
+  synonyms: [ק"ר]
+  definition: >
+    The plenum debates and votes on a bill as prepared by a committee; if approved it goes
+    back to committee to prepare for the final readings.
+  maps_to:
+    - column: fct_bill_reading.reading
+      value: first
+    - column: dim_bill.first_reading_date
+
+- id: glossary.second_third_reading
+  term_he: קריאה שנייה ושלישית
+  term_en: second and third readings
+  synonyms: [קריאה שנייה, קריאה שלישית, ק"ש, final readings]
+  definition: >
+    The final plenum stage: the second reading votes on each clause and the reservations,
+    the third reading on the whole law, usually the same day. Passing the third reading
+    makes the bill a law.
+  maps_to:
+    - column: fct_bill_reading.reading
+      value: second_third
+    - column: dim_bill.final_reading_date
+  see_also: [glossary.law]
+
+- id: glossary.continuity
+  term_he: דין רציפות
+  term_en: continuity
+  synonyms: [רציפות, continuation]
+  definition: >
+    A rule letting a new Knesset continue a bill from the stage it reached in the previous
+    one, instead of starting over.
+  maps_to:
+    - column: dim_bill.is_continuation_bill
+      value: true
+    - column: dim_bill.stage
+      value: continuity
+
+- id: glossary.bill_initiator
+  term_he: יוזם הצעת חוק
+  term_en: bill initiator
+  synonyms: [יוזם, מציע, מצטרף, sponsor, co-sponsor]
+  definition: >
+    The MKs who propose a private bill. Initiators sign it from the start; joiners add
+    their names later. The first-named initiator is usually its main sponsor.
+  maps_to:
+    - column: fct_bill_initiator.is_initiator
+      value: true
+    - column: fct_bill_initiator.is_first_initiator

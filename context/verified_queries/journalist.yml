@@ -1,0 +1,61 @@
+# yaml-language-server: $schema=../schemas/verified_queries.json
+# Questions from the journalist question bank (docs/questions.md).
+# SQL in transformation/analyses/journalist/.
+
+- id: vq.coalition_rebels_25th_knesset
+  question_en: Which coalition MKs voted against their own faction most often in the 25th Knesset?
+  question_he: אילו חברי כנסת מהקואליציה הצביעו הכי הרבה נגד הסיעה שלהם בכנסת ה-25?
+  sql_file: journalist/j01_coalition_rebels_25th_knesset.sql
+  stable: false
+  verified_by: claude
+  verified_at: 2026-11-11
+  onboarding: true
+
+- id: vq.votes_that_split_the_coalition
+  question_en: Which votes split the coalition the most in the 25th Knesset?
+  question_he: אילו הצבעות פיצלו את הקואליציה יותר מכל בכנסת ה-25?
+  sql_file: journalist/j02_votes_that_split_the_coalition.sql
+  stable: false
+  verified_by: claude
+  verified_at: 2026-11-11
+
+- id: vq.committee_chairs_25th_knesset
+  question_en: Who chaired the committees in the 25th Knesset, and for how long?
+  question_he: מי עמד בראש הוועדות בכנסת ה-25, ולכמה זמן?
+  sql_file: journalist/j03_committee_chairs_25th_knesset.sql
+  stable: false
+  verified_by: claude
+  verified_at: 2026-11-11
+
+- id: vq.fastest_laws
+  question_en: Which laws went from first reading to final approval the fastest?
+  question_he: אילו חוקים עברו הכי מהר מקריאה ראשונה לאישור סופי?
+  sql_file: journalist/j04_fastest_laws.sql
+  stable: false
+  verified_by: claude
+  verified_at: 2026-11-11
+
+- id: vq.pre_election_rush
+  question_en: How many laws passed in each Knesset's last months? Is there a rush before elections?
+  question_he: כמה חוקים עברו בחודשים האחרונים של כל כנסת? האם יש מרוץ לפני בחירות?
+  sql_file: journalist/j05_pre_election_rush.sql
+  stable: false
+  verified_by: claude
+  verified_at: 2026-11-11
+  onboarding: true
+
+- id: vq.cross_camp_faction_agreement_25th_knesset
+  question_en: Which coalition and opposition factions voted alike most often in the 25th Knesset?
+  question_he: אילו סיעות מהקואליציה ומהאופוזיציה הצביעו הכי הרבה באותו אופן בכנסת ה-25?
+  sql_file: journalist/j06_cross_camp_faction_agreement_25th_knesset.sql
+  stable: false
+  verified_by: claude
+  verified_at: 2026-11-11
+
+- id: vq.queries_by_camp
+  question_en: Do opposition MKs ask more parliamentary queries than coalition MKs?
+  question_he: האם חברי כנסת מהאופוזיציה מגישים יותר שאילתות מחברי הקואליציה?
+  sql_file: journalist/j07_queries_by_camp.sql
+  stable: false
+  verified_by: claude
+  verified_at: 2026-11-11

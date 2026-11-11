@@ -1,0 +1,245 @@
+version: 2
+
+# MetricFlow semantic layer: named metrics computed the same way every time.
+# Query one: mf query --metrics bill_pass_rate --group-by bill__knesset_num,bill__origin
+# Entities link the models, so a metric can be grouped by any linked dimension
+# (e.g. faction_loyalty_rate by person__full_name).
+
+semantic_models:
+  - name: persons
+    description: "People | אנשים"
+    model: ref('dim_person')
+    entities:
+      - {name: person, type: primary, expr: person_id}
+    dimensions:
+      - {name: full_name, type: categorical}
+      - {name: gender, type: categorical}
+      - {name: latest_faction_name, type: categorical}
+
+  - name: factions
+    description: "Factions per Knesset | סיעות"
+    model: ref('dim_faction')
+    entities:
+      - {name: faction, type: primary, expr: faction_id}
+    dimensions:
+      - {name: faction_name, type: categorical}
+      - {name: knesset_num, type: categorical}
+
+  - name: committees
+    description: "Committees per Knesset | ועדות"
+    model: ref('dim_committee')
+    entities:
+      - {name: committee, type: primary, expr: committee_id}
+    dimensions:
+      - {name: committee_name, type: categorical}
+      - {name: category_name, type: categorical}
+      - {name: committee_type, type: categorical}
+
+  - name: ministries
+    description: "Government ministries | משרדי ממשלה"
+    model: ref('dim_ministry')
+    entities:
+      - {name: ministry, type: primary, expr: ministry_id}
+    dimensions:
+      - {name: ministry_name, type: categorical}
+
+  - name: bills
+    description: "Bills, 20th Knesset onward | הצעות חוק"
+    model: ref('dim_bill')
+    defaults:
+      agg_time_dimension: tabled_date
+    entities:
+      - {name: bill, type: primary, expr: bill_id}
+      - {name: committee, type: foreign, expr: committee_id}
+    dimensions:
+      - {name: knesset_num, type: categorical}
+      - {name: origin, type: categorical}
+      - {name: stage, type: categorical}
+      - {name: outcome, type: categorical}
+      - {name: tabled_date, type: time, type_params: {time_granularity: day}}
+      - {name: final_reading_date, type: time, type_params: {time_granularity: day}}
+    measures:
+      - {name: bills, agg: count, expr: bill_id}
+      - {name: passed_bills, agg: sum, expr: "CAST(is_passed AS INTEGER)"}
+      - {name: days_first_to_final_reading, agg: average, expr: days_first_to_final_reading}
+
+  - name: vote_results
+    description: "Each MK's vote in each plenum vote | הצבעות ח\"כים"
+    model: ref('fct_vote_result')
+    defaults:
+      agg_time_dimension: vote_date
+    entities:
+      - {name: vote_result, type: primary, expr: vote_result_id}
+      - {name: person, type: foreign, expr: person_id}
+      - {name: faction, type: foreign, expr: faction_id}
+    dimensions:
+      - {name: knesset_num, type: categorical}
+      - {name: camp, type: categorical}
+      - {name: result, type: categorical}
+      - {name: vote_date, type: time, type_params: {time_granularity: day}}
+    measures:
+      - {name: vote_results, agg: count, expr: vote_result_id}
+      - {name: votes_taken_part, agg: sum, expr: "CAST(took_part AS INTEGER)"}
+      - {name: votes_with_faction, agg: sum, expr: "CAST(voted_with_faction AS INTEGER)"}
+      - {name: votes_comparable_with_faction, agg: sum, expr: "CAST(voted_with_faction IS NOT NULL AS INTEGER)"}
+
+  - name: plenum_votes
+    description: "Plenum votes | הצבעות במליאה"
+    model: ref('fct_plenum_vote')
+    defaults:
+      agg_time_dimension: vote_date
+    entities:
+      - {name: vote, type: primary, expr: vote_id}
+      - {name: bill, type: foreign, expr: bill_id}
+    dimensions:
+      - {name: knesset_num, type: categorical}
+      - {name: is_no_confidence, type: categorical}
+      - {name: vote_date, type: time, type_params: {time_granularity: day}}
+    measures:
+      - {name: plenum_votes, agg: count, expr: vote_id}
+      - {name: coalition_split_votes, agg: sum, expr: "CAST(is_coalition_split AS INTEGER)"}
+
+  - name: queries
+    description: "Parliamentary queries | שאילתות"
+    model: ref('fct_query')
+    defaults:
+      agg_time_dimension: submitted_date
+    entities:
+      - {name: query, type: primary, expr: query_id}
+      - {name: person, type: foreign, expr: person_id}
+      - {name: ministry, type: foreign, expr: ministry_id}
+    dimensions:
+      - {name: knesset_num, type: categorical}
+      - {name: query_type, type: categorical}
+      - {name: asker_camp, type: categorical}
+      - {name: submitted_date, type: time, type_params: {time_granularity: day}}
+    measures:
+      - {name: queries, agg: count, expr: query_id}
+      - {name: replied_queries, agg: sum, expr: "CAST(is_replied AS INTEGER)"}
+      - {name: reply_days, agg: average, expr: reply_days}
+
+  - name: committee_sessions
+    description: "Committee sessions | ישיבות ועדה"
+    model: ref('fct_committee_session')
+    defaults:
+      agg_time_dimension: session_date
+    entities:
+      - {name: committee_session, type: primary, expr: committee_session_id}
+      - {name: committee, type: foreign, expr: committee_id}
+    dimensions:
+      - {name: knesset_num, type: categorical}
+      - {name: session_type, type: categorical}
+      - {name: session_date, type: time, type_params: {time_granularity: day}}
+    measures:
+      - {name: committee_sessions, agg: count, expr: committee_session_id}
+      - {name: committee_session_minutes, agg: sum, expr: duration_minutes}
+
+metrics:
+  - name: bills
+    label: Bills
+    description: "Number of bills proposed | מספר הצעות החוק"
+    type: simple
+    type_params: {measure: bills}
+  - name: passed_bills
+    label: Passed bills
+    description: "Bills that passed third reading and became law | הצעות שהתקבלו כחוק"
+    type: simple
+    type_params: {measure: passed_bills}
+  - name: bill_pass_rate
+    label: Bill pass rate
+    description: "Share of bills that became law (passed bills / bills) | שיעור ההצעות שהתקבלו כחוק"
+    type: ratio
+    type_params: {numerator: passed_bills, denominator: bills}
+  - name: average_days_first_to_final_reading
+    label: Average days from first to final reading
+    description: "For passed bills: average days from first reading to final approval | ממוצע ימים מקריאה ראשונה לאישור סופי"
+    type: simple
+    type_params: {measure: days_first_to_final_reading}
+
+  - name: attendance_rate
+    label: Vote attendance rate
+    description: "Share of plenum votes an MK took part in (for, against or abstain) | שיעור ההשתתפות בהצבעות"
+    type: ratio
+    type_params: {numerator: votes_taken_part, denominator: vote_results}
+  - name: faction_loyalty_rate
+    label: Faction loyalty rate
+    description: "Share of an MK's votes that matched their faction's majority, among comparable votes | שיעור ההצבעות כרוב הסיעה"
+    type: ratio
+    type_params: {numerator: votes_with_faction, denominator: votes_comparable_with_faction}
+
+  - name: plenum_votes
+    label: Plenum votes
+    description: "Number of plenum votes held | מספר ההצבעות במליאה"
+    type: simple
+    type_params: {measure: plenum_votes}
+  - name: coalition_split_rate
+    label: Coalition split rate
+    description: "Share of plenum votes where coalition MKs voted both for and against | שיעור ההצבעות שבהן הקואליציה התפצלה"
+    type: ratio
+    type_params: {numerator: coalition_split_votes, denominator: plenum_votes}
+
+  - name: queries
+    label: Parliamentary queries
+    description: "Number of parliamentary queries submitted | מספר השאילתות"
+    type: simple
+    type_params: {measure: queries}
+  - name: query_reply_rate
+    label: Query reply rate
+    description: "Share of queries the minister replied to | שיעור השאילתות שנענו"
+    type: ratio
+    type_params: {numerator: replied_queries, denominator: queries}
+  - name: average_query_reply_days
+    label: Average days to reply to a query
+    description: "Average days from submission to the minister's reply, for replied queries | ממוצע ימים עד תשובה לשאילתה"
+    type: simple
+    type_params: {measure: reply_days}
+
+  - name: committee_sessions
+    label: Committee sessions
+    description: "Number of committee sessions held | מספר ישיבות הוועדה"
+    type: simple
+    type_params: {measure: committee_sessions}
+  - name: committee_hours
+    label: Committee hours
+    description: "Total length of committee sessions, in hours | סך שעות הדיון בוועדות"
+    type: derived
+    type_params:
+      expr: committee_session_minutes_total / 60
+      metrics: [{name: committee_session_minutes_total}]
+  - name: committee_session_minutes_total
+    label: Committee session minutes
+    description: "Total length of committee sessions, in minutes | סך דקות הדיון בוועדות"
+    type: simple
+    type_params: {measure: committee_session_minutes}
+
+  # Building blocks for the ratios above
+  - name: vote_results
+    label: MK votes
+    description: "MK vote records, one per vote and MK | רשומות הצבעה של ח\"כים"
+    type: simple
+    type_params: {measure: vote_results}
+  - name: votes_taken_part
+    label: Votes taken part in
+    description: "MK votes for, against or abstaining | הצבעות שבהן הח\"כ השתתף"
+    type: simple
+    type_params: {measure: votes_taken_part}
+  - name: votes_with_faction
+    label: Votes with the faction
+    description: "MK votes that matched the faction majority | הצבעות כרוב הסיעה"
+    type: simple
+    type_params: {measure: votes_with_faction}
+  - name: votes_comparable_with_faction
+    label: Votes comparable with the faction
+    description: "MK votes where the MK took part and the faction had a majority | הצבעות שניתן להשוות לרוב הסיעה"
+    type: simple
+    type_params: {measure: votes_comparable_with_faction}
+  - name: coalition_split_votes
+    label: Coalition split votes
+    description: "Plenum votes where coalition MKs voted both for and against | הצבעות שבהן הקואליציה התפצלה"
+    type: simple
+    type_params: {measure: coalition_split_votes}
+  - name: replied_queries
+    label: Replied queries
+    description: "Queries the minister replied to | שאילתות שנענו"
+    type: simple
+    type_params: {measure: replied_queries}

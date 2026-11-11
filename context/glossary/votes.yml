@@ -1,0 +1,74 @@
+# yaml-language-server: $schema=../schemas/glossary.json
+# Plenum votes, how MKs vote, and coalition and opposition.
+
+- id: glossary.plenum
+  term_he: מליאה
+  term_en: plenum
+  synonyms: [מליאת הכנסת, ישיבת מליאה, plenary]
+  definition: The full Knesset in session, where bills are read and votes are held.
+  maps_to:
+    - column: fct_plenum_session.plenum_session_id
+    - column: fct_plenum_vote.vote_id
+
+- id: glossary.vote_result
+  term_he: תוצאת הצבעה
+  term_en: how an MK voted
+  synonyms: [בעד, נגד, נמנע, הצביע, for, against, abstain]
+  definition: >
+    Each MK's vote in each plenum vote: for, against or abstain. 'absent' means the MK did
+    not vote; 'voted' is a secret ballot (e.g. electing the Speaker).
+  maps_to:
+    - column: fct_vote_result.result
+      value: for
+    - column: fct_vote_result.result
+      value: against
+    - column: fct_vote_result.result
+      value: abstain
+    - column: fct_vote_result.took_part
+
+- id: glossary.no_confidence
+  term_he: הצבעת אי-אמון
+  term_en: no-confidence vote
+  synonyms: [אי אמון, הצעת אי-אמון, motion of no confidence]
+  definition: >
+    A vote to replace the government, proposed by the opposition. Since 2014 it needs 61
+    votes and an alternative government.
+  maps_to:
+    - column: fct_plenum_vote.is_no_confidence
+      value: true
+
+- id: glossary.faction_discipline
+  term_he: משמעת סיעתית
+  term_en: voting with the faction
+  synonyms: [נאמנות לסיעה, מרד, מורד, הצביע נגד הסיעה, rebel, loyalty, party line]
+  definition: >
+    Whether an MK voted like the majority of their own faction in the same vote. A vote
+    against the faction majority is a rebellion.
+  maps_to:
+    - column: fct_vote_result.voted_with_faction
+    - column: fct_vote_result.faction_majority_result
+  see_also: [metric.faction_loyalty_rate]
+
+- id: glossary.coalition
+  term_he: קואליציה
+  term_en: coalition
+  synonyms: [קואליציה, ממשלה, הקואליציה, governing coalition]
+  definition: >
+    The factions supporting the government. Membership changes over time, so always use the
+    camp at the time of the event (fct_vote_result.camp, fct_query.asker_camp), never a
+    faction's overall history.
+  maps_to:
+    - column: fct_vote_result.camp
+      value: coalition
+    - column: fct_coalition_period.faction_id
+  see_also: [rule.camp_at_the_time, glossary.opposition]
+
+- id: glossary.opposition
+  term_he: אופוזיציה
+  term_en: opposition
+  synonyms: [האופוזיציה]
+  definition: The factions not in the coalition at the time.
+  maps_to:
+    - column: fct_vote_result.camp
+      value: opposition
+  see_also: [glossary.coalition, glossary.opposition_leader]
