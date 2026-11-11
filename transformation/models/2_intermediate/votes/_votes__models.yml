@@ -43,9 +43,17 @@ models:
       - name: person_id
         description: "MK who voted | חבר הכנסת המצביע"
       - name: faction_id
-        description: "MK's faction on the day of the vote; null if no membership covers that day | סיעת הח\"כ ביום ההצבעה"
+        description: "MK's faction at the time of the vote (see faction_match); null if unknown | סיעת הח\"כ בעת ההצבעה"
       - name: faction_name
         description: "Faction name (Hebrew) | שם הסיעה"
+      - name: faction_match
+        description: "How the faction was found: dated (a membership covers the vote date), knesset (the MK's only faction in that Knesset; the source lost most 25th-Knesset dates), none | איך נמצאה הסיעה"
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [dated, knesset, none]
+      - name: knesset_num
+        description: "Knesset of the vote's plenum session | הכנסת של ישיבת המליאה"
       - name: plenum_session_id
         description: "Plenum session ID | מזהה ישיבת מליאה"
       - name: voted_at

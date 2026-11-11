@@ -1,5 +1,5 @@
--- At least 95% of MK votes should be matched to a faction. A lower rate means the faction
--- membership periods or the as-of join are wrong.
+-- At least 95% of MK votes should be matched to a faction (dated or by Knesset). A lower
+-- rate means the faction membership periods or the joins are wrong.
 {{ config(severity='warn') }}
 
 SELECT
