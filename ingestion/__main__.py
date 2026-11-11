@@ -24,7 +24,7 @@ import duckdb
 from dlt.common.normalizers.naming.snake_case import NamingConvention
 
 from ingestion import checks, runlog
-from ingestion.odata import TABLES, Api, Settings, api_count, knesset_odata, load_settings, scope
+from ingestion.odata import TABLES, Api, Settings, knesset_odata, load_settings, scope
 
 DATA_DIR = Path("data/raw")  # ingestion owns this folder; dbt mounts it read-only
 
@@ -57,23 +57,29 @@ def load_table(
         with duckdb.connect(db) as con:
             record["bronze_rows"], record["max_updated_at"] = checks.bronze_stats(con, table, scd2)
             if mode != "sample":
-                record["api_rows"] = api_count(api.json, name, where)
-                warnings.append(checks.reconcile(record["api_rows"], record["bronze_rows"]))
+                record["api_rows"], warning = checks.api_rows_or_warning(api.json, name, where)
+                warnings.append(warning)
+                if record["api_rows"] is not None:
+                    warnings.append(checks.reconcile(record["api_rows"], record["bronze_rows"]))
                 warnings.append(
                     checks.volume(record["rows_extracted"], checks.usual_rows(con, table))
                 )
             if mode == "weekly":
-                deleted = checks.find_deleted(
-                    con, api.json, name, table, where, scd2, settings.workers
-                )
-                con.execute("DELETE FROM bronze.deleted_ids WHERE table_name = ?", [table])
-                con.executemany(
-                    "INSERT INTO bronze.deleted_ids VALUES (?, ?, ?, ?)",
-                    [(table, i, record["started_at"], run_id) for i in sorted(deleted)],
-                )
-                record["deleted_rows"] = len(deleted)
-                if deleted:
-                    warnings.append(f"{len(deleted)} rows deleted in the API")
+                try:
+                    deleted = checks.find_deleted(
+                        con, api.json, name, table, where, scd2, settings.workers
+                    )
+                except Exception as error:  # keep last week's list; the data is loaded
+                    warnings.append(f"delete check could not run ({type(error).__name__})")
+                else:
+                    con.execute("DELETE FROM bronze.deleted_ids WHERE table_name = ?", [table])
+                    con.executemany(
+                        "INSERT INTO bronze.deleted_ids VALUES (?, ?, ?, ?)",
+                        [(table, i, record["started_at"], run_id) for i in sorted(deleted)],
+                    )
+                    record["deleted_rows"] = len(deleted)
+                    if deleted:
+                        warnings.append(f"{len(deleted)} rows deleted in the API")
     except Exception as error:
         log.exception("%s failed", name)
         record.update(status="failed", error=str(error)[:4000])

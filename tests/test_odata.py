@@ -149,3 +149,10 @@ def test_settings_come_from_dlt_config_and_env(monkeypatch):
     assert odata.scope("KNS_Person", settings) is None
     monkeypatch.setenv("SOURCES__KNESSET_ODATA__FROM_KNESSET", "24")
     assert odata.scope("KNS_Bill", odata.load_settings()) == "KnessetNum ge 24"
+
+
+def test_empty_api_response_gets_a_clear_error():
+    """The API answers 200 with no body when its server times out (seen after 30 s)."""
+    with pytest.raises(odata.EmptyResponse, match="server-side timeout"):
+        odata.decode("KNS_PlenumVote", b"")
+    assert odata.decode("KNS_Bill", b'{"value": []}') == {"value": []}
