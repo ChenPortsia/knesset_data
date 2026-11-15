@@ -103,6 +103,8 @@ All context items are embedded too, so `get_context(question)` returns only the 
 
 **Implementation (milestone 2):** curated items are YAML files in `knesset_data/context/`, one folder per kind, validated by typed schemas (pydantic, exported as JSON Schema for editors). `make context-check` (CI) checks formats, unique ids and references to gold; `make context` checks values and verified-query results against the data, then loads every item, plus the catalog generated from dbt's manifest and the MetricFlow metrics, into `context.items`. Named metrics are computed by MetricFlow (dbt's semantic layer), so they are deterministic.
 
+**Search (milestone 2):** `make context` also builds `context.search` (each item's text and embedding, with a BM25 keyword index) and `context.build` (the embedding model used). `get_context(question)` in `knesset-agent/tools/context.py` returns, in order: every alias named in the question (exact match), the rules marked `always`, the best matches of each kind (a few tables, glossary terms, rules, metrics and verified queries) by keywords and embeddings merged with reciprocal rank fusion, and what those matches point to (a glossary term's or a metric's tables, `see_also` items). A matching column counts for its table. The embedding model (`intfloat/multilingual-e5-large`) and this set-up were chosen by test on the question bank in `knesset-agent/evals/`, where every question gets the items it needs.
+
 ## Project 2 — AI system (knesset-agent)
 
 A LangGraph supervisor graph: every question goes through understand → plan → execute (subagents) → verify → answer → reflect.

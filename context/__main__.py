@@ -2,7 +2,7 @@
 
 Run from the repo root:
     python -m context check            # format, unique ids, references to gold (no data needed; CI)
-    python -m context build            # check + checks against the data + load into the warehouse
+    python -m context build            # check + data checks + load and index in the warehouse
     python -m context approve vq.<id>  # store a verified query's current result as expected
     python -m context schemas          # write JSON Schemas for editors (context/schemas/)
 
@@ -24,6 +24,7 @@ from pydantic import ValidationError
 
 from context.catalog import TARGET, catalog_items, gold_models, load_manifest, metric_items
 from context.items import KINDS, Alias, GlossaryTerm, Item, Rule, VerifiedQuery
+from context.search import build_index
 
 ROOT = Path(__file__).resolve().parents[1]
 CONTEXT = ROOT / "context"
@@ -267,8 +268,9 @@ def main() -> int:
             return 1
         rows = to_rows(items, manifest)
         load(con, rows)
+        build_index(con)
         kinds = {k: sum(r["kind"] == k for r in rows) for k in sorted({r["kind"] for r in rows})}
-        print(f"loaded {len(rows)} items into context.items: {kinds}")
+        print(f"loaded and indexed {len(rows)} items in the context schema: {kinds}")
     return 0
 
 

@@ -77,6 +77,10 @@ class Rule(Item):
     applies_to: list[ModelOrColumnRef] = Field(
         default=[], description="Gold models or model.columns the rule is about"
     )
+    always: bool = Field(
+        default=False,
+        description="True to give the rule to the agent on every question, not only when found",
+    )
 
 
 class VerifiedQuery(Item):

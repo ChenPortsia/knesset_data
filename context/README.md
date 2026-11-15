@@ -77,6 +77,7 @@ Each name may appear in only one alias, so a name always means one thing.
     Few sessions happen in the summer and winter recesses; compare activity month to month
     only within the same sitting.
   applies_to: [dim_date.month]
+  always: false           # true: the agent gets the rule on every question (keep these few)
 ```
 
 ### Add a verified query
@@ -118,14 +119,44 @@ purpose, approve it again: the CSV diff in the pull request shows what changed.
 
 ## In the warehouse
 
-`make context` loads every item into `context.items` in `data/warehouse/warehouse.duckdb`:
+`make context` writes three tables to the `context` schema of `data/warehouse/warehouse.duckdb`:
+
+**`context.items`**: every item.
 
 | Column | Holds |
 | --- | --- |
 | `id` | the item id, e.g. `glossary.preliminary_reading`, `column.dim_bill.is_passed` |
 | `kind` | glossary, alias, rule, verified_query, table, column, metric |
-| `title`, `text`, `text_he` | what retrieval searches and the agent reads |
+| `title`, `text`, `text_he` | what the search looks at and the agent reads |
 | `source` | the YAML file, or `dbt` for generated items |
-| `payload` | the whole item as JSON (for a verified query, with its compiled SQL) |
+| `payload` | the whole item as JSON (for a verified query, with its compiled SQL; for a metric, with its tables) |
 
-The agent's `get_context(question)` (milestone 2, in knesset-agent) searches this table.
+**`context.search`**: the search index. One row per item: the text that is searched
+(`title`, `text` and `text_he` together) and its embedding, plus a keyword index (BM25,
+DuckDB's `fts` extension) over the same text.
+
+**`context.build`**: the embedding model the index was built with, and when. A question must
+be embedded with the same model, so the agent reads its name from here.
+
+## Search
+
+The agent's `get_context(question)` (in knesset-agent, `tools/context.py`) reads these tables.
+It takes the aliases named in the question, the rules marked `always: true`, the best matches
+by keywords and by meaning, and what those matches point to (`maps_to`, `see_also`, a metric's
+tables). So what you write here decides what the agent finds:
+
+| To make an item easier to find | Do this |
+| --- | --- |
+| People use another word for a term | add it to `synonyms` (glossary) or `names` (alias), in Hebrew and English |
+| Two items belong together | add `see_also` on the glossary term |
+| A term lives in a table | add the column to `maps_to`: the table then comes with the term |
+| A rule matters for every question | set `always: true` on it (keep these few: every one costs space in every prompt) |
+
+An embedding turns a text into a list of numbers so that texts with a similar meaning get
+similar numbers. The model is `intfloat/multilingual-e5-large` (about 100 languages, Hebrew
+included; 2.2 GB, downloaded once on the first `make context`). The first build embeds every
+item (about a minute); later builds embed only new or changed items (seconds).
+
+The model and the search set-up were chosen by test on knesset-agent's question bank; the
+comparison is in its README. Check a change to the context the same way:
+`make eval-context` in knesset-agent.

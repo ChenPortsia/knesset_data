@@ -92,9 +92,16 @@ def metric_items() -> list[dict[str, Any]]:
     path = TARGET / "semantic_manifest.json"
     if not path.exists():
         return []
+    semantic = json.loads(path.read_text())
+    table_of_measure = {
+        measure["name"]: model["node_relation"]["alias"]
+        for model in semantic["semantic_models"]
+        for measure in model["measures"]
+    }
     items = []
-    for metric in json.loads(path.read_text())["metrics"]:
+    for metric in semantic["metrics"]:
         english, hebrew = split_description(metric.get("description") or "")
+        measures = metric["type_params"].get("input_measures") or []
         items.append(
             {
                 "id": f"metric.{metric['name']}",
@@ -102,7 +109,11 @@ def metric_items() -> list[dict[str, Any]]:
                 "title": metric.get("label") or metric["name"],
                 "text": english,
                 "text_he": hebrew,
-                "payload": {"name": metric["name"], "type": metric["type"]},
+                "payload": {
+                    "name": metric["name"],
+                    "type": metric["type"],
+                    "tables": sorted({table_of_measure[m["name"]] for m in measures}),
+                },
             }
         )
     return items
