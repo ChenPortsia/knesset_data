@@ -24,7 +24,7 @@ data/warehouse/warehouse.duckdb  written only by dbt
       │  3. context/  (YAML + dbt docs)                make context
       ▼
   context.items, context.search  what the agent reads first: glossary, aliases, rules,
-                                 verified queries, tables, columns, metrics               ← started
+                                 verified queries, tables, columns, metrics               ← done
 ```
 
 Test loads use `data/raw/raw_sample.duckdb` and `data/warehouse/warehouse_sample.duckdb`.
