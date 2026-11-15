@@ -67,3 +67,53 @@
   maps_to:
     - column: fct_person_role.role
       value: opposition_leader
+
+- id: glossary.prime_minister
+  term_he: ראש הממשלה
+  term_en: prime minister
+  synonyms: [רה"מ, ראש הממשלה החליפי, alternate prime minister, PM]
+  definition: >
+    The head of the government. The 35th and 36th governments also had an alternate prime
+    minister (ראש הממשלה החליפי) under a rotation agreement.
+  maps_to:
+    - column: fct_person_role.role
+      value: prime_minister
+    - column: fct_person_role.role
+      value: alternate_prime_minister
+  see_also: [glossary.government, glossary.minister]
+
+- id: glossary.speaker
+  term_he: יושב ראש הכנסת
+  term_en: Speaker of the Knesset
+  synonyms: [יו"ר הכנסת, סגן יו"ר הכנסת, Speaker, deputy speaker]
+  definition: The MK elected to run the plenum and represent the Knesset; deputies stand in for the Speaker.
+  maps_to:
+    - column: fct_person_role.role
+      value: speaker
+    - column: fct_person_role.role
+      value: deputy_speaker
+
+- id: glossary.coalition_chair
+  term_he: יושב ראש הקואליציה
+  term_en: coalition chair (whip)
+  synonyms: [יו"ר הקואליציה, יו"ר סיעה, יושב ראש הסיעה, whip, faction chair]
+  definition: >
+    The coalition chair manages the coalition's votes in the Knesset; a faction chair leads
+    one faction's MKs there. Neither is a government post.
+  maps_to:
+    - column: fct_person_role.role
+      value: coalition_chair
+    - column: fct_person_role.role
+      value: faction_chair
+
+- id: glossary.ministry
+  term_he: משרד ממשלתי
+  term_en: government ministry
+  synonyms: [משרד, משרדי הממשלה, ministry, department]
+  definition: >
+    A government office headed by a minister. Queries are addressed to a ministry; ministers
+    hold it for a period (fct_person_role.ministry_id).
+  maps_to:
+    - column: dim_ministry.ministry_id
+    - column: fct_person_role.ministry_id
+    - column: fct_query.ministry_id

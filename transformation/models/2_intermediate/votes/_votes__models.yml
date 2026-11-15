@@ -18,7 +18,7 @@ models:
       - name: vote_method
         description: "Voting method (Hebrew) | שיטת הצבעה"
       - name: is_no_confidence
-        description: "True for a no-confidence vote | האם הצבעת אי-אמון"
+        description: "True for a no-confidence vote: flagged by the source, or named in the title or subject | האם הצבעת אי-אמון"
       - name: for_option
         description: "Meaning of a 'for' vote (Hebrew) | משמעות הצבעה בעד"
       - name: against_option

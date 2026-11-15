@@ -59,3 +59,42 @@
   stable: false
   verified_by: claude
   verified_at: 2026-11-11
+
+- id: vq.vote_participation_25th_knesset
+  question_en: Which MKs took part in the smallest share of plenum votes in the 25th Knesset?
+  question_he: אילו חברי כנסת השתתפו בהכי מעט הצבעות במליאה בכנסת ה-25? מי נעדר הכי הרבה?
+  also_asked:
+    - How often does an MK show up to vote? Attendance and absences
+    - נוכחות בהצבעות, היעדרויות מהמליאה
+  sql_file: journalist/j08_vote_participation_25th_knesset.sql
+  stable: false
+  verified_by: claude
+  verified_at: 2026-11-15
+
+- id: vq.no_confidence_votes_by_knesset
+  question_en: How many no-confidence votes did each Knesset hold, and how close did the closest come?
+  question_he: כמה הצבעות אי-אמון נערכו בכל כנסת, וכמה קרובה הייתה הקרובה ביותר להצליח?
+  sql_file: journalist/j09_no_confidence_votes_by_knesset.sql
+  stable: false
+  verified_by: claude
+  verified_at: 2026-11-15
+
+- id: vq.query_reply_rate_by_knesset
+  question_en: Has the share of answered parliamentary queries changed from Knesset to Knesset?
+  question_he: האם שיעור השאילתות שנענו השתנה מכנסת לכנסת?
+  sql_file: journalist/j10_query_reply_rate_by_knesset.sql
+  stable: false
+  verified_by: claude
+  verified_at: 2026-11-15
+
+- id: vq.knessets_compared
+  question_en: How do the Knessets since the 20th compare on bills, laws passed, votes, committee sessions and queries?
+  question_he: איך הכנסות מאז הכנסת ה-20 משתוות בהצעות חוק, חוקים שעברו, הצבעות, ישיבות ועדה ושאילתות?
+  also_asked:
+    - Which Knesset was the most productive? Which did the most work?
+    - איזו כנסת הייתה הכי פעילה או פרודוקטיבית?
+  sql_file: journalist/j11_knessets_compared.sql
+  stable: false
+  verified_by: claude
+  verified_at: 2026-11-15
+  onboarding: true

@@ -20,6 +20,15 @@
         "title": "Question He",
         "type": "string"
       },
+      "also_asked": {
+        "default": [],
+        "description": "Other ways people ask it, in either language; searched too",
+        "items": {
+          "type": "string"
+        },
+        "title": "Also Asked",
+        "type": "array"
+      },
       "sql_file": {
         "description": "The dbt analysis with the SQL, relative to transformation/analyses/",
         "title": "Sql File",

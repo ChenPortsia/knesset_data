@@ -14,9 +14,11 @@ every question in the question bank.
 | Steps | State |
 | --- | --- |
 | 1–3, 5, 6, 11: checks, catalog, metrics, aliases, rules, docs | done |
-| 8–10: search index, `get_context`, question bank and its test | done: all 34 questions get the items they need |
-| 4: glossary | 29 of ~40 terms |
-| 7: verified queries | 17 of 20 |
+| 8–10: search index, `get_context`, question bank and its test | done: all 43 questions get the items they need |
+| 4: glossary | done: 42 terms |
+| 7: verified queries | done: 21 |
+
+Still open: your review of the hand-written items (party aliases, glossary definitions, rules).
 
 Two things changed from the plan below. The search follows links between items (a glossary
 term's or a metric's tables, `see_also`), which found more than any change of model. And a

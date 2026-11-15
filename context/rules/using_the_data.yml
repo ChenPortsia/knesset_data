@@ -14,7 +14,7 @@
   always: true
   title: Use a metric when one exists
   rule: >
-    For a named measure (bill pass rate, faction loyalty, attendance, query reply rate, committee
+    For a named measure (bill pass rate, faction loyalty, query reply rate, committee
     sessions or hours, coalition split rate) use the MetricFlow metric (metric.* items) rather
     than writing SQL: it computes the same way every time. Group-by names are
     <entity>__<dimension>, e.g. bill__knesset_num, vote_result__knesset_num, vote__knesset_num,
@@ -39,6 +39,15 @@
     (3.7%: excluded from faction statistics). When a faction statistic is close or the 25th
     Knesset is involved, mention the share of 'none'.
   applies_to: [fct_vote_result.faction_match, fct_vote_result.faction_id]
+
+- id: rule.absent_mks_have_no_row
+  title: An MK who didn't vote has no row
+  rule: >
+    fct_vote_result has a row only for MKs who voted (about 70 of 120 per vote). Never count
+    absences or attendance from its rows alone: compare the MK's votes with the votes held
+    (fct_plenum_vote) while they served, as vq.vote_participation_25th_knesset does. The data
+    can't tell an absent MK from one who was paired off, abroad or not yet sworn in.
+  applies_to: [fct_vote_result.took_part, fct_vote_result.result, fct_plenum_vote.mks_took_part]
 
 - id: rule.passed_means_third_reading
   title: '"Passed" means passed the third reading'
