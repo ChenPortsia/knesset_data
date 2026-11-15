@@ -21,6 +21,7 @@ notebook = [
     "pandas>=3.1.1",
 ]
 context = [
+    "fastembed>=0.9",  # embeddings for the search index
     "pydantic>=2.14.3",
     "pyyaml>=6.0.3",
 ]

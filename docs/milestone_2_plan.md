@@ -9,6 +9,19 @@ every question in the question bank.
 
 **Requirements** (from you): the context is version-controlled and easy to modify.
 
+## Status (2026-11-15)
+
+| Steps | State |
+| --- | --- |
+| 1–3, 5, 6, 11: checks, catalog, metrics, aliases, rules, docs | done |
+| 8–10: search index, `get_context`, question bank and its test | done: all 34 questions get the items they need |
+| 4: glossary | 29 of ~40 terms |
+| 7: verified queries | 17 of 20 |
+
+Two things changed from the plan below. The search follows links between items (a glossary
+term's or a metric's tables, `see_also`), which found more than any change of model. And a
+few rules are marked `always` and given on every question instead of being searched for.
+
 ## What the research says
 
 | Finding | Source | What we take from it |

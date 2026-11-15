@@ -34,7 +34,7 @@ context-check:  ## Check the context files: format, unique ids, references to go
 	cd transformation && uv run dbt parse --profiles-dir . --target $(TARGET) --quiet
 	uv run python -m context check
 
-context:  ## Check the context against the data and load it into the warehouse (after make dbt)
+context:  ## Check the context against the data, load and index it in the warehouse (after make dbt)
 	cd transformation && uv run dbt compile --profiles-dir . --target $(TARGET) --quiet
 	uv run python -m context build
 

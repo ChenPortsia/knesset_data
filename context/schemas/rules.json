@@ -32,6 +32,12 @@
         },
         "title": "Applies To",
         "type": "array"
+      },
+      "always": {
+        "default": false,
+        "description": "True to give the rule to the agent on every question, not only when found",
+        "title": "Always",
+        "type": "boolean"
       }
     },
     "required": [

@@ -23,7 +23,7 @@ data/warehouse/warehouse.duckdb  written only by dbt
   gold.dim_* / fct_*             marts: the star schema the agent queries                  ← done
       │  3. context/  (YAML + dbt docs)                make context
       ▼
-  context.items                  what the agent reads first: glossary, aliases, rules,
+  context.items, context.search  what the agent reads first: glossary, aliases, rules,
                                  verified queries, tables, columns, metrics               ← started
 ```
 
@@ -75,7 +75,7 @@ make ingest              # ingestion: first run loads everything (~40 min), late
 make dbt                 # build and test on the full load
 make ingest-weekly       # ingestion + check for rows deleted in the API (run weekly)
 make answers             # answer the milestone 1 questions from gold
-make context             # check the context against the data and load it (after make dbt)
+make context             # check the context against the data, load and index it (after make dbt)
 make context-check       # check the context files only (fast, no data)
 make metric M=bill_pass_rate BY=bill__knesset_num   # compute a named metric
 make docs TARGET=sample  # browse model and column docs

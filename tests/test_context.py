@@ -8,6 +8,7 @@ from pydantic import ValidationError
 
 import context.__main__ as build
 from context.items import Alias, GlossaryTerm, Rule, VerifiedQuery
+from context.search import build_index
 
 FILE = Path(build.CONTEXT / "glossary" / "test.yml")
 MANIFEST = {
@@ -117,3 +118,36 @@ def test_a_stable_verified_query_must_match_its_expected_result(warehouse, tmp_p
     assert build.data_errors([(tmp_path / "x.yml", vq)], warehouse) == []
     (tmp_path / "expected" / "vq.q.csv").write_text("origin,bills\nprivate,2\n")
     assert any("differs" in e for e in build.data_errors([(tmp_path / "x.yml", vq)], warehouse))
+
+
+def test_the_search_index_finds_hebrew_words_and_embeds_only_new_texts(warehouse):
+    build.load(
+        warehouse,
+        [
+            {"id": "glossary.law", "kind": "glossary", "title": "law", "text": "A passed bill.",
+             "text_he": "חוק / נחקק", "source": "x.yml", "payload": {}},
+            {"id": "glossary.mk", "kind": "glossary", "title": "MK", "text": "A member.",
+             "text_he": "חבר כנסת", "source": "x.yml", "payload": {}},
+        ],
+    )  # fmt: skip
+    embedded = []
+
+    def fake_embed(texts: list[str]) -> list[list[float]]:
+        embedded.extend(texts)
+        return [[1.0, 0.0] for _ in texts]
+
+    build_index(warehouse, embed=fake_embed, model="fake")
+
+    found = warehouse.execute(
+        """
+        SELECT id FROM context.search
+        WHERE fts_context_search.match_bm25(id, 'מתי נחקק?') IS NOT NULL
+        """
+    ).fetchall()
+    assert found == [("glossary.law",)]
+    assert warehouse.execute("SELECT embedding_model, items FROM context.build").fetchall() == [
+        ("fake", 2)
+    ]
+
+    build_index(warehouse, embed=fake_embed, model="fake")
+    assert len(embedded) == 2  # the second build reused both embeddings
