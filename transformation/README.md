@@ -169,6 +169,8 @@ Quirks handled later, because they need joins:
 | The source rewrote most 25th-Knesset membership dates on 2026-11-04 | votes and queries fall back to the MK's only faction in that Knesset (`int_person_knesset_factions`); `faction_match` says which rule matched |
 | Posts are re-issued when a new Knesset starts | `int_person_roles_classified` starts a new period per Knesset, so a post belongs to the MK's faction in that Knesset |
 | The same role repeated with different end dates | `int_person_roles_classified` merges overlapping rows of the same role |
+| The source's no-confidence flag is set on 4 votes only | `int_votes_joined_to_items` also reads the vote's title and subject |
+| Only MKs who voted have a vote result row | absences are counted against the votes held (analysis J8); there is no attendance metric |
 | No table says which factions are in the coalition | derived from government posts, with `coalition_overrides` (see Derived facts) |
 | Readings are not recorded per bill | `int_bill_plenum_readings`: the bill's status on the plenum agenda, mapped to a reading in `bill_status_stages` |
 

@@ -174,7 +174,8 @@ def to_rows(items: list[tuple[Path, Item]], manifest: dict[str, Any]) -> list[di
         elif isinstance(item, Rule):
             title, text, text_he = item.title, item.rule, ""
         else:
-            title, text, text_he = item.question_en, item.question_en, item.question_he
+            title, text = item.question_en, item.question_en
+            text_he = " / ".join([item.question_he, *item.also_asked])
             data["sql"] = (COMPILED_ANALYSES / item.sql_file).read_text()
         rows.append({
             "id": item.id, "kind": kind, "title": title, "text": text, "text_he": text_he,

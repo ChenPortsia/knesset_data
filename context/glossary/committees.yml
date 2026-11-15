@@ -47,3 +47,49 @@
   maps_to:
     - column: fct_committee_session.session_type
       value: חסויה
+
+- id: glossary.joint_committee
+  term_he: ועדה משותפת
+  term_en: joint committee
+  definition: A committee made of members of two or more main committees, set up for a bill or subject that belongs to both.
+  maps_to:
+    - column: dim_committee.committee_type
+      value: ועדה משותפת
+
+- id: glossary.special_committee
+  term_he: ועדה מיוחדת
+  term_en: special committee
+  synonyms: [ועדה זמנית, ועדת חקירה פרלמנטרית, temporary committee]
+  definition: >
+    A committee set up for one subject or for one Knesset's term, not one of the permanent
+    committees. Its category_id is often empty, so it can't be followed across Knessets.
+  maps_to:
+    - column: dim_committee.committee_type
+      value: ועדה מיוחדת
+
+- id: glossary.committee_member
+  term_he: חבר ועדה
+  term_en: committee member
+  synonyms: [חברי הוועדה, חברים בוועדה, מי חבר בוועדה, ממלא מקום, חבר בוועדה, substitute member]
+  definition: >
+    An MK appointed to a committee, as a full member or a substitute (ממלא מקום). Membership
+    is an appointment; it does not show who attended a session.
+  maps_to:
+    - column: fct_person_role.role
+      value: committee_member
+    - column: fct_person_role.role
+      value: committee_substitute
+  see_also: [glossary.committee_chair]
+
+- id: glossary.committee_session
+  term_he: ישיבת ועדה
+  term_en: committee session (meeting)
+  synonyms: [דיון בוועדה, ישיבה, דיון, ישיבה מבוטלת, committee meeting, hearing]
+  definition: >
+    One meeting of a committee. Cancelled sessions stay in the data with status מבוטלת:
+    leave them out when counting sessions held.
+  maps_to:
+    - column: fct_committee_session.committee_session_id
+    - column: fct_committee_session.status
+      value: מבוטלת
+  see_also: [metric.committee_sessions, glossary.closed_session]

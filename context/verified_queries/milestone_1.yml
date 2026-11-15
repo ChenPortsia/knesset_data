@@ -64,6 +64,9 @@
 - id: vq.mks_who_changed_faction
   question_en: Which MKs were members of more than one faction within the same Knesset?
   question_he: אילו חברי כנסת היו חברים ביותר מסיעה אחת באותה כנסת?
+  also_asked:
+    - Who switched parties or left their party in the middle of a term?
+    - מי עבר סיעה, פרש מהסיעה או התפלג?
   sql_file: milestone_1/q08_mks_who_changed_faction.sql
   stable: false
   verified_by: claude

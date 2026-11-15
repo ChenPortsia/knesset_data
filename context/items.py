@@ -89,6 +89,9 @@ class VerifiedQuery(Item):
     id: str = Field(pattern=r"^vq\.[a-z0-9_]+$", description="vq.<snake_case_name>")
     question_en: str = Field(description="The question in English")
     question_he: str = Field(description="The question in Hebrew, as a user would ask it")
+    also_asked: list[str] = Field(
+        default=[], description="Other ways people ask it, in either language; searched too"
+    )
     sql_file: str = Field(
         description="The dbt analysis with the SQL, relative to transformation/analyses/"
     )

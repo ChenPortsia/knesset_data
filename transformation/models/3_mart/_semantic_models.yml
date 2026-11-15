@@ -64,7 +64,7 @@ semantic_models:
       - {name: days_first_to_final_reading, agg: average, expr: days_first_to_final_reading}
 
   - name: vote_results
-    description: "Each MK's vote in each plenum vote | הצבעות ח\"כים"
+    description: "Each MK's vote in each plenum vote they voted in | הצבעות ח\"כים"
     model: ref('fct_vote_result')
     defaults:
       agg_time_dimension: vote_date
@@ -79,7 +79,6 @@ semantic_models:
       - {name: vote_date, type: time, type_params: {time_granularity: day}}
     measures:
       - {name: vote_results, agg: count, expr: vote_result_id}
-      - {name: votes_taken_part, agg: sum, expr: "CAST(took_part AS INTEGER)"}
       - {name: votes_with_faction, agg: sum, expr: "CAST(voted_with_faction AS INTEGER)"}
       - {name: votes_comparable_with_faction, agg: sum, expr: "CAST(voted_with_faction IS NOT NULL AS INTEGER)"}
 
@@ -156,11 +155,6 @@ metrics:
     type: simple
     type_params: {measure: days_first_to_final_reading}
 
-  - name: attendance_rate
-    label: Vote attendance rate
-    description: "Share of plenum votes an MK took part in (for, against or abstain) | שיעור ההשתתפות בהצבעות"
-    type: ratio
-    type_params: {numerator: votes_taken_part, denominator: vote_results}
   - name: faction_loyalty_rate
     label: Faction loyalty rate
     description: "Share of an MK's votes that matched their faction's majority, among comparable votes | שיעור ההצבעות כרוב הסיעה"
@@ -218,11 +212,6 @@ metrics:
     description: "MK vote records, one per vote and MK | רשומות הצבעה של ח\"כים"
     type: simple
     type_params: {measure: vote_results}
-  - name: votes_taken_part
-    label: Votes taken part in
-    description: "MK votes for, against or abstaining | הצבעות שבהן הח\"כ השתתף"
-    type: simple
-    type_params: {measure: votes_taken_part}
   - name: votes_with_faction
     label: Votes with the faction
     description: "MK votes that matched the faction majority | הצבעות כרוב הסיעה"

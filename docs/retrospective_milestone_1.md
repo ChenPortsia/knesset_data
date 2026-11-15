@@ -127,6 +127,8 @@ Grouped by where the problem came from. "Lesson" is the general rule to keep.
 | Shas labelled opposition after July 2025 | Its ministers resigned but it still voted with the coalition | Override row in `coalition_overrides.csv` with a reason | Derived facts need a reviewed exception list |
 | J7 used only the Knesset fallback | Didn't try the dated membership first | Dated membership first, then the Knesset | Use the most precise source first, fall back explicitly, and record which one was used (`faction_match`) |
 | Seed error after adding a column | dbt tried to insert into the existing seed table | `+full_refresh: true` for seeds | Seeds are small; always rebuild them |
+| The attendance metric always showed ~100% | Only MKs who voted have a vote result row, so "took part / rows" can't see absences. Found when writing a verified query for it | Removed the metric; attendance is counted against the votes held while the MK served (analysis J8); a rule tells the agent | Check a ratio's denominator against the table's grain: what has *no* row? |
+| `is_no_confidence` missed ~550 votes | Trusted the source's flag, which is set on 4 votes only. Found when a new query returned one Knesset | Also read the vote's title and subject | Profile a flag before trusting it: count how often it is true |
 | MetricFlow errors | No time spine; ratio built from measures; wrong group-by name | Time spine on `dim_date`; ratios from metrics; `vote__knesset_num` | Read the error, then the docs; new tools have their own rules |
 | Context tests failed | Catalog code assumed every field exists; paths outside the repo | `.get()`, a `relative()` helper | Test with minimal fake inputs, not only the real manifest |
 

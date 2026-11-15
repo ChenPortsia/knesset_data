@@ -90,6 +90,7 @@ Each name may appear in only one alias, so a name always means one thing.
    - id: vq.laws_per_month
      question_en: How many laws passed each month?
      question_he: כמה חוקים עברו בכל חודש?
+     also_asked: [Laws per month, קצב החקיקה]   # optional: other ways people ask it
      sql_file: journalist/j08_laws_per_month.sql
      stable: false            # true only if the answer can't change and its order is fixed
      verified_by: chen
@@ -148,6 +149,7 @@ tables). So what you write here decides what the agent finds:
 | To make an item easier to find | Do this |
 | --- | --- |
 | People use another word for a term | add it to `synonyms` (glossary) or `names` (alias), in Hebrew and English |
+| People ask a verified query's question another way | add the phrasing to its `also_asked` |
 | Two items belong together | add `see_also` on the glossary term |
 | A term lives in a table | add the column to `maps_to`: the table then comes with the term |
 | A rule matters for every question | set `always: true` on it (keep these few: every one costs space in every prompt) |

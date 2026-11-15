@@ -122,3 +122,27 @@
     - column: fct_bill_initiator.is_initiator
       value: true
     - column: fct_bill_initiator.is_first_initiator
+
+- id: glossary.stopped_bill
+  term_he: הצעת חוק שנעצרה
+  term_en: stopped bill
+  synonyms: [נעצרה, נפלה, הוסרה מסדר היום, נדחתה, ירדה, failed bill, rejected, withdrawn]
+  definition: >
+    A bill that will not advance: voted down, withdrawn by its initiators or removed from the
+    agenda. Most private bills are neither stopped nor passed; they stay 'active' and expire
+    with the Knesset.
+  maps_to:
+    - column: dim_bill.outcome
+      value: stopped
+  see_also: [glossary.law]
+
+- id: glossary.merged_bill
+  term_he: מיזוג הצעות חוק
+  term_en: merged bill
+  synonyms: [מוזגה, מיזוג, אוחדה, merged, combined]
+  definition: >
+    A bill joined with similar bills into one, which continues in its place. A merged bill
+    never shows as passed itself, even when the combined bill became law.
+  maps_to:
+    - column: dim_bill.outcome
+      value: merged

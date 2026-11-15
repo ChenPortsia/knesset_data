@@ -33,7 +33,12 @@ enhanced AS (
         CAST(votes.vote_title AS VARCHAR) AS vote_title,
         CAST(votes.vote_subject AS VARCHAR) AS vote_subject,
         CAST(votes.vote_method AS VARCHAR) AS vote_method,
-        CAST(votes.is_no_confidence AS BOOLEAN) AS is_no_confidence,
+        -- The source flag is set on 4 votes only; a no-confidence motion says so in its title or subject
+        CAST(
+            COALESCE(votes.is_no_confidence, FALSE)
+            OR REGEXP_MATCHES(CONCAT_WS(' ', votes.vote_title, votes.vote_subject), 'אי[- ]אמון')
+            AS BOOLEAN
+        ) AS is_no_confidence,
         CAST(votes.for_option AS VARCHAR) AS for_option,
         CAST(votes.against_option AS VARCHAR) AS against_option,
         CAST(votes.item_id AS INTEGER) AS item_id,

@@ -13,10 +13,11 @@
 - id: glossary.vote_result
   term_he: תוצאת הצבעה
   term_en: how an MK voted
-  synonyms: [בעד, נגד, נמנע, הצביע, for, against, abstain]
+  synonyms: [בעד, נגד, נמנע, הצביע, נעדר, נעדרו, לא הצביע, נוכחות, for, against, abstain, absent, attendance]
   definition: >
-    Each MK's vote in each plenum vote: for, against or abstain. 'absent' means the MK did
-    not vote; 'voted' is a secret ballot (e.g. electing the Speaker).
+    Each MK's vote in each plenum vote: for, against or abstain; 'voted' is a secret ballot
+    (e.g. electing the Speaker). An MK who did not vote has no row, so absences are counted
+    against the votes held (rule.absent_mks_have_no_row).
   maps_to:
     - column: fct_vote_result.result
       value: for
@@ -25,6 +26,7 @@
     - column: fct_vote_result.result
       value: abstain
     - column: fct_vote_result.took_part
+  see_also: [rule.absent_mks_have_no_row]
 
 - id: glossary.no_confidence
   term_he: הצבעת אי-אמון
@@ -32,10 +34,12 @@
   synonyms: [אי אמון, הצעת אי-אמון, motion of no confidence]
   definition: >
     A vote to replace the government, proposed by the opposition. Since 2014 it needs 61
-    votes and an alternative government.
+    votes and an alternative government; none has passed since 2015. A few bill votes were
+    also declared confidence votes: those have item_type set, and 'for' is for the bill.
   maps_to:
     - column: fct_plenum_vote.is_no_confidence
       value: true
+  see_also: [vq.no_confidence_votes_by_knesset]
 
 - id: glossary.faction_discipline
   term_he: משמעת סיעתית
@@ -72,3 +76,40 @@
     - column: fct_vote_result.camp
       value: opposition
   see_also: [glossary.coalition, glossary.opposition_leader]
+
+- id: glossary.reservation
+  term_he: הסתייגות
+  term_en: reservation (proposed amendment)
+  synonyms: [הסתייגויות, amendment, filibuster]
+  definition: >
+    A change to a bill's wording proposed by MKs, voted on one by one in the second reading.
+    The opposition files many to delay a bill, so they are a large share of all plenum votes.
+  maps_to:
+    - column: fct_plenum_vote.vote_subject
+      value: הסתייגות
+
+- id: glossary.roll_call_vote
+  term_he: הצבעה שמית
+  term_en: roll-call vote
+  synonyms: [שמית, הצבעה אלקטרונית, הצבעה חשאית, roll call, secret ballot]
+  definition: >
+    A vote where each MK is called by name. Most votes are electronic (אלקטרונית); a few are
+    by show of hands or secret (חשאית).
+  maps_to:
+    - column: fct_plenum_vote.vote_method
+      value: שמית
+    - column: fct_plenum_vote.vote_method
+      value: אלקטרונית
+
+- id: glossary.plenum_session
+  term_he: ישיבת מליאה
+  term_en: plenum session (sitting)
+  synonyms: [ישיבה, ישיבה מיוחדת, sitting, special session]
+  definition: >
+    One sitting of the full Knesset, usually a day, holding many votes. Special sessions
+    (is_special_meeting) are ceremonial or called in recess.
+  maps_to:
+    - column: fct_plenum_session.plenum_session_id
+    - column: fct_plenum_session.is_special_meeting
+      value: true
+  see_also: [glossary.plenum]

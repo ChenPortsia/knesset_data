@@ -106,7 +106,7 @@ with what it takes to answer, which makes the list a roadmap for the next models
 - ✅ Which MKs vote against their own faction most often? On which votes did they rebel?
 - ✅ How did each faction vote on a given bill or vote? Was any faction split?
 - ✅ Which votes were decided by the smallest margin? Who was absent from them?
-- ✅ Which MKs miss the most plenum votes? Does attendance drop near elections?
+- ✅ Which MKs miss the most plenum votes? Does attendance drop near elections? (only MKs who voted have a row, so count against the votes held while they served; analysis J8)
 - ✅ Which opposition factions vote with the coalition most often, and on what? (`agg_faction_pair_agreement_month`, camp at the time; analysis J6)
 - ✅ Which pairs of factions vote alike most often? Has that changed since the last election? (`agg_faction_pair_agreement_month`)
 - ✅ How did MKs who later switched factions vote in the months before they switched? (`fct_faction_membership` + `fct_vote_result`)
@@ -119,7 +119,7 @@ with what it takes to answer, which makes the list a roadmap for the next models
 - ✅ Has the share of answered queries risen or fallen from Knesset to Knesset?
 - ✅ How many motions for the agenda does each MK propose, and how many does the government accept?
 - ✅ Which ministers answered their queries least often? (`fct_query` joined to `fct_person_role` ministers by ministry and date)
-- ✅ How many no-confidence votes did each government face, and what was the closest one? (`fct_plenum_vote.is_no_confidence`; governments by date from `fct_person_role`)
+- ✅ How many no-confidence votes did each government face, and what was the closest one? (`fct_plenum_vote.is_no_confidence`, read from the vote's title because the source's flag is almost never set; analysis J9; governments by date from `fct_person_role`)
 - 📥 What do the query and motion documents actually say? (`KNS_DocumentQuerie`, `KNS_DocumentAgenda`)
 
 ### Committees: where the power is

@@ -49,7 +49,7 @@ models:
     description: Voting method (Hebrew) | שיטת הצבעה
   - name: is_no_confidence
     data_type: boolean
-    description: True for a no-confidence vote | האם אי-אמון
+    description: 'True for a no-confidence vote: a motion of no confidence, or a vote on a bill also declared a confidence vote (those have item_type set) | האם אי-אמון'
   - name: item_type
     data_type: varchar
     description: Type of item voted on (Hebrew); null if not on the session agenda | סוג הפריט
@@ -93,7 +93,7 @@ models:
     data_type: boolean
     description: True if coalition MKs voted both for and against | האם הקואליציה התפצלה
 - name: fct_vote_result
-  description: 'How each MK voted in each plenum vote, with their faction. Grain: one row per vote and MK | איך הצביע כל ח"כ בכל הצבעה, עם סיעתו'
+  description: 'How each MK voted in each plenum vote, with their faction. Only MKs who voted have a row; an absent MK has none. Grain: one row per vote and MK who voted | איך הצביע כל ח"כ בכל הצבעה, עם סיעתו; רק ח"כים שהצביעו'
   config:
     contract:
       enforced: true
@@ -161,7 +161,7 @@ models:
     description: Vote time, Israel local time | מועד ההצבעה
   - name: result
     data_type: varchar
-    description: for / against / abstain / absent / voted (secret ballot) | תוצאה
+    description: for / against / abstain / voted (secret ballot). Absent MKs have no row; 'absent' is one stray row | תוצאה
     data_tests:
     - accepted_values:
         arguments:
@@ -173,7 +173,7 @@ models:
           - voted
   - name: took_part
     data_type: boolean
-    description: True if the MK voted for, against or abstained | האם השתתף
+    description: True if the MK voted for, against or abstained; almost always true, since absent MKs have no row | האם השתתף
   - name: faction_majority_result
     data_type: varchar
     description: Most common result in the MK's faction; null on a tie | תוצאת הרוב בסיעה
