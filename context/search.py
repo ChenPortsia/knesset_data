@@ -48,6 +48,19 @@ def embedded_before(con: duckdb.DuckDBPyConnection, model: str) -> dict[str, lis
         return {}
 
 
+def build_keyword_index(con: duckdb.DuckDBPyConnection) -> None:
+    """The keyword index (BM25) over context.search. No stemmer or stopword list: English-only."""
+    con.execute("INSTALL fts; LOAD fts")
+    con.execute(
+        f"""
+        PRAGMA create_fts_index(
+            'context.search', 'id', 'search_text',
+            stemmer = 'none', stopwords = 'none', ignore = '{NOT_A_WORD}', overwrite = 1
+        )
+        """
+    )
+
+
 def build_index(con: duckdb.DuckDBPyConnection, embed: Embed = embed, model: str = MODEL) -> None:
     """Rebuild context.search and context.build from context.items."""
     rows = con.execute(
@@ -71,16 +84,7 @@ def build_index(con: duckdb.DuckDBPyConnection, embed: Embed = embed, model: str
         "INSERT INTO context.search VALUES (?, ?, ?)",
         [(id_, text, vector) for (id_, text), vector in zip(rows, vectors, strict=True)],
     )
-    # Keyword index (BM25). No stemmer or stopword list: they are English-only.
-    con.execute("INSTALL fts; LOAD fts")
-    con.execute(
-        f"""
-        PRAGMA create_fts_index(
-            'context.search', 'id', 'search_text',
-            stemmer = 'none', stopwords = 'none', ignore = '{NOT_A_WORD}', overwrite = 1
-        )
-        """
-    )
+    build_keyword_index(con)
     con.execute(
         """
         CREATE OR REPLACE TABLE context.build AS

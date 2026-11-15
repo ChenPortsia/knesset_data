@@ -24,8 +24,12 @@ data/warehouse/warehouse.duckdb  written only by dbt
       │  3. context/  (YAML + dbt docs)                make context
       ▼
   context.items, context.search  what the agent reads first: glossary, aliases, rules,
-                                 verified queries, tables, columns, metrics               ← started
+                                 verified queries, tables, columns, metrics               ← done
 ```
+
+`make publish` copies gold and context into `data/published/knesset.duckdb`, the only file the
+agent opens. `make ui` opens DuckDB's UI in the browser with all three files attached read-only;
+close it before `make ingest` or `make dbt`, because a DuckDB file has one writer or many readers.
 
 Test loads use `data/raw/raw_sample.duckdb` and `data/warehouse/warehouse_sample.duckdb`.
 DuckDB allows one writer per file, so run dbt after ingestion finishes, not during it.
@@ -76,6 +80,8 @@ make dbt                 # build and test on the full load
 make ingest-weekly       # ingestion + check for rows deleted in the API (run weekly)
 make answers             # answer the milestone 1 questions from gold
 make context             # check the context against the data, load and index it (after make dbt)
+make publish             # copy gold and context into the agent's database, with a data version
+make ui                  # browse and query the databases in the browser
 make context-check       # check the context files only (fast, no data)
 make metric M=bill_pass_rate BY=bill__knesset_num   # compute a named metric
 make docs TARGET=sample  # browse model and column docs

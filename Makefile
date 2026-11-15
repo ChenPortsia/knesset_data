@@ -5,7 +5,7 @@
 #   3. context         context/*.yml + dbt docs -> data/warehouse/warehouse.duckdb (context schema)
 TARGET ?= dev
 
-.PHONY: up down sample ingest ingest-weekly dbt answers metric context context-check context-approve context-schemas staging-models docs test lint clean
+.PHONY: up down sample ingest ingest-weekly dbt answers metric publish ui context context-check context-approve context-schemas staging-models docs test lint clean
 
 up:  ## Start both services in Docker: ingestion on :8001, transformation on :8002
 	mkdir -p data/raw data/warehouse logs
@@ -37,6 +37,12 @@ context-check:  ## Check the context files: format, unique ids, references to go
 context:  ## Check the context against the data, load and index it in the warehouse (after make dbt)
 	cd transformation && uv run dbt compile --profiles-dir . --target $(TARGET) --quiet
 	uv run python -m context build
+
+publish:  ## Copy gold and context into the agent's database, data/published/knesset.duckdb (after make context)
+	uv run python -m publish
+
+ui:  ## Browse and query the databases in the browser (read-only; close it before make ingest / make dbt)
+	uv run python scripts/ui.py
 
 context-approve:  ## Store verified queries' current results as expected, e.g. make context-approve ID=vq.fastest_laws
 	cd transformation && uv run dbt compile --profiles-dir . --target $(TARGET) --quiet
