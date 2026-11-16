@@ -64,6 +64,17 @@ that builds every step end to end and **measures** speed and search quality. The
 is sized from those numbers, not from guesses. The embeddings also need room: 1.2M vectors
 is about 5 GB with the large model, 2 GB with a small one.
 
+### Measured (cloud session, 4 processor cores, no GPU)
+
+| Model | Vector size | Chunks a second | The pilot (12,725 chunks) | 500,000 chunks |
+| --- | --- | --- | --- | --- |
+| `e5-large` (the context layer's model) | 1,024 | 0.6 | 5.7 hours | 222 hours |
+| `potion` (a static model, no neural network at run time) | 256 | 2,147 | 6 seconds | 4 minutes |
+
+The large model is out of reach on a plain processor. Whether the fast one searches well
+enough is what the search test (step 9) will show; keyword search carries part of the load
+either way.
+
 ## Decisions
 
 1. **A second, separate ingestion pipeline** (`ingestion/protocols.py`, dlt), like OData:
@@ -123,8 +134,8 @@ knesset-agent/
 | 3 | **Staging and speaker turns** in dbt | done: 91,667 turns from 254 sessions |
 | 4 | **Speaker linking** and its measurement | done on the pilot: 99.4% of MK-marked speakers linked (99.8% of MK turns); a dbt test fails below 90%. The few non-exact links were read by hand; a 100-link check waits for the full load |
 | 5 | **`fct_turn`** with person, faction and camp; a first analysis (who spoke most) | done; bills per turn left for later |
-| 6 | **Chunking** with the context line | chunk sizes within limits; a turn's text is never lost |
-| 7 | **Embedding the slice, timed** on your Mac, with two models | a table: chunks per second, size, by model |
+| 6 | **Chunking** with the context line | done: 12,725 chunks from the 254 sessions, 183 words on average, 253 at most; tests show no word is lost |
+| 7 | **Embedding the slice, timed** on your Mac, with two models | built (`make embed-benchmark`); timed in the cloud session, see below; the Mac's numbers are still needed |
 | 8 | **Indexes and `search_protocols`**, published | a query returns the right passages for 10 trial questions |
 | 9 | **Text question bank and RAGAS baseline** on the slice | the scores are recorded, good or bad |
 | 10 | **Decide the full load** from steps 7 and 9: which model, where it runs, how long | a written decision |

@@ -11,7 +11,9 @@ renamed AS (
     SELECT DISTINCT
         CAST(session_id AS INTEGER)          AS committee_session_id,
         CAST(speaker_id AS INTEGER)          AS speaker_id,
-        CAST(TRIM(speaker_name) AS VARCHAR)  AS speaker_name
+        -- A few files run the speech into the name ('משה גפני:    תודה...', up to 100,000
+        -- characters): the name is what comes before the colon
+        CAST(TRIM(SPLIT_PART(speaker_name, ':', 1)) AS VARCHAR) AS speaker_name
     FROM source
 ),
 
