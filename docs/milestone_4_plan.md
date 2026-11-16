@@ -204,7 +204,13 @@ knesset-agent/
 | 9 | **Text question bank and RAGAS baseline** on the slice | built: 27 questions and `make eval-text` in knesset-agent; search baseline recorded there. The answer scores come from a full run with a model |
 | 10 | **Decide the full load** from steps 7 and 9: which model, where it runs, how long | decided: see "The decision" below |
 | 11 | **Full load**, then rerun steps 4 and 9 on everything | next: one overnight run on the Mac |
-| 12 | **Docs**: both READMEs, `ARCHITECTURE.md`, the context (new tables, terms, rules) | someone new can load a slice and search it |
+| 12 | **Plenum protocols** (`ivrit-ai/knesset-plenums`, about 1,550 sessions, 2009 to 2025): look at its files, load it with the same pipeline, link speeches to plenum sessions and votes, add test questions | plenum speeches are searchable next to the votes |
+| 13 | **Mentions on chunks**: people and bills named in the text, matched against our own tables (no model, no hand tagging) | a chunk can be filtered by who and what it mentions |
+| 14 | **Docs**: both READMEs, `ARCHITECTURE.md`, the context (new tables, terms, rules) | someone new can load a slice and search it |
+
+After this milestone: session summaries and a reranker (each kept only if the text test
+improves), then the Knesset-documents pipeline for missing and new protocols and bill texts.
+`make odata-survey` profiles the API tables we don't load, to choose what to add.
 
 ## Risks and how we handle them
 

@@ -47,8 +47,22 @@ Two DuckDB files, so ingestion and transformation are separate processes that sh
 | Source | What it gives | Access |
 | --- | --- | --- |
 | Knesset OData v4 (`knesset.gov.il/OdataV4/ParliamentInfo/`) | Members, factions, bills, stages, votes per MK, laws, committee and plenum sessions, agenda items, parliamentary queries | Open REST, `@odata.nextLink` paging |
-| ivrit-ai/knesset-committees (Hugging Face) | ~13K committee protocols, Nov 2018 – Jan 2026, with speaker labels and session metadata | Gated: accept terms; download text files only (repo is 827 GB, mostly audio) |
-| Bill documents (`KNS_DocumentBill`) — v2 | Bill text and explanatory notes (.docx links) | File download + parse |
+| ivrit-ai/knesset-committees (Hugging Face) | 11,144 committee protocols, Nov 2018 – Jan 2026, with speaker labels: 83% of the open sessions held | Gated: accept terms; three small text files per session (the repo is 692 GB, mostly audio) |
+| ivrit-ai/knesset-plenums (Hugging Face) | ~1,550 plenum sessions, Mar 2009 – Feb 2025: the speeches behind the votes | Gated separately; the same kind of layout |
+| Knesset documents (the OData `KNS_Document*` tables) | Links to the Knesset's own files: committee and plenum protocols, bill texts and explanatory notes, queries, laws | File download + parse; the only source for protocols the datasets lack and for anything new |
+
+**Text roadmap.** The goal is as much unstructured text as the sources give, to practise
+retrieval and agentic analysis on. In order: (1) all committee protocols from ivrit-ai;
+(2) plenum protocols from ivrit-ai; (3) Knesset documents for what is missing or new, then
+bill texts. Each source arrives with a few test questions, so its value is measured.
+`make odata-survey` profiles the API tables that aren't loaded yet (28 of 48), including the
+seven document tables and the lobbyist tables.
+
+**No manual tagging.** Everything attached to the text is produced by code: speakers are
+linked by name rules, mentions are matched against our own person and bill tables, topics
+and sentiment come from models. A person's time goes to reviewing samples and results, not
+to labelling rows. Test questions and their expected answers are written by the assistant
+from the data and checked by running them.
 
 ### Ingestion — dlt
 
@@ -360,7 +374,7 @@ Eight milestones; each one ships something usable on its own, so you can stop af
    - *Done when:* `get_context` returns the right items for every question in the bank.
 3. **Single SQL agent + eval** — one LangGraph agent with SQL and live OData tools, question bank v1.
    - *Done when:* ≥ 80% on structured questions, with traces in Langfuse.
-4. **Text layer** — protocols ingest, speaker turns, speaker linking, chunks, hybrid index.
+4. **Text layer** — committee and plenum protocols: ingest, speaker turns, speaker linking, chunks, hybrid index.
    - *Done when:* > 90% MK link rate and a RAGAS baseline.
 5. **Multi-agent team** — supervisor, Researcher, Statistician, Critic; blackboard and team mode.
    - *Done when:* hybrid questions pass and the Critic catches seeded wrong answers.
@@ -371,6 +385,6 @@ Eight milestones; each one ships something usable on its own, so you can stop af
 8. **A2A + write-up** — Researcher and SQL Analyst as A2A servers; README with architecture, eval results, limitations.
    - *Done when:* published. **Then stop.**
 
-**Out of scope:** fine-tuning models, plenum text, protocols before Nov 2018, stance detection, per-user memory, prompt-level self-modification.
+**Out of scope:** fine-tuning models, committee protocols before Nov 2018, stance detection, per-user memory, prompt-level self-modification, and any labelling of rows by hand.
 
 **Fallbacks:** if sentiment is poor (M6), ship topic trends only. If the learning loop sprawls (M7), keep aliases only. The project is still complete.
