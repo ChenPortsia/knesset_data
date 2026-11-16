@@ -32,6 +32,7 @@ import sys
 from collections.abc import Callable, Iterator
 from concurrent.futures import ThreadPoolExecutor
 from itertools import batched
+from pathlib import Path
 from typing import Any
 
 import dlt
@@ -50,12 +51,30 @@ TABLES = ("protocol_text", "protocol_speakers", "protocol_segments")
 Get = Callable[[str], str]
 
 
+def token_help() -> str:
+    """Why no token was found: says what the secrets file holds, by name only."""
+    path = Path(__file__).parent / ".dlt" / "secrets.toml"
+    wanted = '[sources.knesset_protocols]\nhf_token = "hf_..."'
+    if not path.exists():
+        return f"No Hugging Face token. Create {path} with:\n{wanted}"
+    found = [
+        line.split("=")[0].strip()
+        for line in path.read_text(encoding="utf-8").splitlines()
+        if line.strip() and not line.strip().startswith("#")
+    ]
+    return (
+        f"No Hugging Face token. {path} exists but has no hf_token under "
+        f"[sources.knesset_protocols].\nIt has these lines (names only): {found}\n"
+        f"It should have exactly:\n{wanted}"
+    )
+
+
 def make_get(base_url: str) -> Get:
     """Download one file of the dataset as text, with retries."""
     session = Client(request_timeout=120, request_max_attempts=6).session
     token = dlt.secrets.get("sources.knesset_protocols.hf_token") or os.environ.get("HF_TOKEN")
     if not token:
-        raise SystemExit("No Hugging Face token: see the top of ingestion/protocols.py")
+        raise SystemExit(token_help())
     session.headers["Authorization"] = f"Bearer {token}"
 
     def get(path: str) -> str:
