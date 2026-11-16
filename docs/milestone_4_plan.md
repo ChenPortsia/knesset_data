@@ -150,6 +150,28 @@ next step.
     RAGAS scores context precision, context recall and faithfulness. Run on a cheap model,
     a few questions at a time, like the answer test.
 
+## The chunk is where knowledge about the text lives
+
+Each chunk row carries what search can filter on, beside its text and vector. Adding a
+column doesn't change a chunk's text, so it needs no re-embedding.
+
+| On every chunk | State |
+| --- | --- |
+| Session, committee, Knesset, date | done |
+| Its place in the session (`position`), so the chunks before and after can be read | done |
+| Speakers as written, and the people they link to | done |
+| People and bills mentioned in the text | later |
+| Topic | milestone 6 |
+| Sentiment | milestone 6 |
+
+## Where the text comes from
+
+Only from the Hugging Face dataset. The Knesset's OData API gives each session's facts
+(committee, date, agenda items) and links to its protocol as a Word document; it has no
+protocol text. So the sessions the dataset lacks (9% to 21% per Knesset, and everything
+after January 2026) have no text yet. Filling them means downloading those documents
+through the links and cutting them into speakers ourselves: planned, not built.
+
 ## Layout after this milestone
 
 ```
@@ -176,7 +198,7 @@ knesset-agent/
 | 3 | **Staging and speaker turns** in dbt | done: 91,667 turns from 254 sessions |
 | 4 | **Speaker linking** and its measurement | done on the pilot: 99.4% of MK-marked speakers linked (99.8% of MK turns); a dbt test fails below 90%. The few non-exact links were read by hand; a 100-link check waits for the full load |
 | 5 | **`fct_turn`** with person, faction and camp; a first analysis (who spoke most) | done; bills per turn left for later |
-| 6 | **Chunking** with the context line | done: 12,725 chunks from the 254 sessions, 183 words on average, 253 at most; tests show no word is lost |
+| 6 | **Chunking** with the context line | done: 12,397 chunks from the 254 sessions, 188 words on average, 260 at most. A chunk under 40 words joins a neighbour (257 such chunks became 1); tests show no word or turn is lost |
 | 7 | **Embedding the slice, timed** on your Mac, with two models | built (`make embed-benchmark`); timed in the cloud session, see below; the Mac's numbers are still needed |
 | 8 | **Indexes and `search_protocols`**, published | done: `make publish` carries the chunks, vectors and keyword index; the agent answered a trial question from the passages. A proper measure is step 9 |
 | 9 | **Text question bank and RAGAS baseline** on the slice | built: 27 questions and `make eval-text` in knesset-agent; search baseline recorded there. The answer scores come from a full run with a model |
