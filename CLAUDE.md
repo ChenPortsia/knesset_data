@@ -6,7 +6,7 @@ Personal project: a data platform (`knesset-data`) and a LangGraph multi-agent s
 
 - Keep code simple, short and clean. Prefer small, typed functions over frameworks and abstractions.
 - Build one milestone at a time (see "Milestones" in `ARCHITECTURE.md`). Don't start the next one until the current one meets its "Done when".
-- Current milestone: **3 — Single SQL agent + eval** (one LangGraph agent with SQL and live OData tools; question bank with ground truth; plan in `knesset-agent/docs/milestone_3_plan.md`). Milestones 1 and 2 are done.
+- Current milestone: **4 — Text layer** (committee protocols: ingest, speaker turns, speaker linking, chunks, hybrid index, `search_protocols`; plan in `knesset_data/docs/milestone_4_plan.md`). Milestones 1 to 3 are done.
 
 ## Stack
 
