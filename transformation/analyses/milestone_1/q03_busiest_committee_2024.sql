@@ -1,4 +1,4 @@
--- Q3: Which committee held the most sessions in 2024?
+-- Q3: Which committee held the most sessions in 2024? (cancelled sessions are not counted)
 
 WITH committee_sessions AS (
     SELECT *
@@ -14,6 +14,7 @@ filtered AS (
     SELECT *
     FROM committee_sessions
     WHERE YEAR(session_date) = 2024
+      AND status <> 'מבוטלת'
 ),
 
 enhanced AS (
@@ -28,5 +29,5 @@ enhanced AS (
 
 SELECT *
 FROM enhanced
-ORDER BY sessions DESC
+ORDER BY sessions DESC, committee_name
 LIMIT 5

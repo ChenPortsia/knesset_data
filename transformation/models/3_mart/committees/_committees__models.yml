@@ -36,7 +36,7 @@ models:
     description: End, Israel local time; null if ongoing | מועד סיום, שעון ישראל; ריק אם פעיל
   - name: duration_minutes
     data_type: integer
-    description: Length in minutes; null without an end time | משך בדקות
+    description: Length in minutes; null without an end time, which is about three quarters of sessions | משך בדקות
   - name: session_number
     data_type: integer
     description: Session number | מספר הישיבה
