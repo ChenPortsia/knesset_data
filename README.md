@@ -55,6 +55,7 @@ transformation/      # 2. Transformation: raw.duckdb → warehouse.duckdb (a dbt
   macros/            #    is_current(), local_time(), code_label()
   tests/, analyses/, snapshots/   # the rest of the standard dbt layout
   scripts/           #    generate_staging.py: writes the staging models (make staging-models)
+nlp/                 # the text batch: chunk the committee turns, embed the chunks -> rag schema
 context/             # 3. Context layer: glossary, aliases, rules, verified queries (YAML, in git)
   README.md          #    how to add or change an item
 nlp/                 # 4. NLP batch (milestone 4+)
@@ -81,6 +82,9 @@ make protocols ARGS='--limit 20'   # committee protocols not loaded yet (needs a
 make ingest-weekly       # ingestion + check for rows deleted in the API (run weekly)
 make answers             # answer the milestone 1 questions from gold
 make context             # check the context against the data, load and index it (after make dbt)
+make chunks              # committee turns -> chunks of text for search (after make dbt)
+make embed MODEL=potion  # embed the chunks that have no vector yet
+make embed-benchmark     # time both embedding models on this machine
 make publish             # copy gold and context into the agent's database, with a data version
 make ui                  # browse and query the databases in the browser
 make context-check       # check the context files only (fast, no data)
