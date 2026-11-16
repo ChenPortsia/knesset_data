@@ -21,10 +21,13 @@ import duckdb
 # The two e5-large rows are one model, so their vectors are interchangeable.
 # (Apple's CoreML through fastembed was tried on an M1 Max: it supports only part of the
 # model, ran out of memory and was killed, so it is not offered.)
+# The last value is how much more a keyword match should count than a match by meaning when
+# the two rankings are merged: 1 for a model that is good at meaning, more for a weak one
+# (measured on knesset-agent's text test). It is stored with the vectors for the search to use.
 MODELS = {
-    "e5-large": ("intfloat/multilingual-e5-large", "passage: ", "query: ", "cpu"),
-    "e5-large-torch": ("intfloat/multilingual-e5-large", "passage: ", "query: ", "torch"),
-    "potion": ("minishlab/potion-multilingual-128M", "", "", "cpu"),
+    "e5-large": ("intfloat/multilingual-e5-large", "passage: ", "query: ", "cpu", 1),
+    "e5-large-torch": ("intfloat/multilingual-e5-large", "passage: ", "query: ", "torch", 1),
+    "potion": ("minishlab/potion-multilingual-128M", "", "", "cpu", 4),
 }
 DEFAULT = "e5-large"
 BATCH = 256  # chunks embedded and saved at a time, so a stopped run keeps its work
@@ -34,7 +37,7 @@ Encoder = Callable[[list[str]], list[list[float]]]
 
 def load(model: str) -> Encoder:
     """A function that embeds texts with the model, on the backend its row names."""
-    name, prefix, _, backend = MODELS[model]
+    name, prefix, _, backend, _ = MODELS[model]
     if backend == "torch":
         from sentence_transformers import SentenceTransformer
 
@@ -52,18 +55,21 @@ def load(model: str) -> Encoder:
 def embed_new(con: duckdb.DuckDBPyConnection, model: str = DEFAULT) -> tuple[int, int]:
     """Embed the chunks that have no vector yet. Returns (embedded now, embedded in all)."""
     con.execute("CREATE SCHEMA IF NOT EXISTS rag")
-    build = (model, MODELS[model][0], MODELS[model][2])
-    con.execute(
-        """
-        CREATE TABLE IF NOT EXISTS rag.build (
-            model VARCHAR, embedding_model VARCHAR, question_prefix VARCHAR
-        )
-        """
-    )
-    if con.execute("SELECT * FROM rag.build").fetchone() != build:
+    name, _, question_prefix, _, keyword_weight = MODELS[model]
+    build = (name, question_prefix, keyword_weight)
+    try:
+        same_model = con.execute("SELECT * FROM rag.build").fetchone() == build
+    except duckdb.Error:  # no rag.build yet, or one from an older layout
+        same_model = False
+    if not same_model:
         con.execute("DROP TABLE IF EXISTS rag.embeddings")  # another model's vectors
-        con.execute("DELETE FROM rag.build")
-        con.execute("INSERT INTO rag.build VALUES (?, ?, ?)", build)
+        con.execute(
+            """
+            CREATE OR REPLACE TABLE rag.build AS
+            SELECT ? AS embedding_model, ? AS question_prefix, ? AS keyword_weight
+            """,
+            build,
+        )
     encode = load(model)
     size = len(encode(["x"])[0])
     con.execute(
@@ -122,7 +128,7 @@ def benchmark(con: duckdb.DuckDBPyConnection, sample: int, models: list[str]) ->
     )
     reference: dict[str, list[list[float]]] = {}  # the cpu vectors of each Hugging Face model
     for model in models:
-        name, _, _, backend = MODELS[model]
+        name, _, _, backend, _ = MODELS[model]
         try:
             encode = load(model)
             encode(texts[:4])  # warm up: the first call loads the model
