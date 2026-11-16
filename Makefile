@@ -29,7 +29,7 @@ protocols:  ## Load committee protocols not loaded yet, e.g. make protocols ARGS
 odata-survey:  ## Profile the API tables we don't load into docs/odata_survey.md (loads nothing)
 	uv run python -m ingestion.survey
 
-peek-documents:  ## Look inside the newest committee and plenum protocol documents -> docs/document_peek.md
+peek-documents:  ## Look inside a committee and a plenum protocol document of each Knesset -> docs/document_peek.md
 	uv run python -m ingestion.peek
 
 dbt:  ## Transformation: build and test all models (TARGET=sample to use the test load)

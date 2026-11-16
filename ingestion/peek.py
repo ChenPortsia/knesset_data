@@ -2,25 +2,31 @@
 
     python -m ingestion.peek          (make peek-documents)
 
-Finds the newest committee protocol and the newest plenum protocol ("דברי הכנסת") through
-the API's document tables, downloads each Word file, and writes docs/document_peek.md:
-whether it is a real .docx, its paragraph styles, and the paragraphs around the first
-speakers. Loads nothing.
+For each Knesset from the 20th on, takes one committee protocol and one plenum protocol
+("דברי הכנסת") through the API's document tables, downloads the Word file, and writes
+docs/document_peek.md: whether it is a real .docx, its paragraph styles with examples, and
+the markers (<< דובר >> ...) found in it. This shows whether one parser can read every
+year. Loads nothing.
 """
 
+import html
 import io
 import re
 import zipfile
 from collections import Counter
 from pathlib import Path
+from typing import Any
 
 from ingestion.odata import Api, load_settings
 
 REPORT = Path(__file__).resolve().parents[1] / "docs" / "document_peek.md"
-KINDS = {  # table -> the kind of document that is the protocol
-    "KNS_DocumentCommitteeSession": "פרוטוקול ועדה",
-    "KNS_DocumentPlenumSession": "דברי הכנסת",
+# document table -> (its session table, its session column, the kind that is the protocol)
+SOURCES = {
+    "KNS_DocumentCommitteeSession": ("KNS_CommitteeSession", "CommitteeSessionID", "פרוטוקול ועדה"),
+    "KNS_DocumentPlenumSession": ("KNS_PlenumSession", "PlenumSessionID", "דברי הכנסת"),
 }
+KNESSETS = range(20, 27)
+MARKER = re.compile(r"<<\s*([^<>]{1,25}?)\s*>>")
 PARAGRAPH = re.compile(r"<w:p[ >].*?</w:p>", re.S)
 STYLE = re.compile(r'<w:pStyle w:val="([^"]+)"')
 TEXT = re.compile(r"<w:t[^>]*>([^<]*)</w:t>")
@@ -38,41 +44,73 @@ def paragraphs(docx: bytes) -> list[tuple[str | None, str]]:
     return found
 
 
-def describe(table: str, row: dict, content: bytes) -> str:
+def describe(title: str, row: dict[str, Any], content: bytes) -> str:
     """One document's section of the report."""
-    lines = [f"## {table}", "", "```json", str(row), "```", "", f"Size: {len(content):,} bytes"]
+    lines = [f"## {title}", "", f"`{row.get('FilePath')}`", "", f"Size: {len(content):,} bytes"]
     if not zipfile.is_zipfile(io.BytesIO(content)):
-        return "\n".join([*lines, f"Not a .docx file. First bytes: {content[:80]!r}", ""])
-    rows = paragraphs(content)
-    styles = Counter(style for style, _ in rows).most_common()
-    lines += [f"Paragraphs: {len(rows):,}", "", f"Styles: {styles}", ""]
-    # A speaker line is short and ends with a colon; show what surrounds the first few
-    speakers = [i for i, (_, text) in enumerate(rows) if text.endswith(":") and len(text) < 80]
-    lines += [f"Short lines ending with a colon: {len(speakers):,}", ""]
-    for start in speakers[40:43] or speakers[:3]:
-        lines += ["```"] + [f"{s!s:8} {t[:110]}" for s, t in rows[start : start + 4]] + ["```", ""]
-    lines += ["First 25 paragraphs:", "", "```"]
-    lines += [f"{s!s:8} {t[:110]}" for s, t in rows[:25]] + ["```", ""]
-    return "\n".join(lines)
+        return "\n".join([*lines, f"Not a .docx file. First bytes: {content[:60]!r}", ""])
+    rows = [(style, html.unescape(text)) for style, text in paragraphs(content)]
+    markers = Counter(m for _, text in rows for m in MARKER.findall(text)).most_common(12)
+    colon = sum(text.endswith(":") and len(text) < 80 for _, text in rows)
+    lines += [
+        f"Paragraphs: {len(rows):,}",
+        f"Short paragraphs ending with a colon: {colon:,}",
+        f"Markers: {markers}",
+        "",
+        "Styles, with how many paragraphs and three examples from the middle of the document:",
+        "",
+        "```",
+    ]
+    for style, count in Counter(style for style, _ in rows).most_common():
+        texts = [text for s, text in rows if s == style]
+        middle = texts[len(texts) // 2 : len(texts) // 2 + 3]
+        lines += [f"{style!s} ({count})"] + [f"    {text[:120]}" for text in middle]
+    return "\n".join([*lines, "```", ""])
+
+
+def one_protocol(api: Api, table: str, knesset: int) -> dict[str, Any] | None:
+    """A protocol document of a session from the middle of a Knesset, or None."""
+    session_table, session_column, kind = SOURCES[table]
+    sessions = api.json(
+        session_table,
+        {
+            "$filter": f"KnessetNum eq {knesset}",
+            "$orderby": "Id desc",
+            "$top": "100",
+            "$skip": "40",
+        },
+    )["value"]
+    for session in sessions:
+        found = api.json(
+            table,
+            {
+                "$filter": f"{session_column} eq {session['Id']} and GroupTypeDesc eq '{kind}' "
+                "and ApplicationDesc eq 'DOC'",
+                "$top": "1",
+            },
+        )["value"]
+        if found:
+            return found[0]
+    return None
 
 
 def main() -> None:
     api = Api(load_settings())
     sections = []
-    for table, kind in KINDS.items():
-        row = api.json(
-            table,
-            {
-                "$filter": f"GroupTypeDesc eq '{kind}' and ApplicationDesc eq 'DOC'",
-                "$orderby": "Id desc",
-                "$top": "1",
-            },
-        )["value"][0]
-        url = row["FilePath"].replace("\\", "/")
-        print(f"{table}: {url}")
-        response = api.session.get(url)
-        response.raise_for_status()
-        sections.append(describe(table, row, response.content))
+    for table in SOURCES:
+        for knesset in KNESSETS:
+            title = f"{table}, Knesset {knesset}"
+            try:
+                row = one_protocol(api, table, knesset)
+                if row is None:
+                    sections.append(f"## {title}\n\nNo protocol document found.\n")
+                    continue
+                response = api.session.get(row["FilePath"].replace("\\", "/"))
+                response.raise_for_status()
+                sections.append(describe(title, row, response.content))
+            except Exception as error:
+                sections.append(f"## {title}\n\nFailed: {type(error).__name__}: {error}\n")
+            print(title, flush=True)
     REPORT.write_text("# A look inside Knesset documents\n\n" + "\n".join(sections), "utf-8")
     print(f"wrote {REPORT}")
 

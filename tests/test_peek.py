@@ -27,4 +27,5 @@ def test_paragraphs_keep_their_style_and_join_their_runs():
 
 def test_a_file_that_is_not_a_docx_is_said_so():
     assert "Not a .docx file" in describe("KNS_DocumentPlenumSession", {"Id": 1}, b"\xd0\xcf old")
-    assert "Short lines ending with a colon: 1" in describe("t", {"Id": 1}, docx())
+    section = describe("t", {"Id": 1}, docx())
+    assert "Short paragraphs ending with a colon: 1" in section and "af6 (1)" in section
