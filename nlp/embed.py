@@ -9,28 +9,45 @@ a time; embedding with a different model starts over.
 """
 
 import time
-from typing import Any
+from collections.abc import Callable
 
 import duckdb
 
-# name -> fastembed model, the prefix it expects before a text to index and before a question
+# name -> model on Hugging Face, the prefix it expects before a text to index and before a
+# question, and how it is run:
+#   cpu     fastembed on the processor
+#   coreml  fastembed through Apple's CoreML (the Mac's GPU and neural engine)
+#   torch   PyTorch, which uses the Mac's GPU (Metal) or an NVIDIA card when there is one;
+#           needs `uv sync --group gpu`
+# The three e5-large rows are one model, so their vectors are interchangeable.
 MODELS = {
-    "e5-large": ("intfloat/multilingual-e5-large", "passage: ", "query: "),
-    "potion": ("minishlab/potion-multilingual-128M", "", ""),
+    "e5-large": ("intfloat/multilingual-e5-large", "passage: ", "query: ", "cpu"),
+    "e5-large-coreml": ("intfloat/multilingual-e5-large", "passage: ", "query: ", "coreml"),
+    "e5-large-torch": ("intfloat/multilingual-e5-large", "passage: ", "query: ", "torch"),
+    "potion": ("minishlab/potion-multilingual-128M", "", "", "cpu"),
 }
 DEFAULT = "e5-large"
 BATCH = 256  # chunks embedded and saved at a time, so a stopped run keeps its work
 
+Encoder = Callable[[list[str]], list[list[float]]]
 
-def load(model: str) -> Any:
+
+def load(model: str) -> Encoder:
+    """A function that embeds texts with the model, on the backend its row names."""
+    name, prefix, _, backend = MODELS[model]
+    if backend == "torch":
+        from sentence_transformers import SentenceTransformer
+
+        encoder = SentenceTransformer(name)  # picks the GPU itself when there is one
+        return lambda texts: encoder.encode(
+            [prefix + text for text in texts], normalize_embeddings=True, batch_size=32
+        ).tolist()
+
     from fastembed import TextEmbedding  # here, not at the top: slow to import
 
-    return TextEmbedding(MODELS[model][0])
-
-
-def vectors(encoder: Any, model: str, texts: list[str]) -> list[list[float]]:
-    prefix = MODELS[model][1]
-    return [v.tolist() for v in encoder.embed([prefix + text for text in texts])]
+    providers = ["CoreMLExecutionProvider"] if backend == "coreml" else None
+    embedder = TextEmbedding(name, providers=providers)
+    return lambda texts: [v.tolist() for v in embedder.embed([prefix + text for text in texts])]
 
 
 def embed_new(con: duckdb.DuckDBPyConnection, model: str = DEFAULT) -> tuple[int, int]:
@@ -48,8 +65,8 @@ def embed_new(con: duckdb.DuckDBPyConnection, model: str = DEFAULT) -> tuple[int
         con.execute("DROP TABLE IF EXISTS rag.embeddings")  # another model's vectors
         con.execute("DELETE FROM rag.build")
         con.execute("INSERT INTO rag.build VALUES (?, ?, ?)", build)
-    encoder = load(model)
-    size = len(vectors(encoder, model, ["x"])[0])
+    encode = load(model)
+    size = len(encode(["x"])[0])
     con.execute(
         f"""
         CREATE TABLE IF NOT EXISTS rag.embeddings (
@@ -74,7 +91,7 @@ def embed_new(con: duckdb.DuckDBPyConnection, model: str = DEFAULT) -> tuple[int
     ).fetchall()
     for start in range(0, len(todo), BATCH):
         batch = todo[start : start + BATCH]
-        embedded = vectors(encoder, model, [text for _, text in batch])
+        embedded = encode([text for _, text in batch])
         con.executemany(
             "INSERT INTO rag.embeddings VALUES (?, MD5(?), ?)",
             [(id_, text, v) for (id_, text), v in zip(batch, embedded, strict=True)],
@@ -85,7 +102,11 @@ def embed_new(con: duckdb.DuckDBPyConnection, model: str = DEFAULT) -> tuple[int
 
 
 def benchmark(con: duckdb.DuckDBPyConnection, sample: int) -> None:
-    """Time each model on the same chunks and say how long every chunk would take."""
+    """Time each model on the same chunks and say how long every chunk would take.
+
+    A row that can't run here (no GPU, a package not installed) says why and is skipped.
+    'same as cpu' compares a GPU run's vectors with the processor's: 1.000 means identical.
+    """
     texts = [
         r[0]
         for r in con.execute(
@@ -97,18 +118,38 @@ def benchmark(con: duckdb.DuckDBPyConnection, sample: int) -> None:
     total = con.execute("SELECT COUNT(*) FROM rag.chunks").fetchone()[0]
     print(f"{len(texts)} chunks timed; {total:,} chunks loaded\n")
     print(
-        f"{'model':10} {'size':>5} {'chunks/s':>9} {'all loaded chunks':>18} {'500,000 chunks':>15}"
+        f"{'model':16} {'size':>5} {'chunks/s':>9} {'loaded chunks':>14} {'500,000':>10} same as cpu"
     )
-    for model in MODELS:
-        encoder = load(model)
-        vectors(encoder, model, texts[:4])  # warm up: the first call loads the model
-        started = time.time()
-        size = len(vectors(encoder, model, texts)[0])
+    reference: dict[str, list[list[float]]] = {}  # the cpu vectors of each Hugging Face model
+    for model, (name, _, _, backend) in MODELS.items():
+        try:
+            encode = load(model)
+            encode(texts[:4])  # warm up: the first call loads the model
+            started = time.time()
+            embedded = encode(texts)
+        except Exception as error:
+            print(f"{model:16} not available here: {type(error).__name__}: {str(error)[:80]}")
+            continue
         rate = len(texts) / (time.time() - started)
+        same = ""
+        if backend == "cpu":
+            reference[name] = embedded
+        elif name in reference:
+            same = f"{mean_cosine(reference[name], embedded):.3f}"
         print(
-            f"{model:10} {size:>5} {rate:>9.1f} {minutes(total / rate):>18} "
-            f"{minutes(500_000 / rate):>15}"
+            f"{model:16} {len(embedded[0]):>5} {rate:>9.1f} {minutes(total / rate):>14} "
+            f"{minutes(500_000 / rate):>10} {same}"
         )
+
+
+def mean_cosine(a: list[list[float]], b: list[list[float]]) -> float:
+    """How alike two sets of vectors for the same texts are, on average (1 = identical)."""
+
+    def cosine(x: list[float], y: list[float]) -> float:
+        dot = sum(i * j for i, j in zip(x, y, strict=True))
+        return dot / (sum(i * i for i in x) ** 0.5 * sum(j * j for j in y) ** 0.5)
+
+    return sum(cosine(x, y) for x, y in zip(a, b, strict=True)) / len(a)
 
 
 def minutes(seconds: float) -> str:

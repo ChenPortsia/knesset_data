@@ -33,10 +33,10 @@ dbt:  ## Transformation: build and test all models (TARGET=sample to use the tes
 chunks:  ## Cut the committee turns into chunks: gold.fct_turn -> rag.chunks (after make dbt)
 	uv run python -m nlp chunk
 
-embed:  ## Embed the chunks that have no vector yet (MODEL=e5-large or potion)
+embed:  ## Embed the chunks that have no vector yet (MODEL=potion, e5-large, e5-large-coreml or e5-large-torch)
 	uv run python -m nlp embed $(if $(MODEL),--model $(MODEL))
 
-embed-benchmark:  ## Time both embedding models on 200 chunks and estimate the full load
+embed-benchmark:  ## Time every embedding model and backend on 200 chunks and estimate the full load
 	uv run python -m nlp benchmark
 
 metric:  ## Compute a MetricFlow metric, e.g. make metric M=bill_pass_rate BY=bill__knesset_num,bill__origin
