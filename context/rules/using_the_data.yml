@@ -71,6 +71,15 @@
     any time-of-day analysis (e.g. "votes after midnight").
   applies_to: [fct_plenum_vote.voted_at]
 
+- id: rule.session_length_mostly_unknown
+  title: Most committee sessions have no known length
+  rule: >
+    Only 18% to 30% of committee sessions in a Knesset have an end time, so
+    fct_committee_session.duration_minutes is null for the rest. Never report total committee
+    hours as if complete. Compare committees by sessions held, or by the average length of the
+    sessions that have one, and say what share of sessions that covers.
+  applies_to: [fct_committee_session.duration_minutes, fct_committee_session.finish_at]
+
 - id: rule.known_gaps
   title: Known gaps in the source
   rule: >

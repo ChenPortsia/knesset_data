@@ -23,7 +23,8 @@ enhanced AS (
         persons.full_name,
         persons.latest_faction_name,
         COUNT(*) AS comparable_votes,
-        ROUND(100.0 * COUNT(*) FILTER (WHERE filtered.voted_with_faction) / COUNT(*), 1) AS with_faction_percent
+        ROUND(100.0 * COUNT(*) FILTER (WHERE filtered.voted_with_faction) / COUNT(*), 1) AS with_faction_percent,
+        1.0 * COUNT(*) FILTER (WHERE filtered.voted_with_faction) / COUNT(*) AS with_faction_share
     FROM filtered
     INNER JOIN persons
         ON filtered.person_id = persons.person_id
@@ -31,7 +32,8 @@ enhanced AS (
     HAVING COUNT(*) >= 100
 )
 
-SELECT *
+-- Ordered by the exact share, so MKs with the same rounded percent keep a fixed order
+SELECT * EXCLUDE (with_faction_share)
 FROM enhanced
-ORDER BY with_faction_percent
+ORDER BY with_faction_share, full_name
 LIMIT 15

@@ -1,8 +1,9 @@
--- Q4: Committee sessions per month over the last 3 years
+-- Q4: Committee sessions per month over the last 3 years (cancelled sessions are not counted)
 
 WITH committee_sessions AS (
     SELECT *
     FROM {{ ref('fct_committee_session') }}
+    WHERE status <> 'מבוטלת'
 ),
 
 dates AS (

@@ -130,8 +130,9 @@ semantic_models:
       - {name: session_type, type: categorical}
       - {name: session_date, type: time, type_params: {time_granularity: day}}
     measures:
-      - {name: committee_sessions, agg: count, expr: committee_session_id}
-      - {name: committee_session_minutes, agg: sum, expr: duration_minutes}
+      # Cancelled sessions stay in the table; they are not sessions held
+      - {name: committee_sessions, agg: count, expr: "CASE WHEN status <> 'מבוטלת' THEN committee_session_id END"}
+      - {name: committee_session_minutes, agg: sum, expr: "CASE WHEN status <> 'מבוטלת' THEN duration_minutes END"}
 
 metrics:
   - name: bills
@@ -190,19 +191,19 @@ metrics:
 
   - name: committee_sessions
     label: Committee sessions
-    description: "Number of committee sessions held | מספר ישיבות הוועדה"
+    description: "Number of committee sessions held; cancelled sessions are not counted | מספר ישיבות הוועדה שהתקיימו"
     type: simple
     type_params: {measure: committee_sessions}
   - name: committee_hours
     label: Committee hours
-    description: "Total length of committee sessions, in hours | סך שעות הדיון בוועדות"
+    description: "Total length of committee sessions with a known end time, in hours. Only about a quarter of sessions have one, so this is a large undercount | סך שעות הדיון בוועדות, רק בישיבות עם שעת סיום ידועה"
     type: derived
     type_params:
       expr: committee_session_minutes_total / 60
       metrics: [{name: committee_session_minutes_total}]
   - name: committee_session_minutes_total
     label: Committee session minutes
-    description: "Total length of committee sessions, in minutes | סך דקות הדיון בוועדות"
+    description: "Total length of committee sessions with a known end time, in minutes; a large undercount | סך דקות הדיון בוועדות, רק בישיבות עם שעת סיום ידועה"
     type: simple
     type_params: {measure: committee_session_minutes}
 
