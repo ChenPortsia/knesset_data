@@ -89,7 +89,8 @@
     counting or comparing, check which sessions have turns and say so. speaker_kind 'mk' are
     MKs (linked to person_id); 'other' are officials and guests, known only by speaker_name;
     'interjection' is a call from the floor. Compare speaking by words, not by turns: half
-    of all turns are a few words long.
+    of all turns are a few words long. To find what was said on a subject, search the
+    passages (the search_protocols tool); use SQL on fct_turn to count and compare.
   applies_to: [fct_turn, fct_turn.turn_text, fct_turn.speaker_kind, fct_turn.person_id]
 
 - id: rule.known_gaps

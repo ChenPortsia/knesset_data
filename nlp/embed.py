@@ -36,11 +36,18 @@ def vectors(encoder: Any, model: str, texts: list[str]) -> list[list[float]]:
 def embed_new(con: duckdb.DuckDBPyConnection, model: str = DEFAULT) -> tuple[int, int]:
     """Embed the chunks that have no vector yet. Returns (embedded now, embedded in all)."""
     con.execute("CREATE SCHEMA IF NOT EXISTS rag")
-    con.execute("CREATE TABLE IF NOT EXISTS rag.build (model VARCHAR, question_prefix VARCHAR)")
-    if con.execute("SELECT model FROM rag.build").fetchone() != (model,):
+    build = (model, MODELS[model][0], MODELS[model][2])
+    con.execute(
+        """
+        CREATE TABLE IF NOT EXISTS rag.build (
+            model VARCHAR, embedding_model VARCHAR, question_prefix VARCHAR
+        )
+        """
+    )
+    if con.execute("SELECT * FROM rag.build").fetchone() != build:
         con.execute("DROP TABLE IF EXISTS rag.embeddings")  # another model's vectors
         con.execute("DELETE FROM rag.build")
-        con.execute("INSERT INTO rag.build VALUES (?, ?)", [model, MODELS[model][2]])
+        con.execute("INSERT INTO rag.build VALUES (?, ?, ?)", build)
     encoder = load(model)
     size = len(vectors(encoder, model, ["x"])[0])
     con.execute(
