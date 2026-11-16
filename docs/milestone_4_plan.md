@@ -78,6 +78,16 @@ The large model is out of reach on a plain processor. Whether the fast one searc
 enough is what the search test (step 9) will show; keyword search carries part of the load
 either way.
 
+### What the search test showed (step 9)
+
+On the pilot, with the fast model: keyword search finds the right passage for most Hebrew
+questions, and `potion`'s meaning search for few (6 of 27). On a reduced set, `e5-large`
+with keywords found all 27, including English questions and rephrasings that share no words
+with the passage. So the fast model is not good enough on its own, and the large one is too
+slow to build on a plain processor. Step 10 has to find a strong model at a workable cost:
+the Mac's GPU, a rented GPU for a few hours, an embedding API, or a mid-sized model.
+The tables are in knesset-agent's README.
+
 ## Decisions
 
 1. **A second, separate ingestion pipeline** (`ingestion/protocols.py`, dlt), like OData:
@@ -140,7 +150,7 @@ knesset-agent/
 | 6 | **Chunking** with the context line | done: 12,725 chunks from the 254 sessions, 183 words on average, 253 at most; tests show no word is lost |
 | 7 | **Embedding the slice, timed** on your Mac, with two models | built (`make embed-benchmark`); timed in the cloud session, see below; the Mac's numbers are still needed |
 | 8 | **Indexes and `search_protocols`**, published | done: `make publish` carries the chunks, vectors and keyword index; the agent answered a trial question from the passages. A proper measure is step 9 |
-| 9 | **Text question bank and RAGAS baseline** on the slice | the scores are recorded, good or bad |
+| 9 | **Text question bank and RAGAS baseline** on the slice | built: 27 questions and `make eval-text` in knesset-agent; search baseline recorded there. The answer scores come from a full run with a model |
 | 10 | **Decide the full load** from steps 7 and 9: which model, where it runs, how long | a written decision |
 | 11 | **Full load**, then rerun steps 4 and 9 on everything | more than 90% of MK turns linked; baseline on the full data |
 | 12 | **Docs**: both READMEs, `ARCHITECTURE.md`, the context (new tables, terms, rules) | someone new can load a slice and search it |
