@@ -47,14 +47,12 @@ Two DuckDB files, so ingestion and transformation are separate processes that sh
 | Source | What it gives | Access |
 | --- | --- | --- |
 | Knesset OData v4 (`knesset.gov.il/OdataV4/ParliamentInfo/`) | Members, factions, bills, stages, votes per MK, laws, committee and plenum sessions, agenda items, parliamentary queries | Open REST, `@odata.nextLink` paging |
-| ivrit-ai/knesset-committees (Hugging Face) | 11,144 committee protocols, Nov 2018 – Jan 2026, with speaker labels: 83% of the open sessions held | Gated: accept terms; three small text files per session (the repo is 692 GB, mostly audio) |
-| ivrit-ai/knesset-plenums (Hugging Face) | ~1,550 plenum sessions, Mar 2009 – Feb 2025: the speeches behind the votes | Gated separately; the same kind of layout |
-| Knesset documents (the OData `KNS_Document*` tables) | Links to the Knesset's own files: committee and plenum protocols, bill texts and explanatory notes, queries, laws | File download + parse; the only source for protocols the datasets lack and for anything new |
+| Knesset documents (the OData `KNS_Document*` tables) | Links to the Knesset's own Word files: committee protocols (201,813 document rows), the plenum record (21,928), bill texts (111,663), motions, regulations. Keyed by our session and bill ids, and current | Download each file once and read its paragraphs; their styles mark the chair, MKs, guests, calls from the floor, the subject under discussion and the votes |
+| ivrit-ai/knesset-committees (Hugging Face) | The same committee protocols, already cut into speakers, for 83% of sessions to Jan 2026 | Used for the pilot only; dropped as a source because the documents give more (see `docs/milestone_4_plan.md`) |
 
 **Text roadmap.** The goal is as much unstructured text as the sources give, to practise
-retrieval and agentic analysis on. In order: (1) all committee protocols from ivrit-ai;
-(2) plenum protocols from ivrit-ai; (3) Knesset documents for what is missing or new, then
-bill texts. Each source arrives with a few test questions, so its value is measured.
+retrieval and agentic analysis on, from one source, the Knesset's own documents. In order:
+(1) committee protocols; (2) the plenum record, with its votes; (3) bill texts. Each source arrives with a few test questions, so its value is measured.
 `make odata-survey` profiles the API tables that aren't loaded yet (28 of 48), including the
 seven document tables and the lobbyist tables.
 

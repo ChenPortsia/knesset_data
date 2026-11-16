@@ -187,6 +187,42 @@ So the Knesset's own documents are the better road for the plenum (they should c
 speakers, which ivrit's plenum text does not) and the only road for what ivrit lacks.
 `make peek-documents` looks inside one committee and one plenum document to confirm it.
 
+## Decision: one text source, the Knesset's own documents (2026-11-16)
+
+`make peek-documents` looked at a committee protocol and a plenum protocol from each Knesset,
+20 to 25. All twelve are real `.docx` files with the same paragraph styles:
+
+| Style | Marker (from the 21st Knesset) | Means |
+| --- | --- | --- |
+| `af6` | `<< יור >>` | the chair speaks |
+| `a4` | `<< דובר >>` | an MK or minister starts speaking |
+| `-` | `<< דובר_המשך >>` | the same speaker continues after an interruption |
+| `af9` | `<< אורח >>` | a guest speaks (committees) |
+| `af5` | `<< קריאה >>` | a call from the floor, usually with the caller's name |
+| `a6` | `<< נושא >>`, `<< הצח >>` | the subject or bill now under discussion |
+| `af1`, `--`, `af2` | | a vote: its number, the counts, the outcome |
+| none | | what is said |
+
+So one parser that reads the styles covers every year and both kinds of session. Compared
+with the ivrit datasets, the documents also give the kind of speaker, the subject each
+speech belongs to, the votes inside the debate, guests' roles, plenum speakers (ivrit's
+plenum text has none), every session (ivrit has 83%), and anything new.
+
+**The ivrit datasets are dropped as a source.** The full load from ivrit is cancelled: its
+embeddings would have to be redone once the text came from the documents. The ivrit pilot
+stays as the reference the new parser is compared against, then its pipeline is removed.
+
+New steps, replacing 11 and 12:
+
+| # | Step | Done when |
+| --- | --- | --- |
+| A | Load the document link tables with the OData pipeline (`KNS_DocumentCommitteeSession`, `KNS_DocumentPlenumSession`) | they are in bronze, incremental like the rest |
+| B | **Documents pipeline**: download each session's protocol file once, store its paragraphs with their styles in bronze | the pilot sessions load; a second run downloads nothing |
+| C | **Turns from styles** in dbt, for committees: speaker, kind, subject, text. Compare with ivrit's turns on the pilot | the same sessions give the same speakers and text, or the differences are understood |
+| D | Speaker linking, `fct_turn`, chunks and search on the new turns; rerun the text test | no worse than the ivrit pilot |
+| E | **Plenum** through the same pipeline, with votes linked by their number in the session | plenum speeches are searchable next to the votes |
+| F | Full load, one night of embedding | everything from 2015 on is searchable |
+
 ## Layout after this milestone
 
 ```
