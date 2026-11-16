@@ -172,6 +172,21 @@ protocol text. So the sessions the dataset lacks (9% to 21% per Knesset, and eve
 after January 2026) have no text yet. Filling them means downloading those documents
 through the links and cutting them into speakers ourselves: planned, not built.
 
+## What the other sources turned out to be (looked at 2026-11-16)
+
+| Source | Finding |
+| --- | --- |
+| `ivrit-ai/knesset-plenums` | 1,551 plenum sessions, 53 million words (984 sessions and 34 million words since 2015). The text is the full "דברי הכנסת", but **without speaker names**: the speeches follow each other as bare paragraphs, and only the table of contents lists who spoke. Its session ids are not ours; every session date since 2015 matches one of our plenum session dates |
+| `ivrit-ai/VoxKnesset` | 66,670 short plenum segments, each tied to a speaker: a sample for voice research, not the record. Gated separately |
+| The Knesset's protocol documents (`KNS_DocumentCommitteeSession`: 201,813 rows; `KNS_DocumentPlenumSession`: 21,928) | Keyed by our own session ids, and current (protocols of June 2026 are there). A committee protocol is a real `.docx` in which each speaker is a short paragraph of its own style ending with a colon, and the attendance list gives every guest's role and organisation. Readable with Python's standard library |
+| `KNS_DocumentBill` (111,663 rows) | Bill texts at each stage, background material, the law as published |
+| `KNS_DocumentAgenda` (23,021), `KNS_DocumentSecondaryLaw` (7,630) | Motion texts and committee conclusions; regulations |
+| `KNS_DocumentQuerie`, `V_Lobbyists`, `V_LobbyistsClients` | Listed by the API but answer "not found" |
+
+So the Knesset's own documents are the better road for the plenum (they should carry the
+speakers, which ivrit's plenum text does not) and the only road for what ivrit lacks.
+`make peek-documents` looks inside one committee and one plenum document to confirm it.
+
 ## Layout after this milestone
 
 ```
@@ -204,7 +219,7 @@ knesset-agent/
 | 9 | **Text question bank and RAGAS baseline** on the slice | built: 27 questions and `make eval-text` in knesset-agent; search baseline recorded there. The answer scores come from a full run with a model |
 | 10 | **Decide the full load** from steps 7 and 9: which model, where it runs, how long | decided: see "The decision" below |
 | 11 | **Full load**, then rerun steps 4 and 9 on everything | next: one overnight run on the Mac |
-| 12 | **Plenum protocols** (`ivrit-ai/knesset-plenums`, about 1,550 sessions, 2009 to 2025): look at its files, load it with the same pipeline, link speeches to plenum sessions and votes, add test questions | plenum speeches are searchable next to the votes |
+| 12 | **Plenum protocols**: from the Knesset's own documents if `make peek-documents` shows they carry speakers (ivrit's plenum text has none); link speeches to plenum sessions and votes, add test questions | plenum speeches are searchable next to the votes |
 | 13 | **Mentions on chunks**: people and bills named in the text, matched against our own tables (no model, no hand tagging) | a chunk can be filtered by who and what it mentions |
 | 14 | **Docs**: both READMEs, `ARCHITECTURE.md`, the context (new tables, terms, rules) | someone new can load a slice and search it |
 
