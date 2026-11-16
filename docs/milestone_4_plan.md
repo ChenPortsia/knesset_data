@@ -88,6 +88,30 @@ slow to build on a plain processor. Step 10 has to find a strong model at a work
 the Mac's GPU, a rented GPU for a few hours, an embedding API, or a mid-sized model.
 The tables are in knesset-agent's README.
 
+### The decision (step 10)
+
+Measured on the Mac (M1 Max), 100 chunks:
+
+| How `e5-large` runs | Chunks a second | The pilot | 500,000 chunks | Same vectors as the processor |
+| --- | --- | --- | --- | --- |
+| Processor | 1.1 | 2.5 hours | 123 hours | |
+| GPU, through PyTorch (`e5-large-torch`) | 14.2 | 12 minutes | 9.8 hours | 1.000 |
+| GPU, through CoreML | ran out of memory and was killed | | | |
+
+**Use `e5-large` on the Mac's GPU through PyTorch.** It is 13 times faster than the
+processor, its vectors are identical, and the full load fits in one night. The run saves
+every 256 chunks, so it can be stopped and continued. The agent keeps embedding questions on
+the processor (one question takes a fraction of a second), which is safe because the
+vectors are the same.
+
+Order: first re-embed the pilot with it (12 minutes) and rerun the text test, to see the
+gain on the whole pilot and not only on the reduced set. Then the full load.
+
+Expect for all 11,144 sessions: about 35 minutes to download, about 10 hours to embed,
+and a published database of roughly 5 GB (2 GB of vectors, the rest text). Search compares
+a question with every vector; if that gets slow at 500,000 chunks, a vector index is the
+next step.
+
 ## Decisions
 
 1. **A second, separate ingestion pipeline** (`ingestion/protocols.py`, dlt), like OData:
@@ -151,7 +175,7 @@ knesset-agent/
 | 7 | **Embedding the slice, timed** on your Mac, with two models | built (`make embed-benchmark`); timed in the cloud session, see below; the Mac's numbers are still needed |
 | 8 | **Indexes and `search_protocols`**, published | done: `make publish` carries the chunks, vectors and keyword index; the agent answered a trial question from the passages. A proper measure is step 9 |
 | 9 | **Text question bank and RAGAS baseline** on the slice | built: 27 questions and `make eval-text` in knesset-agent; search baseline recorded there. The answer scores come from a full run with a model |
-| 10 | **Decide the full load** from steps 7 and 9: which model, where it runs, how long | in progress: `make embed-benchmark` now also times the large model on the Mac's GPU, two ways, and checks its vectors match the processor's |
+| 10 | **Decide the full load** from steps 7 and 9: which model, where it runs, how long | decided: see "The decision" below |
 | 11 | **Full load**, then rerun steps 4 and 9 on everything | more than 90% of MK turns linked; baseline on the full data |
 | 12 | **Docs**: both READMEs, `ARCHITECTURE.md`, the context (new tables, terms, rules) | someone new can load a slice and search it |
 
