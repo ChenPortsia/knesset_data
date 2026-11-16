@@ -4,7 +4,8 @@
 
 The agent opens data/published/knesset.duckdb read-only. It holds the gold tables, the
 context, and the protocol chunks with their vectors and keyword index (rag), when built.
-Silver and bronze are not in it, so no query can reach them. `main.build_info` says which build an answer came from.
+Silver and bronze are not in it, so no query can reach them. `main.build_info` says which
+build an answer came from.
 """
 
 import sys
