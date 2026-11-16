@@ -3,6 +3,8 @@
 Turns are short (half are a few words), so a chunk is a run of consecutive turns from one
 session, up to MAX_WORDS, written as a dialogue: one "speaker: text" line per turn. A turn
 longer than that is split at sentence ends, each piece carrying the end of the one before.
+A chunk that comes out very short (the end of a session, a few words between two speeches)
+joins the chunk before it, or the one after, when the two fit together.
 Every chunk starts with a line saying where and when, so its embedding knows the setting.
 """
 
@@ -10,7 +12,9 @@ import re
 from dataclasses import dataclass, field
 from typing import Any
 
-MAX_WORDS = 220  # about 400 tokens of Hebrew: what the embedding model reads well
+MAX_WORDS = 220  # about 420 tokens of Hebrew; the embedding model reads 512 at most
+MIN_WORDS = 40  # a chunk shorter than this says too little alone: it joins a neighbour
+JOINED_MAX_WORDS = 260  # the most a chunk may reach by taking in a short neighbour
 OVERLAP_WORDS = 30  # a split turn repeats this much, so a sentence cut in two is still found
 SENTENCE_END = re.compile(r"(?<=[.!?])\s+")
 
@@ -43,6 +47,20 @@ class Chunk:
             self.speakers.append(turn.speaker_name)
         if turn.person_id is not None and turn.person_id not in self.person_ids:
             self.person_ids.append(turn.person_id)
+
+    def take(self, other: "Chunk", before: bool = False) -> None:
+        """Join a neighbouring chunk into this one (`before`: it comes first)."""
+        self.lines = other.lines + self.lines if before else self.lines + other.lines
+        self.first_turn = min(self.first_turn, other.first_turn)
+        self.last_turn = max(self.last_turn, other.last_turn)
+        if before:
+            self.part = other.part
+        for name in other.speakers:
+            if name not in self.speakers:
+                self.speakers.append(name)
+        for person_id in other.person_ids:
+            if person_id not in self.person_ids:
+                self.person_ids.append(person_id)
 
     @property
     def words(self) -> int:
@@ -80,15 +98,37 @@ def chunk_session(turns: list[Turn]) -> list[Chunk]:
             current = Chunk(turn.turn_index, turn.turn_index, 0)
             chunks.append(current)
         current.add(turn, turn.text)
-    return chunks
+    return join_short(chunks)
 
 
-def to_row(session: dict[str, Any], chunk: Chunk) -> dict[str, Any]:
-    """A chunk as a row of rag.chunks, with its where-and-when line on top."""
+def join_short(chunks: list[Chunk]) -> list[Chunk]:
+    """Join each very short chunk into the one before it, or else the one after, if they fit."""
+    joined: list[Chunk] = []
+    carry: Chunk | None = None  # a short chunk waiting to join the next one
+    for chunk in chunks:
+        if carry is not None:
+            if carry.words + chunk.words <= JOINED_MAX_WORDS:
+                chunk.take(carry, before=True)
+            else:
+                joined.append(carry)  # fits nowhere: it stays as it is
+            carry = None
+        if chunk.words >= MIN_WORDS:
+            joined.append(chunk)
+        elif joined and joined[-1].words + chunk.words <= JOINED_MAX_WORDS:
+            joined[-1].take(chunk)
+        else:
+            carry = chunk
+    return joined + ([carry] if carry is not None else [])
+
+
+def to_row(session: dict[str, Any], chunk: Chunk, position: int) -> dict[str, Any]:
+    """A chunk as a row of rag.chunks, with its where-and-when line on top.
+    `position` is its place in the session, so the chunks before and after can be read."""
     header = f"{session['committee_name']} · {session['session_date']}"
     return {
         "chunk_id": f"{session['committee_session_id']}-{chunk.first_turn}-{chunk.part}",
         "committee_session_id": session["committee_session_id"],
+        "position": position,
         "committee_id": session["committee_id"],
         "knesset_num": session["knesset_num"],
         "session_date": session["session_date"],

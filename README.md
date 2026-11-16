@@ -80,6 +80,7 @@ make ingest              # ingestion: first run loads everything (~40 min), late
 make dbt                 # build and test on the full load
 make protocols ARGS='--limit 20'   # committee protocols not loaded yet (needs a Hugging Face token)
 make ingest-weekly       # ingestion + check for rows deleted in the API (run weekly)
+make odata-survey        # profile the API tables we don't load into docs/odata_survey.md
 make answers             # answer the milestone 1 questions from gold
 make context             # check the context against the data, load and index it (after make dbt)
 make chunks              # committee turns -> chunks of text for search (after make dbt)

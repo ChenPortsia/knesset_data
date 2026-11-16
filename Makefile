@@ -5,7 +5,7 @@
 #   3. context         context/*.yml + dbt docs -> data/warehouse/warehouse.duckdb (context schema)
 TARGET ?= dev
 
-.PHONY: up down sample ingest ingest-weekly protocols chunks embed embed-benchmark dbt answers metric publish ui context context-check context-approve context-schemas staging-models docs test lint clean
+.PHONY: up down sample ingest ingest-weekly protocols odata-survey chunks embed embed-benchmark dbt answers metric publish ui context context-check context-approve context-schemas staging-models docs test lint clean
 
 up:  ## Start both services in Docker: ingestion on :8001, transformation on :8002
 	mkdir -p data/raw data/warehouse logs
@@ -25,6 +25,9 @@ ingest-weekly:  ## Ingestion weekly run: daily + check for rows deleted in the A
 
 protocols:  ## Load committee protocols not loaded yet, e.g. make protocols ARGS='--committee "ועדת הכספים" --year 2024'
 	uv run python -m ingestion.protocols $(ARGS)
+
+odata-survey:  ## Profile the API tables we don't load into docs/odata_survey.md (loads nothing)
+	uv run python -m ingestion.survey
 
 dbt:  ## Transformation: build and test all models (TARGET=sample to use the test load)
 	mkdir -p data/warehouse

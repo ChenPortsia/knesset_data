@@ -36,7 +36,8 @@ TURNS = """
 CHUNKS_DDL = """
     CREATE SCHEMA IF NOT EXISTS rag;
     CREATE OR REPLACE TABLE rag.chunks (
-        chunk_id VARCHAR PRIMARY KEY, committee_session_id INTEGER, committee_id INTEGER,
+        chunk_id VARCHAR PRIMARY KEY, committee_session_id INTEGER, position INTEGER,
+        committee_id INTEGER,
         knesset_num INTEGER, session_date DATE, first_turn INTEGER, last_turn INTEGER,
         speakers VARCHAR[], person_ids INTEGER[], words INTEGER, chunk_text VARCHAR
     );
@@ -53,10 +54,10 @@ def chunk(con: duckdb.DuckDBPyConnection) -> None:
         session_turns = [
             Turn(t["turn_index"], t["speaker_name"], t["person_id"], t["turn_text"]) for t in turns
         ]
-        rows += [to_row(turns[0], c) for c in chunk_session(session_turns)]
+        rows += [to_row(turns[0], c, i) for i, c in enumerate(chunk_session(session_turns))]
     con.execute(CHUNKS_DDL)
     con.executemany(
-        "INSERT INTO rag.chunks VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO rag.chunks VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         [list(row.values()) for row in rows],
     )
     sessions, words, longest = con.execute(
