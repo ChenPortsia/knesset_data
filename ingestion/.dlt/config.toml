@@ -25,3 +25,9 @@ sample_pages = 2          # pages per table in a sample run (100 rows per page)
 request_timeout = 120
 request_max_attempts = 8
 request_backoff_factor = 2  # waits 1, 2, 4 ... 64s between attempts
+
+[sources.knesset_protocols]
+# Committee protocols, one folder per session; only the small text files are downloaded
+base_url = "https://huggingface.co/datasets/ivrit-ai/knesset-committees/resolve/main/"
+workers = 8               # parallel downloads
+batch_sessions = 200      # sessions per load; a stopped run keeps the batches already loaded

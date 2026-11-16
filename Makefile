@@ -5,7 +5,7 @@
 #   3. context         context/*.yml + dbt docs -> data/warehouse/warehouse.duckdb (context schema)
 TARGET ?= dev
 
-.PHONY: up down sample ingest ingest-weekly dbt answers metric publish ui context context-check context-approve context-schemas staging-models docs test lint clean
+.PHONY: up down sample ingest ingest-weekly protocols dbt answers metric publish ui context context-check context-approve context-schemas staging-models docs test lint clean
 
 up:  ## Start both services in Docker: ingestion on :8001, transformation on :8002
 	mkdir -p data/raw data/warehouse logs
@@ -22,6 +22,9 @@ ingest:  ## Ingestion daily run: changed rows only (first run loads everything, 
 
 ingest-weekly:  ## Ingestion weekly run: daily + check for rows deleted in the API
 	uv run python -m ingestion --mode weekly $(TABLES)
+
+protocols:  ## Load committee protocols not loaded yet, e.g. make protocols ARGS='--committee "ועדת הכספים" --year 2024'
+	uv run python -m ingestion.protocols $(ARGS)
 
 dbt:  ## Transformation: build and test all models (TARGET=sample to use the test load)
 	mkdir -p data/warehouse
