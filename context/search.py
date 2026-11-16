@@ -48,13 +48,18 @@ def embedded_before(con: duckdb.DuckDBPyConnection, model: str) -> dict[str, lis
         return {}
 
 
-def build_keyword_index(con: duckdb.DuckDBPyConnection) -> None:
-    """The keyword index (BM25) over context.search. No stemmer or stopword list: English-only."""
+def build_keyword_index(
+    con: duckdb.DuckDBPyConnection,
+    table: str = "context.search",
+    key: str = "id",
+    column: str = "search_text",
+) -> None:
+    """A keyword index (BM25) over a text column. No stemmer or stopword list: English-only."""
     con.execute("INSTALL fts; LOAD fts")
     con.execute(
         f"""
         PRAGMA create_fts_index(
-            'context.search', 'id', 'search_text',
+            '{table}', '{key}', '{column}',
             stemmer = 'none', stopwords = 'none', ignore = '{NOT_A_WORD}', overwrite = 1
         )
         """

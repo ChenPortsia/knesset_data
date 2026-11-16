@@ -1,9 +1,11 @@
-"""Publish the agent's database: a copy of gold and context only, stamped with a data version.
+"""Publish the agent's database: a copy of gold, context and rag, stamped with a data version.
 
     python -m publish        (make publish, after make dbt and make context)
 
-The agent opens data/published/knesset.duckdb read-only. Silver and bronze are not in it, so
-no query can reach them. `main.build_info` says which build an answer came from.
+The agent opens data/published/knesset.duckdb read-only. It holds the gold tables, the
+context, and the protocol chunks with their vectors and keyword index (rag), when built.
+Silver and bronze are not in it, so no query can reach them. `main.build_info` says which
+build an answer came from.
 """
 
 import sys
@@ -17,7 +19,7 @@ from context.search import build_keyword_index
 ROOT = Path(__file__).resolve().parents[1]
 WAREHOUSE = ROOT / "data" / "warehouse" / "warehouse.duckdb"
 PUBLISHED = ROOT / "data" / "published" / "knesset.duckdb"
-SCHEMAS = ("gold", "context")
+SCHEMAS = ("gold", "context", "rag")  # rag: the protocol chunks and their vectors, if built
 
 
 def publish(warehouse: Path = WAREHOUSE, published: Path = PUBLISHED) -> str:
@@ -43,6 +45,8 @@ def publish(warehouse: Path = WAREHOUSE, published: Path = PUBLISHED) -> str:
                 f"CREATE TABLE {schema}.{table} AS SELECT * FROM warehouse.{schema}.{table}"
             )
         build_keyword_index(con)
+        if ("rag", "chunks") in tables:
+            build_keyword_index(con, "rag.chunks", "chunk_id", "chunk_text")
         con.execute(
             """
             CREATE TABLE build_info AS

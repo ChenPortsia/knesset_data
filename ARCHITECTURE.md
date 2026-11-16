@@ -39,7 +39,7 @@ Data flows down from the sources into the warehouse and index; agents read every
 Two DuckDB files, so ingestion and transformation are separate processes that share only the bronze tables:
 
 - `raw.duckdb` — written only by ingestion: `bronze` (every version of every source row) and `ops` (run records).
-- `published/knesset.duckdb` — written by `make publish`: a copy of `gold` and `context` only, stamped with a data version (`build_info`). This is the file the agent opens, read-only.
+- `published/knesset.duckdb` — written by `make publish`: a copy of `gold`, `context` and `rag` (the protocol chunks, their vectors and keyword index), stamped with a data version (`build_info`). This is the file the agent opens, read-only.
 - `warehouse.duckdb` — written by dbt and the NLP batch, which read `raw.duckdb` read-only: `silver`, `gold`, `rag` and `context`.
 
 ### Sources
