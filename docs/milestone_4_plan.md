@@ -24,7 +24,31 @@ Looked at the source before planning (no protocol text read yet: the files need 
 | Access | Gated: you accept the licence on the dataset page and use a personal access token. The licence is ivrit.ai's own: read it before we load anything |
 | The text itself | Protocols are edited minutes, not word-for-word transcripts. Speaker names are kept in separate files, which is what makes speaker turns possible |
 
+## What the real files look like
+
+Loaded and profiled the pilot slice (the Finance Committee in 2024, 214 sessions) plus 40
+other sessions.
+
+| Finding | What it means |
+| --- | --- |
+| The dataset has 11,144 sessions and 101.6 million words; all but one are in our `fct_committee_session` | the join is clean |
+| It covers 79% to 91% of the sessions held in each Knesset (45% in the short 21st) | report coverage; don't claim "every session" |
+| `raw.protocol.txt` is the speech only; the header with the agenda and the attendance list is in another file | attendance is possible later, from `raw.full.protocol.txt` |
+| Segments are character positions into the text and cover 100% of it | a turn is `text[start:end]`, nothing is lost |
+| Turns are short: half are under 43 characters, 75% under 100 | merging neighbours matters more than splitting |
+| MKs are marked in the name: `ינון אזולאי (ש"ס)`, `היו"ר משה גפני` | "is this an MK" comes from the protocol itself |
+| 98.8% of MK-marked speakers match a person serving in that Knesset by exact name | the 90% target looks reachable with simple rules; the rest are spelling (`יחימוביץ` / `יחימוביץ'`), middle names, and a few broken names |
+| Low speaker ids (below 10,000,000) are the same person across sessions, but they are not our `person_id` | link by name once, then carry the link by that id |
+| "Speakers" include `קריאה` (an interjection from the floor) and section headings | keep them as their own kind, not as people |
+| `metadata.json` is 125 KB of audio alignment scores; `manifest.csv` has the fields we need | we download three files per session, not four |
+| A few files are broken: 9 segments point to a speaker that isn't listed | reported as a warning by the pipeline |
+| Speed: 214 sessions in 35 seconds | all 11,144 in about half an hour |
+
 ## The main risk: embedding time
+
+**Revised after profiling:** 101.6 million words is about 400,000 to 500,000 chunks, not the
+1.2 million first guessed from file sizes. The rest of this section still holds, with the
+times roughly halved.
 
 Rough size: 13,000 sessions × about 27,000 tokens ≈ 350 million tokens ≈ 1.2 million chunks.
 
@@ -43,9 +67,9 @@ is about 5 GB with the large model, 2 GB with a small one.
 ## Decisions
 
 1. **A second, separate ingestion pipeline** (`ingestion/protocols.py`, dlt), like OData:
-   own run mode, own checks, own log. It downloads only the four text files per session
-   (never audio) and loads three bronze tables: `protocol_sessions`, `protocol_speakers`,
-   `protocol_segments`.
+   own command, own checks, own log. It downloads only three text files per session
+   (never audio) and loads four bronze tables: `protocol_manifest`, `protocol_text`,
+   `protocol_speakers`, `protocol_segments`.
 2. **Load only sessions we know.** A protocol is loaded when its id is in
    `fct_committee_session`; the rest are counted and reported.
 3. **Incremental by folder.** A session's protocol never changes, so each run loads only
@@ -94,8 +118,8 @@ knesset-agent/
 
 | # | Step | Done when |
 | --- | --- | --- |
-| 1 | **Access and a look at real files**: accept the licence, token, download 20 sessions, profile them in a notebook (formats, sizes, speaker name shapes, oddities) | we know the file formats and the notebook is in the repo |
-| 2 | **Protocols pipeline** for the pilot slice: bronze tables, checks (sessions found vs expected, empty texts), run log | the slice loads, reloads nothing on a second run |
+| 1 | **Access and a look at real files**: accept the licence, token, profile real sessions (formats, sizes, speaker name shapes, oddities) | done: see "What the real files look like" |
+| 2 | **Protocols pipeline** for the pilot slice: bronze tables, checks (sessions found vs expected, empty texts), run log | done: 214 sessions in 35 seconds; a second run loads nothing |
 | 3 | **Staging and speaker turns** in dbt | one row per turn, in order, with tests |
 | 4 | **Speaker linking** and its measurement | match rate reported; 100 links hand-checked |
 | 5 | **`fct_turn`** with person, faction, camp and bills; a few analyses (who speaks most, by camp) | answers checked by hand |

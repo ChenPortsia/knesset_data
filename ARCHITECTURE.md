@@ -53,7 +53,7 @@ Two DuckDB files, so ingestion and transformation are separate processes that sh
 ### Ingestion — dlt
 
 - **OData pipeline:** one dlt resource per KNS table, loaded one table at a time so a failure stays contained. Pages by `Id` (keyset) because `@odata.nextLink` uses slow `$skip` paging; large tables are split into parallel `Id` ranges. Incremental on `LastUpdatedDate` with a 1-hour overlap, stored as SCD2 so bronze keeps every version of every row (e.g. bill status history). Checks after each load (reconciliation with the API's `$count`, volume, freshness) and a weekly check for rows deleted in the API; results go to `ops.ingestion_runs` / `ops.ingestion_tables` and a log file per run.
-- **Protocols pipeline:** `snapshot_download` with `allow_patterns` for `raw.protocol.txt`, `speakers*.txt`, `metadata.json`, then a dlt Python resource that yields three tables: `sessions`, `speakers`, `speaker_segments`.
+- **Protocols pipeline** (`ingestion/protocols.py`, its own dlt pipeline and run record): downloads three small text files per session folder (`raw.protocol.txt`, `speakers.txt`, `speakers.segments.txt`; never the audio) and loads `protocol_manifest`, `protocol_text`, `protocol_speakers` and `protocol_segments`. The folder name is the `committee_session_id`. A protocol never changes, so each run loads only sessions not in bronze yet.
 - Both land in `bronze` as-is. A schema contract fails a load if a column changes type; new columns are added and logged. `_dlt_load_id` links every row to its run.
 
 ### Transformation — dbt (dbt-duckdb)

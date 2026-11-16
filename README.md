@@ -77,6 +77,7 @@ make sample              # ingestion test load: 200 rows per table (~1 min)
 make dbt TARGET=sample   # build and test the dbt models on the test load
 make ingest              # ingestion: first run loads everything (~40 min), later runs only changes
 make dbt                 # build and test on the full load
+make protocols ARGS='--limit 20'   # committee protocols not loaded yet (needs a Hugging Face token)
 make ingest-weekly       # ingestion + check for rows deleted in the API (run weekly)
 make answers             # answer the milestone 1 questions from gold
 make context             # check the context against the data, load and index it (after make dbt)
