@@ -107,6 +107,11 @@ vectors are the same.
 Order: first re-embed the pilot with it (12 minutes) and rerun the text test, to see the
 gain on the whole pilot and not only on the reduced set. Then the full load.
 
+**Result on the pilot** (10,271 chunks embedded on the Mac in 12 minutes): the right passage
+is in the top 6 for 24 of 27 questions (17 of 26 with the fast model), answers are correct
+for 21 of 27 (19 of 26) and faithful for 25 of 27 (23 of 26). That is the milestone's
+baseline, and the go-ahead for the full load.
+
 Expect for all 11,144 sessions: about 35 minutes to download, about 10 hours to embed,
 and a published database of roughly 5 GB (2 GB of vectors, the rest text). Search compares
 a question with every vector; if that gets slow at 500,000 chunks, a vector index is the
@@ -176,7 +181,7 @@ knesset-agent/
 | 8 | **Indexes and `search_protocols`**, published | done: `make publish` carries the chunks, vectors and keyword index; the agent answered a trial question from the passages. A proper measure is step 9 |
 | 9 | **Text question bank and RAGAS baseline** on the slice | built: 27 questions and `make eval-text` in knesset-agent; search baseline recorded there. The answer scores come from a full run with a model |
 | 10 | **Decide the full load** from steps 7 and 9: which model, where it runs, how long | decided: see "The decision" below |
-| 11 | **Full load**, then rerun steps 4 and 9 on everything | more than 90% of MK turns linked; baseline on the full data |
+| 11 | **Full load**, then rerun steps 4 and 9 on everything | next: one overnight run on the Mac |
 | 12 | **Docs**: both READMEs, `ARCHITECTURE.md`, the context (new tables, terms, rules) | someone new can load a slice and search it |
 
 ## Risks and how we handle them
