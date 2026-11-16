@@ -84,7 +84,8 @@ make answers             # answer the milestone 1 questions from gold
 make context             # check the context against the data, load and index it (after make dbt)
 make chunks              # committee turns -> chunks of text for search (after make dbt)
 make embed MODEL=potion  # embed the chunks that have no vector yet
-make embed-benchmark     # time both embedding models on this machine
+make embed-benchmark     # time every embedding model and backend on this machine
+                         # (for the GPU rows on a Mac: uv sync --group gpu first)
 make publish             # copy gold, context and the protocol chunks into the agent's database
 make ui                  # browse and query the databases in the browser
 make context-check       # check the context files only (fast, no data)

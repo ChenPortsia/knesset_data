@@ -26,6 +26,9 @@ context = [
     "pyyaml>=6.0.3",
 ]
 
+# Only for embedding on a GPU (make embed MODEL=e5-large-torch); not installed by default
+gpu = ["sentence-transformers"]
+
 [tool.uv]
 default-groups = ["ingestion", "transformation", "context", "api", "dev", "notebook"]  # locally: everything
 
