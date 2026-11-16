@@ -118,7 +118,8 @@ def benchmark(con: duckdb.DuckDBPyConnection, sample: int) -> None:
     total = con.execute("SELECT COUNT(*) FROM rag.chunks").fetchone()[0]
     print(f"{len(texts)} chunks timed; {total:,} chunks loaded\n")
     print(
-        f"{'model':16} {'size':>5} {'chunks/s':>9} {'loaded chunks':>14} {'500,000':>10} same as cpu"
+        f"{'model':16} {'size':>5} {'chunks/s':>9} {'loaded chunks':>14} {'500,000':>10} "
+        "same as cpu"
     )
     reference: dict[str, list[list[float]]] = {}  # the cpu vectors of each Hugging Face model
     for model, (name, _, _, backend) in MODELS.items():

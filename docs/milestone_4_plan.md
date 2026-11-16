@@ -151,7 +151,7 @@ knesset-agent/
 | 7 | **Embedding the slice, timed** on your Mac, with two models | built (`make embed-benchmark`); timed in the cloud session, see below; the Mac's numbers are still needed |
 | 8 | **Indexes and `search_protocols`**, published | done: `make publish` carries the chunks, vectors and keyword index; the agent answered a trial question from the passages. A proper measure is step 9 |
 | 9 | **Text question bank and RAGAS baseline** on the slice | built: 27 questions and `make eval-text` in knesset-agent; search baseline recorded there. The answer scores come from a full run with a model |
-| 10 | **Decide the full load** from steps 7 and 9: which model, where it runs, how long | a written decision |
+| 10 | **Decide the full load** from steps 7 and 9: which model, where it runs, how long | in progress: `make embed-benchmark` now also times the large model on the Mac's GPU, two ways, and checks its vectors match the processor's |
 | 11 | **Full load**, then rerun steps 4 and 9 on everything | more than 90% of MK turns linked; baseline on the full data |
 | 12 | **Docs**: both READMEs, `ARCHITECTURE.md`, the context (new tables, terms, rules) | someone new can load a slice and search it |
 
