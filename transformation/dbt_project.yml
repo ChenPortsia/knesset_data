@@ -21,12 +21,18 @@ models:
     1_staging:
       +schema: silver
       +materialized: view
+      protocols:
+        +enabled: "{{ target.name != 'sample' }}"  # the sample load has no protocols
     2_intermediate:
       +schema: silver
       +materialized: view
+      protocols:
+        +enabled: "{{ target.name != 'sample' }}"
     3_mart:
       +schema: gold
       +materialized: table
+      protocols:
+        +enabled: "{{ target.name != 'sample' }}"
 
 seeds:
   knesset:

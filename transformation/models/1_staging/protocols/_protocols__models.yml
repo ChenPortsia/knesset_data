@@ -1,0 +1,45 @@
+version: 2
+
+models:
+  - name: stg_protocols__text
+    description: "The text of each committee session's protocol: edited minutes, not a word-for-word transcript. Grain: one row per committee session with a protocol | הטקסט של פרוטוקול כל ישיבת ועדה"
+    columns:
+      - name: committee_session_id
+        description: "Committee session ID | מזהה ישיבת ועדה"
+        data_tests: [unique, not_null]
+      - name: protocol_text
+        description: "What was said, as one text | הטקסט המלא"
+      - name: characters
+        description: "Length of the text in characters | אורך הטקסט בתווים"
+  - name: stg_protocols__speakers
+    description: "Speakers of each session, with the name taken apart. Grain: one row per committee session and speaker | הדוברים בכל ישיבה, עם פירוק השם"
+    columns:
+      - name: committee_session_id
+        description: "Committee session ID | מזהה ישיבת ועדה"
+        data_tests: [not_null]
+      - name: speaker_id
+        description: "Speaker ID from the protocol; only reliable within its session | מזהה דובר מהפרוטוקול, אמין רק בתוך הישיבה"
+        data_tests: [not_null]
+      - name: speaker_name
+        description: "The speaker as written in the protocol | שם הדובר כפי שנכתב בפרוטוקול"
+      - name: is_chair
+        description: "True if the name starts with the chair's title | האם מסומן כיו\"ר"
+      - name: faction_text
+        description: "The faction written in brackets after an MK's name | הסיעה שנכתבה בסוגריים"
+      - name: person_name
+        description: "The name alone, without title and faction | השם בלבד"
+  - name: stg_protocols__segments
+    description: "Who spoke which part of a session's text. Grain: one row per speaker turn | מי אמר איזה חלק מטקסט הישיבה"
+    columns:
+      - name: committee_session_id
+        description: "Committee session ID | מזהה ישיבת ועדה"
+        data_tests: [not_null]
+      - name: turn_index
+        description: "Position of the turn in the session, from 0 | מיקום התור בישיבה"
+        data_tests: [not_null]
+      - name: speaker_id
+        description: "Speaker ID from the protocol | מזהה דובר"
+      - name: start_char
+        description: "First character of the turn in the text | תו ההתחלה בטקסט"
+      - name: end_char
+        description: "Character after the turn's last | תו הסיום בטקסט"

@@ -172,6 +172,8 @@ Quirks handled later, because they need joins:
 | The source's no-confidence flag is set on 4 votes only | `int_votes_joined_to_items` also reads the vote's title and subject |
 | Only MKs who voted have a vote result row | absences are counted against the votes held (analysis J8); there is no attendance metric |
 | Only about a quarter of committee sessions have an end time | `duration_minutes` is null for the rest; a rule tells the agent not to report total hours as complete |
+| Protocol speakers are names as written, with titles and factions | `stg_protocols__speakers` takes the name apart; `int_speaker_links` matches it to people serving in that Knesset, and records how |
+| The protocols' speaker ids repeat across sessions only most of the time | not used for linking |
 | No table says which factions are in the coalition | derived from government posts, with `coalition_overrides` (see Derived facts) |
 | Readings are not recorded per bill | `int_bill_plenum_readings`: the bill's status on the plenum agenda, mapped to a reading in `bill_status_stages` |
 

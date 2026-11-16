@@ -1,0 +1,14 @@
+# yaml-language-server: $schema=../schemas/verified_queries.json
+# Questions about what was said in committee (fct_turn).
+# SQL in transformation/analyses/protocols/.
+
+- id: vq.who_spoke_most_finance_committee_2024
+  question_en: Which MKs spoke the most in the Finance Committee in 2024?
+  question_he: אילו חברי כנסת דיברו הכי הרבה בוועדת הכספים ב-2024?
+  also_asked:
+    - Who talks the most in committee? Who dominates the discussion?
+    - מי מדבר הכי הרבה בוועדה?
+  sql_file: protocols/p01_who_spoke_most_finance_committee_2024.sql
+  stable: false
+  verified_by: claude
+  verified_at: 2026-11-16

@@ -80,6 +80,18 @@
     sessions that have one, and say what share of sessions that covers.
   applies_to: [fct_committee_session.duration_minutes, fct_committee_session.finish_at]
 
+- id: rule.protocols_are_partial_minutes
+  title: Protocols are edited minutes, loaded for part of the sessions
+  rule: >
+    fct_turn holds what was said in committee, from the protocols: edited minutes, not exact
+    words, so quote passages as "the protocol records", not as verbatim speech. Protocols
+    exist only for part of the sessions since November 2018, and only some are loaded: before
+    counting or comparing, check which sessions have turns and say so. speaker_kind 'mk' are
+    MKs (linked to person_id); 'other' are officials and guests, known only by speaker_name;
+    'interjection' is a call from the floor. Compare speaking by words, not by turns: half
+    of all turns are a few words long.
+  applies_to: [fct_turn, fct_turn.turn_text, fct_turn.speaker_kind, fct_turn.person_id]
+
 - id: rule.known_gaps
   title: Known gaps in the source
   rule: >

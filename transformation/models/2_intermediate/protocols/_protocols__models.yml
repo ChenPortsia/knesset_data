@@ -1,0 +1,51 @@
+version: 2
+
+models:
+  - name: int_speaker_links
+    description: "Each session's speakers linked to people, by name within the people serving in that Knesset. Grain: one row per committee session and speaker | קישור הדוברים בכל ישיבה לאנשים"
+    columns:
+      - name: committee_session_id
+        description: "Committee session ID | מזהה ישיבת ועדה"
+        data_tests: [not_null]
+      - name: speaker_id
+        description: "Speaker ID from the protocol | מזהה דובר"
+        data_tests: [not_null]
+      - name: knesset_num
+        description: "Knesset of the session | הכנסת של הישיבה"
+      - name: speaker_name
+        description: "The speaker as written in the protocol | שם הדובר כפי שנכתב"
+      - name: person_name
+        description: "The name alone, without title and faction | השם בלבד"
+      - name: faction_text
+        description: "The faction written in brackets | הסיעה שנכתבה בסוגריים"
+      - name: is_chair
+        description: "True if marked as the chair | האם מסומן כיו\"ר"
+      - name: is_marked_mk
+        description: "True if the protocol marks the speaker as an MK: a chair title or a faction in brackets | האם הפרוטוקול מסמן את הדובר כח\"כ"
+      - name: person_id
+        description: "The person the speaker was linked to; null if not linked | האדם שאליו קושר הדובר"
+      - name: link_method
+        description: "How the link was made | איך נעשה הקישור"
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [same_name, first_and_last_name, close_spelling]
+      - name: speaker_kind
+        description: "mk, interjection (a call from the floor) or other (officials, guests, headings) | סוג הדובר"
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [mk, interjection, other]
+  - name: int_speaker_turns
+    description: "What each speaker said, turn by turn. Grain: one row per speaker turn | מה אמר כל דובר, תור אחר תור"
+    columns:
+      - name: committee_session_id
+        description: "Committee session ID | מזהה ישיבת ועדה"
+        data_tests: [not_null]
+      - name: turn_index
+        description: "Position of the turn in the session, from 0 | מיקום התור בישיבה"
+        data_tests: [not_null]
+      - name: speaker_id
+        description: "Speaker ID from the protocol | מזהה דובר"
+      - name: turn_text
+        description: "What was said in the turn | מה נאמר בתור"
