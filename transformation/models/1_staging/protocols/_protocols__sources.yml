@@ -1,0 +1,15 @@
+version: 2
+sources:
+- name: protocols
+  description: 'Committee protocols from ivrit-ai/knesset-committees, loaded by ingestion/protocols.py. A protocol never changes, so each session is loaded once | פרוטוקולים של ישיבות ועדה'
+  database: raw
+  schema: bronze
+  tables:
+  - name: protocol_text
+    description: 'What was said in a session, as one text | הטקסט המלא של הישיבה'
+  - name: protocol_speakers
+    description: 'The speakers of a session, named as in the protocol | הדוברים בישיבה, כפי שנכתבו בפרוטוקול'
+  - name: protocol_segments
+    description: 'Who spoke which part of the text: character positions | מי אמר איזה חלק מהטקסט'
+  - name: protocol_manifest
+    description: "The dataset's list of sessions | רשימת הישיבות במאגר"

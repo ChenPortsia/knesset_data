@@ -1,0 +1,88 @@
+version: 2
+models:
+- name: fct_turn
+  description: 'What was said in committee, turn by turn, with who said it. From the protocols, which are edited minutes, not word-for-word transcripts; loaded for part of the sessions since November 2018. Grain: one row per speaker turn | מה נאמר בוועדות, תור אחר תור, ומי אמר'
+  config:
+    contract:
+      enforced: true
+  columns:
+  - name: turn_id
+    data_type: varchar
+    description: 'Key: committee session and position | מפתח: ישיבה ומיקום'
+    data_tests:
+    - unique
+    - not_null
+  - name: committee_session_id
+    data_type: integer
+    description: Committee session (fct_committee_session) | מזהה ישיבת ועדה
+    data_tests:
+    - not_null
+    - relationships:
+        arguments:
+          to: ref('fct_committee_session')
+          field: committee_session_id
+  - name: turn_index
+    data_type: integer
+    description: Position of the turn in the session, from 0 | מיקום התור בישיבה
+  - name: committee_id
+    data_type: integer
+    description: Committee (dim_committee) | מזהה ועדה
+  - name: knesset_num
+    data_type: integer
+    description: Knesset number | מספר הכנסת
+  - name: session_date
+    data_type: date
+    description: Date of the session (dim_date) | תאריך הישיבה
+  - name: speaker_name
+    data_type: varchar
+    description: The speaker as written in the protocol, with title and faction | שם הדובר כפי שנכתב בפרוטוקול
+  - name: speaker_kind
+    data_type: varchar
+    description: 'mk (marked as an MK by the protocol), interjection (a call from the floor) or other (officials, guests, headings) | סוג הדובר'
+    data_tests:
+    - accepted_values:
+        arguments:
+          values:
+          - mk
+          - interjection
+          - other
+  - name: is_chair
+    data_type: boolean
+    description: True if the speaker chaired the session | האם הדובר ניהל את הישיבה
+  - name: person_id
+    data_type: integer
+    description: The MK who spoke (dim_person); null for officials, guests and unlinked names | חבר הכנסת שדיבר
+    data_tests:
+    - relationships:
+        arguments:
+          to: ref('dim_person')
+          field: person_id
+  - name: link_method
+    data_type: varchar
+    description: 'How the speaker was linked to a person: same_name, first_and_last_name or close_spelling | איך קושר הדובר לאדם'
+  - name: faction_id
+    data_type: integer
+    description: The MK's faction at the time (dim_faction) | סיעת הח"כ במועד הישיבה
+    data_tests:
+    - relationships:
+        arguments:
+          to: ref('dim_faction')
+          field: faction_id
+  - name: camp
+    data_type: varchar
+    description: coalition or opposition at the time of the session; null for non-MKs | קואליציה או אופוזיציה במועד הישיבה
+    data_tests:
+    - accepted_values:
+        arguments:
+          values:
+          - coalition
+          - opposition
+  - name: turn_text
+    data_type: varchar
+    description: What was said in the turn | מה נאמר בתור
+  - name: characters
+    data_type: integer
+    description: Length of the turn in characters | אורך התור בתווים
+  - name: words
+    data_type: integer
+    description: Length of the turn in words | אורך התור במילים

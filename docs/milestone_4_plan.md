@@ -38,7 +38,7 @@ other sessions.
 | Turns are short: half are under 43 characters, 75% under 100 | merging neighbours matters more than splitting |
 | MKs are marked in the name: `ינון אזולאי (ש"ס)`, `היו"ר משה גפני` | "is this an MK" comes from the protocol itself |
 | 98.8% of MK-marked speakers match a person serving in that Knesset by exact name | the 90% target looks reachable with simple rules; the rest are spelling (`יחימוביץ` / `יחימוביץ'`), middle names, and a few broken names |
-| Low speaker ids (below 10,000,000) are the same person across sessions, but they are not our `person_id` | link by name once, then carry the link by that id |
+| Low speaker ids (below 10,000,000) usually repeat across sessions, but not reliably (14% carry more than one name), and they are not our `person_id` | link by name only. Carrying a link by id was tried and linked different people, so it was removed |
 | "Speakers" include `קריאה` (an interjection from the floor) and section headings | keep them as their own kind, not as people |
 | `metadata.json` is 125 KB of audio alignment scores; `manifest.csv` has the fields we need | we download three files per session, not four |
 | A few files are broken: 9 segments point to a speaker that isn't listed | reported as a warning by the pipeline |
@@ -120,9 +120,9 @@ knesset-agent/
 | --- | --- | --- |
 | 1 | **Access and a look at real files**: accept the licence, token, profile real sessions (formats, sizes, speaker name shapes, oddities) | done: see "What the real files look like" |
 | 2 | **Protocols pipeline** for the pilot slice: bronze tables, checks (sessions found vs expected, empty texts), run log | done: 214 sessions in 35 seconds; a second run loads nothing |
-| 3 | **Staging and speaker turns** in dbt | one row per turn, in order, with tests |
-| 4 | **Speaker linking** and its measurement | match rate reported; 100 links hand-checked |
-| 5 | **`fct_turn`** with person, faction, camp and bills; a few analyses (who speaks most, by camp) | answers checked by hand |
+| 3 | **Staging and speaker turns** in dbt | done: 91,667 turns from 254 sessions |
+| 4 | **Speaker linking** and its measurement | done on the pilot: 99.4% of MK-marked speakers linked (99.8% of MK turns); a dbt test fails below 90%. The few non-exact links were read by hand; a 100-link check waits for the full load |
+| 5 | **`fct_turn`** with person, faction and camp; a first analysis (who spoke most) | done; bills per turn left for later |
 | 6 | **Chunking** with the context line | chunk sizes within limits; a turn's text is never lost |
 | 7 | **Embedding the slice, timed** on your Mac, with two models | a table: chunks per second, size, by model |
 | 8 | **Indexes and `search_protocols`**, published | a query returns the right passages for 10 trial questions |

@@ -93,3 +93,15 @@
     - column: fct_committee_session.status
       value: מבוטלת
   see_also: [metric.committee_sessions, glossary.closed_session]
+
+- id: glossary.protocol
+  term_he: פרוטוקול
+  term_en: committee protocol (minutes)
+  synonyms: [פרוטוקול הישיבה, דברי הכנסת, מה נאמר, מי אמר, דיון, דברים בוועדה, minutes, transcript, what was said]
+  definition: >
+    The written record of a committee session: who spoke and what they said, turn by turn.
+    Edited minutes, not a word-for-word transcript.
+  maps_to:
+    - column: fct_turn.turn_text
+    - column: fct_turn.speaker_name
+  see_also: [rule.protocols_are_partial_minutes]
