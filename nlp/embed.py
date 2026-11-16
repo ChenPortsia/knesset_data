@@ -16,13 +16,13 @@ import duckdb
 # name -> model on Hugging Face, the prefix it expects before a text to index and before a
 # question, and how it is run:
 #   cpu     fastembed on the processor
-#   coreml  fastembed through Apple's CoreML (the Mac's GPU and neural engine)
 #   torch   PyTorch, which uses the Mac's GPU (Metal) or an NVIDIA card when there is one;
 #           needs `uv sync --group gpu`
-# The three e5-large rows are one model, so their vectors are interchangeable.
+# The two e5-large rows are one model, so their vectors are interchangeable.
+# (Apple's CoreML through fastembed was tried on an M1 Max: it supports only part of the
+# model, ran out of memory and was killed, so it is not offered.)
 MODELS = {
     "e5-large": ("intfloat/multilingual-e5-large", "passage: ", "query: ", "cpu"),
-    "e5-large-coreml": ("intfloat/multilingual-e5-large", "passage: ", "query: ", "coreml"),
     "e5-large-torch": ("intfloat/multilingual-e5-large", "passage: ", "query: ", "torch"),
     "potion": ("minishlab/potion-multilingual-128M", "", "", "cpu"),
 }
@@ -45,8 +45,7 @@ def load(model: str) -> Encoder:
 
     from fastembed import TextEmbedding  # here, not at the top: slow to import
 
-    providers = ["CoreMLExecutionProvider"] if backend == "coreml" else None
-    embedder = TextEmbedding(name, providers=providers)
+    embedder = TextEmbedding(name)
     return lambda texts: [v.tolist() for v in embedder.embed([prefix + text for text in texts])]
 
 
@@ -101,7 +100,7 @@ def embed_new(con: duckdb.DuckDBPyConnection, model: str = DEFAULT) -> tuple[int
     return len(todo), con.execute("SELECT COUNT(*) FROM rag.embeddings").fetchone()[0]
 
 
-def benchmark(con: duckdb.DuckDBPyConnection, sample: int) -> None:
+def benchmark(con: duckdb.DuckDBPyConnection, sample: int, models: list[str]) -> None:
     """Time each model on the same chunks and say how long every chunk would take.
 
     A row that can't run here (no GPU, a package not installed) says why and is skipped.
@@ -122,7 +121,8 @@ def benchmark(con: duckdb.DuckDBPyConnection, sample: int) -> None:
         "same as cpu"
     )
     reference: dict[str, list[list[float]]] = {}  # the cpu vectors of each Hugging Face model
-    for model, (name, _, _, backend) in MODELS.items():
+    for model in models:
+        name, _, _, backend = MODELS[model]
         try:
             encode = load(model)
             encode(texts[:4])  # warm up: the first call loads the model

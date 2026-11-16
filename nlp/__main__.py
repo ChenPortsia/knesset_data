@@ -71,6 +71,10 @@ def main() -> int:
     parser.add_argument("command", choices=["chunk", "embed", "benchmark"])
     parser.add_argument("--model", default=embed.DEFAULT, choices=list(embed.MODELS))
     parser.add_argument("--sample", type=int, default=200, help="chunks to time in a benchmark")
+    parser.add_argument(
+        "--models", nargs="+", default=list(embed.MODELS), choices=list(embed.MODELS),
+        help="rows of the benchmark, in order (the cpu row first, to compare a GPU row with it)",
+    )  # fmt: skip
     args = parser.parse_args()
 
     with duckdb.connect(str(WAREHOUSE)) as con:
@@ -82,7 +86,7 @@ def main() -> int:
             print(f"embedded {done:,} chunks with {args.model} in {time.time() - started:.0f}s; "
                   f"{total:,} chunks have vectors")  # fmt: skip
         else:
-            embed.benchmark(con, args.sample)
+            embed.benchmark(con, args.sample, args.models)
     return 0
 
 
