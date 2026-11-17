@@ -192,16 +192,21 @@ speakers, which ivrit's plenum text does not) and the only road for what ivrit l
 `make peek-documents` looked at a committee protocol and a plenum protocol from each Knesset,
 20 to 25. All twelve are real `.docx` files with the same paragraph styles:
 
-| Style | Marker (from the 21st Knesset) | Means |
+| Style name | Marker (from the 21st Knesset) | Means |
 | --- | --- | --- |
-| `af6` | `<< יור >>` | the chair speaks |
-| `a4` | `<< דובר >>` | an MK or minister starts speaking |
-| `-` | `<< דובר_המשך >>` | the same speaker continues after an interruption |
-| `af9` | `<< אורח >>` | a guest speaks (committees) |
-| `af5` | `<< קריאה >>` | a call from the floor, usually with the caller's name |
-| `a6` | `<< נושא >>`, `<< הצח >>` | the subject or bill now under discussion |
-| `af1`, `--`, `af2` | | a vote: its number, the counts, the outcome |
+| `יור` | `<< יור >>` | the chair speaks |
+| `דובר` | `<< דובר >>` | an MK or minister starts speaking |
+| `דובר-המשך` | `<< דובר_המשך >>` | the same speaker continues after an interruption |
+| `אורח` | `<< אורח >>` | a guest speaks (committees) |
+| `קריאות` | `<< קריאה >>` | a call from the floor, usually with the caller's name |
+| `נושא` | `<< נושא >>`, `<< הצח >>` | the subject or bill now under discussion |
+| `הצבעה_מספר`, `הצבעה_בעד-נגד-נמנעים`, `הצבעה_תוצאות` | | a vote: its number, the counts, the outcome |
+| `שאילתה`, `תשובה` | | a query and its answer (plenum) |
 | none | | what is said |
+
+A paragraph points to its style by an id, and **the id differs between files** (the chair is
+`af6` in most, `af7` or `af8` in others). The style's name is the same in every file, so the
+pipeline stores names. Reading ids only, 7 of the 254 pilot documents had no speakers.
 
 So one parser that reads the styles covers every year and both kinds of session. Compared
 with the ivrit datasets, the documents also give the kind of speaker, the subject each
@@ -216,12 +221,28 @@ New steps, replacing 11 and 12:
 
 | # | Step | Done when |
 | --- | --- | --- |
-| A | Load the document link tables with the OData pipeline (`KNS_DocumentCommitteeSession`, `KNS_DocumentPlenumSession`) | they are in bronze, incremental like the rest |
-| B | **Documents pipeline**: download each session's protocol file once, store its paragraphs with their styles in bronze | the pilot sessions load; a second run downloads nothing |
+| A | Load the document link tables with the OData pipeline (`KNS_DocumentCommitteeSession`, `KNS_DocumentPlenumSession`) | added to `make ingest`; to be run on the Mac (the API blocks the cloud session) |
+| B | **Documents pipeline**: download each session's protocol file once, store its paragraphs with their styles in bronze | built (`make documents`). On the 254 pilot sessions, from the copies of the same files kept in the ivrit folders: 228,885 paragraphs in about a minute; a second run downloads nothing |
 | C | **Turns from styles** in dbt, for committees: speaker, kind, subject, text. Compare with ivrit's turns on the pilot | the same sessions give the same speakers and text, or the differences are understood |
 | D | Speaker linking, `fct_turn`, chunks and search on the new turns; rerun the text test | no worse than the ivrit pilot |
 | E | **Plenum** through the same pipeline, with votes linked by their number in the session | plenum speeches are searchable next to the votes |
 | F | Full load, one night of embedding | everything from 2015 on is searchable |
+
+## How we know the documents are read correctly
+
+| Check | Where | Catches |
+| --- | --- | --- |
+| The file is a `.docx`; it has paragraphs; it has speaker paragraphs | the pipeline, per document, as warnings and as columns of `protocol_documents` | old-format files, empty files, files without the Knesset's styles |
+| A style name no earlier document had | the pipeline, per run | new formatting we haven't seen |
+| The same sessions, read both ways: our turns against ivrit's on the pilot | step C | speakers or text cut differently |
+| Speakers the protocol marks as MKs link to a person | dbt test (fails under 90%) | names read wrongly |
+| The session's date and number in the document's first lines match our session | dbt test (step C) | a link that points to another session's file |
+| Votes in a plenum document match the votes we have for that session | dbt test (step E) | missed or misread votes |
+
+First comparison with ivrit, counting speaker paragraphs against ivrit's turns in the 254
+pilot sessions: 92,572 against 91,669 in all; the same number in 116 sessions and within 2
+in 187. One document has no styles at all (1,567 plain paragraphs) but does carry the
+`<< >>` markers, so turns will be cut by style first and by marker as a fallback.
 
 ## Layout after this milestone
 

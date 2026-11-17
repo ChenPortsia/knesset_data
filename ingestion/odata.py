@@ -64,6 +64,9 @@ TABLES: dict[str, Table] = {
     "KNS_CmtSessionItem": Table(),  # no Knesset/date column; filtered in dbt
     "KNS_PlenumSession": Table(BY_KNESSET),
     "KNS_PlmSessionItem": Table(),  # no Knesset/date column; filtered in dbt
+    # Links to the Knesset's own files; ingestion/documents.py downloads the protocols
+    "KNS_DocumentCommitteeSession": Table(),
+    "KNS_DocumentPlenumSession": Table(),
     # Bills, laws, votes
     "KNS_Bill": Table(BY_KNESSET),
     "KNS_BillInitiator": Table(),  # no Knesset/date column; filtered in dbt
