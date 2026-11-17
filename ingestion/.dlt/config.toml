@@ -31,3 +31,8 @@ request_backoff_factor = 2  # waits 1, 2, 4 ... 64s between attempts
 base_url = "https://huggingface.co/datasets/ivrit-ai/knesset-committees/resolve/main/"
 workers = 8               # parallel downloads
 batch_sessions = 200      # sessions per load; a stopped run keeps the batches already loaded
+
+[sources.knesset_documents]
+# The Knesset's own protocol files, one Word document per session
+workers = 4               # parallel downloads; the file server throttles bursts
+batch_documents = 100     # documents per load; a stopped run keeps the batches already loaded
